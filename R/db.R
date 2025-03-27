@@ -145,9 +145,6 @@ db_role_create <- function(conn, role, pass) {
 #' @export
 #'
 db_grant_access <- function(conn, dbname, role) {
-  conn <- db_create_conn("postgres", admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
-  
   RPostgres::dbExecute(
     conn, 
     glue::glue("GRANT CONNECT ON DATABASE {dbname} TO {role};")
