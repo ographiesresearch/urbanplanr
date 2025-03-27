@@ -1,3 +1,166 @@
+#' Detect UTM Zone
+#'
+#' @param df Simple features data frame or tibble.
+#'
+#' @returns Object of class `crs`.
+#' @export
+#'
+detect_utm <- function(df) {
+  utm_zone <- df |>
+    st_transform(
+      # `utm_zones` is from `R/sysdata.Rda`
+      sf::st_crs(utm_zones)
+    ) |>
+    sf::st_join(
+      utm_zones,
+      sf::st_intersects,
+      largest = TRUE
+    ) |>
+    dplyr::pull(zone_num)
+  
+  center_coords <- center |>
+    sf::st_transform(4326) |>
+    sf::st_coordinates()
+  
+  # UTM convention is that unmarked zones are
+  # N, S zones are marked S (because Eurocentrism).
+  # Here, we test if latitude > 0 to determine
+  # whether it is N or S.
+  if(center_coords[1,2] < 0){
+    utm_zone <- base::paste0(utm_zone, "S")
+  }
+  
+  # Set up projection using custom proj4string.
+  sf::st_crs(
+    base::paste0(
+      "+proj=utm +zone=",
+      utm_zone,
+      " +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
+    )
+  )
+}
+
+#' Add Z Dimension to Points from Column
+#'
+#' @param df Simple features data frame or tibble.
+#' @param zcol Character. Name of column containing Z values.
+#'
+#' @returns Simple features data frame or tibble.
+#' @export
+#'
+elevate_points <- function(df, zcol) {
+  df |>
+    dplyr::mutate(
+      coords = sf::st_coordinates(geom),
+      x = coords[,"X"],
+      y = coords[,"Y"]
+    ) |> 
+    sf::st_drop_geometry() |>
+    sf::st_as_sf(coords=c("x", "y", zcol)) |>
+    dplyr::select(-c(coords))
+}
+
+#' Get DEM from AWS Terrain Tiles
+#'
+#' @param area Simple features data frame or tibble (ideally polygon).
+#' @param src One of "aws", "gl3", "gl1", "alos", "srtm15plus".
+#'
+#' @returns A `RasterLayer`.
+#' @export
+#'
+get_dem <- function(area, z=14, src="aws") {
+  dem <- elevatr::get_elev_raster(
+      locations=area,
+      z=z,
+      src=src,
+      clip="locations",
+      neg_to_na=TRUE
+    )
+}
+
+#' Calculate a Hillshade from a Digital Elevation Model.
+#' 
+#' Can be used to calcualte a hillshade from a DEM `RasterLayer` of the type
+#' returned by `get_dem()`.
+#'
+#' @param dem A digital elevation model stored as a `RasterLayer`.
+#' @param angle Elevation angle of the light source (degrees). Defaults to 45.
+#' @param direction Azimuth angle of the light source (degrees). Defaults to 300.
+#' @param normalize Logical. If `TRUE` (default), values below zero are set to zero and the results are multiplied by 255.
+#' @param overwrite Logical. If `TRUE` (and `filename` is set), overwrites existing raster file.
+#' @param filename Character. Optional output filename.
+#'
+#' @returns A `RasterLayer`.
+#' @export
+#'
+hillshade_from_dem <- function(
+    dem, 
+    angle=45, 
+    direction=300, 
+    normalize=TRUE,
+    overwrite=TRUE,
+    filename='') {
+  raster::hillShade(
+    slope=terra::terrain(dem, v="slope", unit="radians"), 
+    aspect=terra::terrain(dem, v="aspect", unit="radians"), 
+    angle=angle,
+    direction=direction,
+    filename=filename, 
+    normalize=normalize, 
+    overwrite=overwrite
+    )
+}
+
+#' Retrieve Scaling Parameters, Given Model Size
+#'
+#' @param df Simple features dataframe or tibble.
+#' @param model_size Optional. Largest dimension of model, as numeric or `units`. If numeric, treated as map units. If not provided, model will not be scaled.
+#'
+#' @returns Named list with `factor`, `x_delta`, `y_delta`.
+#'
+scale_to_model <- function(df, model_size = NULL) {
+  if (!is.null(model_size)) {
+    bbox <- sf::st_bbox(df)
+    x_size <- abs(bbox$xmax - bbox$xmin)
+    y_size <- abs(bbox$ymax - bbox$ymin)
+    x_center <- as.numeric(bbox$xmax - (x_size / 2))
+    y_center <- as.numeric(bbox$ymax - (y_size / 2))
+    
+    factor <- as.numeric(units::set_units(model_size, m)) / max(x_size, y_size)
+  } else {
+    x_center <- 0
+    y_center <- 0
+    factor <- 1
+  }
+  c(factor = factor, x_delta = x_center, y_delta = y_center)
+}
+
+#' Scale Layer Based on Scaling Parameters
+#'
+#' @param df Simple features dataframe or tibble.
+#' @param scale Scaling parameters, as returend by `scale_to_model()`.
+#' @param thickness Numeric. Thickness of model plywood sheets.
+#' @param z_scale Numeric. Z-exaggeration for elevation.
+#' @param contour_int Nuemeric. Intervals for contours.
+#'
+#' @returns Scaled simple features dataframe or tibble.
+#' @export
+#' 
+model_scale <- function(df, scale, thickness, z_scale, contour_int) {
+  crs <- sf::st_crs(df)
+  scaled <- (sf::st_geometry(df) - c(scale['x_delta'], scale['y_delta'])) * scale['factor']
+  
+  if (!("sfc" %in% class(df))) {
+    sf::st_geometry(df) <- scaled
+    if ("z" %in% colnames(df))
+      df <- df |> 
+        dplyr::mutate(z = (z / (z_scale * contour_int)) * as.numeric(set_units(thickness, m)))
+  }
+  df <- df |>
+    sf::st_set_crs(crs)
+  df
+}
+
 set_census_api <- function(config) {
   if ("census_api" %in% names(config)) {
     message("Census API key set.")
