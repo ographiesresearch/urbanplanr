@@ -182,6 +182,16 @@
       ],
       "Hash": "3f038e5ac7f41d4ac41ce658c85e3042"
     },
+    "codetools": {
+      "Package": "codetools",
+      "Version": "0.2-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "61e097f35917d342622f21cdc79c256e"
+    },
     "cpp11": {
       "Package": "cpp11",
       "Version": "0.5.1",
@@ -213,6 +223,17 @@
         "R"
       ],
       "Hash": "d65efa2a203bb99faa78690eee928f30"
+    },
+    "digest": {
+      "Package": "digest",
+      "Version": "0.6.37",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "utils"
+      ],
+      "Hash": "33698c4b3127fc9f506654607fb73676"
     },
     "dotenv": {
       "Package": "dotenv",
@@ -260,6 +281,29 @@
       ],
       "Hash": "27a09ca40266a1066d62ef5402dd51d6"
     },
+    "elevatr": {
+      "Package": "elevatr",
+      "Version": "0.99.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "curl",
+        "furrr",
+        "future",
+        "httr",
+        "jsonlite",
+        "methods",
+        "progressr",
+        "purrr",
+        "raster",
+        "sf",
+        "slippymath",
+        "terra",
+        "units"
+      ],
+      "Hash": "f5a648116dfa343b1c76c40d33a8e834"
+    },
     "fansi": {
       "Package": "fansi",
       "Version": "1.0.6",
@@ -272,6 +316,37 @@
       ],
       "Hash": "962174cf2aeb5b9eea581522286a911f"
     },
+    "furrr": {
+      "Package": "furrr",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "future",
+        "globals",
+        "lifecycle",
+        "purrr",
+        "rlang",
+        "vctrs"
+      ],
+      "Hash": "da7a4c32196cb2262a41dd5a25d486ff"
+    },
+    "future": {
+      "Package": "future",
+      "Version": "1.34.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "digest",
+        "globals",
+        "listenv",
+        "parallel",
+        "parallelly",
+        "utils"
+      ],
+      "Hash": "475771e3edb711591476be387c9a8c2e"
+    },
     "generics": {
       "Package": "generics",
       "Version": "0.1.3",
@@ -282,6 +357,17 @@
         "methods"
       ],
       "Hash": "15e9634c0fcd294799e9b2e929ed1b86"
+    },
+    "globals": {
+      "Package": "globals",
+      "Version": "0.16.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "codetools"
+      ],
+      "Hash": "2580567908cafd4f187c1e5a91e98b7f"
     },
     "glue": {
       "Package": "glue",
@@ -354,6 +440,21 @@
       ],
       "Hash": "4e993b65c2c3ffbffce7bb3e2c6f832b"
     },
+    "lattice": {
+      "Package": "lattice",
+      "Version": "0.22-6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "grid",
+        "stats",
+        "utils"
+      ],
+      "Hash": "cc5ac1ba4c238c7ca9fa6a87ca11a7e2"
+    },
     "lehdr": {
       "Package": "lehdr",
       "Version": "1.1.4",
@@ -384,6 +485,16 @@
       ],
       "Hash": "b8552d117e1b808b09a832f589b79035"
     },
+    "listenv": {
+      "Package": "listenv",
+      "Version": "0.9.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "e2fca3e12e4db979dccc6e519b10a7ee"
+    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.9.4",
@@ -396,6 +507,19 @@
         "timechange"
       ],
       "Hash": "be38bc740fc51783a78edb5a157e4104"
+    },
+    "lwgeom": {
+      "Package": "lwgeom",
+      "Version": "0.2-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "sf",
+        "units"
+      ],
+      "Hash": "f1fb7cc9fc60f3b039201174268aaad9"
     },
     "magrittr": {
       "Package": "magrittr",
@@ -426,6 +550,18 @@
         "askpass"
       ],
       "Hash": "5bfe2927efa9f87766ca9605301ea48f"
+    },
+    "parallelly": {
+      "Package": "parallelly",
+      "Version": "1.43.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "parallel",
+        "tools",
+        "utils"
+      ],
+      "Hash": "ca40f736e4d2dc6981c1dc9d14ea3dcf"
     },
     "pillar": {
       "Package": "pillar",
@@ -460,6 +596,16 @@
       "Repository": "RSPM",
       "Hash": "09eb987710984fc2905c7129c7d85e65"
     },
+    "png": {
+      "Package": "png",
+      "Version": "0.1-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "bd54ba8a0a5faded999a7aab6e46b374"
+    },
     "prettyunits": {
       "Package": "prettyunits",
       "Version": "1.2.0",
@@ -483,6 +629,18 @@
         "prettyunits"
       ],
       "Hash": "f4625e061cb2865f111b47ff163a5ca6"
+    },
+    "progressr": {
+      "Package": "progressr",
+      "Version": "0.15.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "digest",
+        "utils"
+      ],
+      "Hash": "f8e9876b6ffff900e83f171081cacd6f"
     },
     "proxy": {
       "Package": "proxy",
@@ -521,6 +679,20 @@
       ],
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d"
     },
+    "raster": {
+      "Package": "raster",
+      "Version": "3.6-31",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "methods",
+        "sp",
+        "terra"
+      ],
+      "Hash": "4b6f355fc2802fa27ab51bbb0d0c0469"
+    },
     "readr": {
       "Package": "readr",
       "Version": "2.1.5",
@@ -547,7 +719,12 @@
     "renv": {
       "Package": "renv",
       "Version": "1.0.11",
-      "Source": "Repository"
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "utils"
+      ],
+      "Hash": "47623f66b4e80b3b0587bc5d7b309888"
     },
     "rlang": {
       "Package": "rlang",
@@ -606,9 +783,9 @@
     },
     "sf": {
       "Package": "sf",
-      "Version": "1.0-19",
+      "Version": "1.0-20",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "DBI",
         "R",
@@ -625,7 +802,38 @@
         "units",
         "utils"
       ],
-      "Hash": "fe02eec2f6b3ba0e24afe83d5ccfb528"
+      "Hash": "b99bc68a928d7d9aea4aad10d970edf1"
+    },
+    "slippymath": {
+      "Package": "slippymath",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "png",
+        "purrr",
+        "raster",
+        "stats"
+      ],
+      "Hash": "abdaf883004a4791545655d79ca3aae0"
+    },
+    "sp": {
+      "Package": "sp",
+      "Version": "2.2-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "grid",
+        "lattice",
+        "methods",
+        "stats",
+        "utils"
+      ],
+      "Hash": "d9ff3b753db98bc50650314c8782abe6"
     },
     "stringi": {
       "Package": "stringi",
@@ -663,6 +871,18 @@
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "de342ebfebdbf40477d0758d05426646"
+    },
+    "terra": {
+      "Package": "terra",
+      "Version": "1.8-29",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "methods"
+      ],
+      "Hash": "10321b092e16e7c5c02a3bf22727ef39"
     },
     "tibble": {
       "Package": "tibble",
