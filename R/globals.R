@@ -238,10 +238,15 @@ db_create_conn <-function(dbname, admin=FALSE) {
   )
 }
 
-db_exists <- function(dbname) {
-  conn <- db_create_conn("postgres", admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add=TRUE)
-  
+#' Test Whether Database Exists
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param dbname Character. Name of database.
+#'
+#' @returns Boolean.
+#' @export
+#'
+db_exists <- function(conn, dbname) {
   exists <- dbname %in% RPostgres::dbGetQuery(
     conn, 
     glue::glue("SELECT datname FROM pg_database WHERE datname = '{dbname}';")
@@ -254,31 +259,47 @@ db_exists <- function(dbname) {
   exists
 }
 
-db_create_postgis <- function(dbname) {
-  conn <- db_create_conn(dbname, admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
-  
+#' Create PostGIS extension.
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param dbname Character. Name of database.
+#'
+#' @returns NULL
+#' @export
+#'
+db_create_postgis <- function(conn, dbname) {
   RPostgres::dbExecute(conn, "CREATE EXTENSION postgis;")
   message(
     glue::glue("Created PostGIS extension on database '{dbname}'.")
   )
+  NULL
 }
 
-db_drop <- function(dbname) {
-  conn <- db_create_conn("postgres", admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add=TRUE)
-  
+#' Drop Database If It Exists
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param dbname Character. Name of database.
+#'
+#' @returns NULL
+#' @export
+#'
+db_drop <- function(conn, dbname) {
   RPostgres::dbExecute(
     conn, 
     glue::glue("DROP DATABASE IF EXISTS {dbname};")
   )
-  
+  NULL
 }
 
-db_create <- function(dbname) {
-  conn <- db_create_conn("postgres", admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add=TRUE)
-  
+#' Create Database
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param dbname Character. Name of database.
+#'
+#' @returns NULL
+#' @export
+#'
+db_create <- function(conn, dbname) {
   RPostgres::dbExecute(
     conn, 
     glue::glue("CREATE DATABASE {dbname};")
@@ -287,11 +308,19 @@ db_create <- function(dbname) {
   message(
     glue::glue("Created database '{dbname}'.")
   )
+  
+  NULL
 }
 
-db_role_exists <- function(role) {
-  conn <- db_create_conn("postgres", admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add=TRUE)
+#' Test Whether Role Exists
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param role Character. Name of role.
+#'
+#' @returns Boolean
+#' @export
+#'
+db_role_exists <- function(conn, role) {
   
   exists <- role %in% RPostgres::dbGetQuery(
     conn, 
@@ -306,10 +335,16 @@ db_role_exists <- function(role) {
   exists
 }
 
-db_role_create <- function(role, pass) {
-  conn <- db_create_conn("postgres", admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
-  
+#' Create Role With a Password
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param role Character. Name of role.
+#' @param pass Character. Password
+#'
+#' @returns NULL
+#' @export
+#'
+db_role_create <- function(conn, role, pass) {
   RPostgres::dbExecute(
     conn, 
     glue::glue("CREATE ROLE {role} WITH LOGIN PASSWORD '{pass}';")
@@ -317,9 +352,19 @@ db_role_create <- function(role, pass) {
   message(
     glue::glue("Role '{role}' created.")
   )
+  NULL
 }
 
-db_grant_access <- function(dbname, role) {
+#' Grant DB Acess to Role
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param dbname Character. Name of database.
+#' @param role Character. Name of role.
+#'
+#' @returns NULL
+#' @export
+#'
+db_grant_access <- function(conn, dbname, role) {
   conn <- db_create_conn("postgres", admin=TRUE)
   on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
   
@@ -330,12 +375,20 @@ db_grant_access <- function(dbname, role) {
   message(
     glue::glue("Granted CONNECT privilege on database '{dbname}' to role '{role}'.")
   )
+  NULL
 }
 
-db_set_defaults <- function(dbname, role) {
-  conn <- db_create_conn(dbname, admin=TRUE)
-  on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
-  
+
+#' Set Default Access for Role on Database
+#'
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @param dbname Character. Name of database.
+#' @param role Character. Name of role.
+#'
+#' @returns NULL
+#' @export
+#'
+db_set_defaults <- function(conn, dbname, role) {
   RPostgres::dbExecute(
     conn, 
     glue::glue("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {role};")
@@ -343,6 +396,7 @@ db_set_defaults <- function(dbname, role) {
   message(
     glue::glue("Set default SELECT privileges in '{dbname}' to role '{role}'.")
   )
+  NULL
 }
 
 prompt_check <- function(prompt) {
