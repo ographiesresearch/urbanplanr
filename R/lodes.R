@@ -117,14 +117,14 @@ st_join_max_overlap <- function(x, y, x_id, y_id) {
   sf::st_agr(y) <- "constant"
   max_int <- x |>
     sf::st_intersection(
-      dplyr::select(y, tidyselect::all_of(y_id))
+      dplyr::select(y, dplyr::all_of(y_id))
     ) |>
     dplyr::mutate(
       area = sf::st_area(geometry)
     ) |>
     sf::st_drop_geometry() |>
     dplyr::group_by(
-      dplyr::across(tidyselect::all_of(x_id))
+      dplyr::across(dplyr::all_of(x_id))
       ) |>
     dplyr::slice_max(order_by = area, na_rm = TRUE) |>
     dplyr::ungroup() |>

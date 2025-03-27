@@ -37,7 +37,7 @@ get_acs_vars <- function(vars,
   if (drop_moe) {
     df <- df |>
       dplyr::select(
-        -tidyselect::ends_with("M")
+        -dplyr::ends_with("M")
       )
   }
   if(!is.null(names(vars))) {
@@ -446,8 +446,8 @@ get_acs_age <- function(states,
     ) |>
     dplyr::select(
       unit_id,
-      tidyselect::starts_with("t"), 
-      tidyselect::starts_with("f"),
-      tidyselect::starts_with("m")
+      dplyr::starts_with("t"), 
+      dplyr::starts_with("f"),
+      dplyr::starts_with("m")
     )
 }
