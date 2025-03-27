@@ -210,17 +210,50 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
   }
 }
 
-
-
+#' Get ACS Variables by Census Unit
+#' @name get_acs
+#' 
+#' @description
+#' `get_acs_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
+#' Employed Population 16 Years and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
+#' 
+#' `get_acs_occupations()` obtains data on civilian occupation from ACS table 
+#' [S2401 (Occupation by Sex for the Civilan Employed Population 16 Years 
+#' and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
+#' 
+#' `get_acs_ancestry()` obtains data on reported ancestry from ACS table 
+#' [B04006 (People Reporting Ancestry)](https://data.census.gov/table/ACSDT5Y2023.B04006).
+#' 
+#' `get_acs_place_of_birth()` obtains data on place of birth for migrant population from ACS table
+#' [B05006 (Place of Birth for the Foreign-Born Population in the United States)](https://data.census.gov/table/ACSDT5Y2023.B05006).
+#' 
+#' `get_acs_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
+#' [B25042 (Tenure by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25042), [B25024 (Units in Structure)](https://data.census.gov/table/ACSDT5Y2023.B25024), and
+#' [B25031 (Median Gross Rent by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25031).
+#' 
+#' `get_acs_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
+#' [B03002 (Hispanic or Latino Origin by Race)](https://data.census.gov/table/ACSDT5Y2023.B03002), [B19301B-H (Per capita income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19301B), 
+#' and [B19013B-H (Median household income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19013B).
+#' 
+#' `get_acs_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
+#'
+#' @param states A character vector of two-digit state abbreviations (e.g., `c("MA", "MI")).
+#' @param year Integer. Final year of 5-year ACS period.
+#' @param census_unit Character. The desired geography.
+#' @param county County for which you are requesting data.
+#' @param crs Target coordinate reference system: object of class `crs`, or input string for `st_crs`.
+#' @param geometry If `FALSE` (the default), returns a table. If `TRUE`, returns a simple feature (`sf`) dataframe.
+#'
+#' @returns A tibble or sf tibble of ACS data.
+#' @export
+#' 
 get_acs_industries <- function(states,
                            year,
                            census_unit,
                            county = NULL,
                            crs = 4326,
                            geometry = FALSE) {
-  # Industry data from ACS Table S2403: Industry by Sex for the Civilian 
-  # Employed Population 16 Years and Over
-  # https://data.census.gov/table/ACSST5Y2022.S2401
+  
   get_acs_table("S2403", 
                  census_unit = census_unit,
                  year = year,
@@ -230,15 +263,14 @@ get_acs_industries <- function(states,
     process_nested_table()
 }
 
+#' @name get_acs
+#' @export
 get_acs_occupations <- function(states,
                             year,
                             census_unit,
                             county = NULL,
                             crs = 4326,
                             geometry = FALSE) {
-  # Industry data from ACS Table S2401: Occupation by Sex for the Civilian 
-  # Employed Population 16 Years and Over
-  # https://data.census.gov/table/ACSST5Y2022.S2401
   get_acs_table("S2401", 
                 census_unit = census_unit,
                 year = year,
@@ -248,9 +280,12 @@ get_acs_occupations <- function(states,
     process_nested_table()
 }
 
+#' @name get_acs
+#' @export
 get_acs_ancestry <- function(states,
                              year,
                              census_unit,
+                             county = NULL,
                              crs = 4326,
                              geometry = FALSE) {
   get_acs_table("B04006",
@@ -262,9 +297,12 @@ get_acs_ancestry <- function(states,
                 var_suffix = FALSE)
 }
 
+#' @name get_acs
+#' @export
 get_acs_place_of_birth <- function(states,
                                    year,
                                    census_unit,
+                                   county = NULL,
                                    crs = 4326,
                                    geometry = FALSE) {
   get_acs_table("B05006",
@@ -276,6 +314,8 @@ get_acs_place_of_birth <- function(states,
                 var_suffix = FALSE)
 }
 
+#' @name get_acs
+#' @export
 get_acs_housing <- function(states,
                             year,
                             census_unit,
@@ -327,6 +367,8 @@ get_acs_housing <- function(states,
                )
 }
 
+#' @name get_acs
+#' @export
 get_acs_race <- function(states,
                          year,
                          census_unit,
@@ -376,43 +418,45 @@ get_acs_race <- function(states,
   )
 }
 
+#' @name get_acs
+#' @export
 get_acs_age <- function(states,
                         year,
                         census_unit,
                         crs = 4326,
                         geometry = FALSE) {
   vars <- c(
-    "tot" = "B01001A_001",
-    "mtot" = "B01001A_002",
-    "mlt5" = "B01001A_003",
-    "m5_9" = "B01001A_004",
-    "m10_14" = "B01001A_005",
-    "m15_17" = "B01001A_006",
-    "m18_19" = "B01001A_007",
-    "m20_24" = "B01001A_008",
-    "m25_29" = "B01001A_009",
-    "m30_34" = "B01001A_010",
-    "m35_44" = "B01001A_011",
-    "m45_54" = "B01001A_012",
-    "m55_64" = "B01001A_013",
-    "m65_74" = "B01001A_014",
-    "m75_84" = "B01001A_015",
-    "mgt85" = "B01001A_016",
-    "ftot" = "B01001A_017",
-    "flt5" = "B01001A_018",
-    "f5_9" = "B01001A_019",
-    "f10_14" = "B01001A_020",
-    "f15_17" = "B01001A_021",
-    "f18_19" = "B01001A_022",
-    "f20_24" = "B01001A_023",
-    "f25_29" = "B01001A_024",
-    "f30_34" = "B01001A_025",
-    "f35_44" = "B01001A_026",
-    "f45_54" = "B01001A_027",
-    "f55_64" = "B01001A_028",
-    "f65_74" = "B01001A_029",
-    "f75_84" = "B01001A_030",
-    "fgt85" = "B01001A_031")
+    "tot" = "B01001_001",
+    "mtot" = "B01001_002",
+    "mlt5" = "B01001_003",
+    "m5_9" = "B01001_004",
+    "m10_14" = "B01001_005",
+    "m15_17" = "B01001_006",
+    "m18_19" = "B01001_007",
+    "m20_24" = "B01001_008",
+    "m25_29" = "B01001_009",
+    "m30_34" = "B01001_010",
+    "m35_44" = "B01001_011",
+    "m45_54" = "B01001_012",
+    "m55_64" = "B01001_013",
+    "m65_74" = "B01001_014",
+    "m75_84" = "B01001_015",
+    "mgt85" = "B01001_016",
+    "ftot" = "B01001_017",
+    "flt5" = "B01001_018",
+    "f5_9" = "B01001_019",
+    "f10_14" = "B01001_020",
+    "f15_17" = "B01001_021",
+    "f18_19" = "B01001_022",
+    "f20_24" = "B01001_023",
+    "f25_29" = "B01001_024",
+    "f30_34" = "B01001_025",
+    "f35_44" = "B01001_026",
+    "f45_54" = "B01001_027",
+    "f55_64" = "B01001_028",
+    "f65_74" = "B01001_029",
+    "f75_84" = "B01001_030",
+    "fgt85" = "B01001_031")
   
   get_acs_vars(vars, 
                states = states,
