@@ -18,7 +18,7 @@ detect_utm <- function(df) {
     ) |>
     dplyr::pull(zone_num)
   
-  center_coords <- center |>
+  center <- df |>
     sf::st_transform(4326) |>
     sf::st_coordinates()
   
@@ -26,7 +26,7 @@ detect_utm <- function(df) {
   # N, S zones are marked S (because Eurocentrism).
   # Here, we test if latitude > 0 to determine
   # whether it is N or S.
-  if(center_coords[1,2] < 0){
+  if(center[1,2] < 0){
     utm_zone <- base::paste0(utm_zone, "S")
   }
   
