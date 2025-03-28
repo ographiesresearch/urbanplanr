@@ -33,6 +33,45 @@ rast_hillshade_from_dem <- function(dem,
   )
 }
 
+st_clip <- function(x, y) {
+  init_type <- as.character(sf::st_geometry_type(x, by_geometry=FALSE))
+  clip <- x |>
+    sf::st_set_agr("constant") |>
+    sf::st_intersection(
+      y |>
+        sf::st_union() |>
+        sf::st_geometry()
+    ) |>
+    dplyr::filter(
+      as.character(sf::st_geometry_type(geometry)) %in% c(
+        init_type, 
+        stringr::str_c("MULTI", init_type, sep=""),
+        stringr::str_remove(init_type, "MULTI")
+      )
+    )
+  
+  clip_type_multi <- base::any(
+    stringr::str_detect(
+      clip |>
+        sf::st_geometry_type(by_geometry=TRUE) |>
+        as.character() |>
+        base::unique(), 
+      "MULTI"
+    )
+  )
+  
+  init_type_multi <- stringr::str_detect(init_type, "MULTI")
+  
+  if (clip_type_multi & !init_type_multi) {
+    cast_to <- stringr::str_c("MULTI", init_type, sep="")
+  } else {
+    cast_to <- init_type
+  }
+  
+  clip |>
+    sf::st_cast(cast_to)
+}
+
 #' Retrieve Scaling Parameters, Given Model Size
 #'
 #' @param df Simple features dataframe or tibble.
@@ -96,9 +135,9 @@ st_model_scale <- function(df, scale, thickness, z_scale, contour_int) {
 #'
 st_detect_utm <- function(df) {
   zone <- df |>
-    sf::st_transform(# `utm_zones` is from `R/sysdata.Rda`
-      sf::st_crs(utm_zones)) |>
-    sf::st_join(utm_zones, sf::st_intersects, largest = TRUE) |>
+    sf::st_transform(
+      sf::st_crs(UTM_ZONES)) |>
+    sf::st_join(UTM_ZONES, sf::st_intersects, largest = TRUE) |>
     dplyr::pull(zone_num)
   
   center <- df |>

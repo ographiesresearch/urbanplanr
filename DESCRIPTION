@@ -32,3 +32,4 @@ Imports:
     tigris (>= 2.1)
 Depends: 
     R (>= 3.5)
+LazyData: true
