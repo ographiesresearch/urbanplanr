@@ -238,7 +238,7 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
 #' @returns A tibble or sf tibble of ACS data.
 #' @export
 #' 
-acs_get_industries <- function(states,
+acs_get_ind <- function(states,
                            year,
                            census_unit,
                            county = NULL,
@@ -256,7 +256,7 @@ acs_get_industries <- function(states,
 
 #' @name get_acs
 #' @export
-acs_get_occupations <- function(states,
+acs_get_occ <- function(states,
                             year,
                             census_unit,
                             county = NULL,

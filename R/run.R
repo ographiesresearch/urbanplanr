@@ -1,7 +1,3 @@
-# source('R/globals.R')
-# source('R/lodes.R')
-# source('R/acs.R')
-
 # dotenv::load_dot_env()
 
 options(
@@ -15,214 +11,210 @@ run <- function(config) {
   if (class(config) == "character") {
     config <- jsonlite::read_json(config)
   }
-
-  config <- config |>
-    set_census_api() |>
-    lehd_census_units() |>
-    tidy_census_units() |>
-    std_format()
   
-  # Create database if it doesn't already exist.
-  # Also prompts user to overwrite or not.
-  if (config$format == "postgis") {
-    db_create_if(config$project)
-  }
+  states <- c("MA", "RI", "CT")
+  crs <- 2249
+  counties <- NULL
+  year <- 2023
   
-  # # Get states----
-  # states <- states(year = year) |>
-  #   sf::st_transform(crs) |>
-  #   sf::st_filter(
-  #     study_radius,
-  #     .predicate = sf::st_intersects
-  #   ) |>
-  #   dplyr::pull(STATEFP)
-  # 
-  # # Get Counties----
-  # counties <- tigris::counties(states, year = year) |>
-  #   sf::st_transform(crs) |>
-  #   sf::st_filter(
-  #     study_radius,
-  #     .predicate = sf::st_intersects
-  #   ) |>
-  #   dplyr::pull(COUNTYFP)
-  # 
-  # # Get Hydro----
-  # water <- tigris::area_water(
-  #   state = states,
-  #   county = counties,
-  #   year = year
-  # ) |>
-  #   sf::st_transform(crs) |>
-  #   sf::st_intersection(dl_radius) |>
-  #   dplyr::mutate(
-  #     area = sf::st_area(geometry)
-  #   ) |>
-  #   dplyr::filter(
-  #     area > units::set_units(25000, m^2)
-  #   ) |>
-  #   sf::st_union() |>
-  #   st_as_sf()
-  # 
-  # # Get Roads----
-  # tigris::roads(
-  #   state = states,
-  #   county = counties,
-  #   year = year
-  # ) |>
-  #   sf::st_transform(crs) |>
-  #   sf::st_intersection(contour_joined) |>
-  #   write_to_formats("roads", out_dir, exts, scale_elements = se, thickness = thickness, z_scale = z_scale, contour_interval = contour_interval)
-  # 
-  # # Get Rails----
-  # tigris::rails(year = year) |>
-  #   sf::st_transform(crs) |>
-  #   sf::st_intersection(contour_joined) |>
-  #   write_to_formats(
-  #     "rails",
-  #     out_dir,
-  #     exts,
-  #     scale_elements = se,
-  #     thickness = thickness,
-  #     z_scale = z_scale,
-  #     contour_interval = contour_interval
-  #   )
-
-  message("Downloading places...")
-  place_geo <- place_decision(config$states, crs = config$crs)
-
-  if ("places" %in% names(config)) {
-    place_geo <- place_geo |>
-      select_places(places = config$places)
-  }
-
-  get_places(states = config$states, year = config$year, crs = config$crs) |>
-    write_multi("census_places", config = config)
+  tidycensus::census_api_key()
+  utils_std_output_format()
   
-  place_geo |>
-    # TODO: Replace with specific column removal.
-    # remove_coords() |>
-    write_multi("places", config = config)
+  # # Create database if it doesn't already exist.
+  # # Also prompts user to overwrite or not.
+  # if (config$format == "postgis") {
+  #   db_create_if(config$project)
+  # }
   
-  census_units <- get_census_units(
-    states = config$states,
-    year = config$year,
-    crs = config$crs,
-    census_unit = config$census_unit
-    ) |>
-    # TODO: Replace with `st_join(..., largest=TRUE)`.
-    st_join_max_overlap(place_geo, x_id = "unit_id", y_id = "pl_id")
+  # Get states----
+  states_ <- tigris_get_states(
+    states = states, 
+    crs = crs,
+    year = year
+  )
   
-  census_units |>
-    # TODO: Replace with specific column removal.
-    # remove_coords() |>
-    write_multi("census_unit", config = config)
+  # Get Counties----
+  counties_ <- tigris_get_counties(
+    states = states, 
+    counties = counties, 
+    crs = crs,
+    year = year
+  )
   
-  if ("lodes" %in% config$datasets) {
-    message("Downloading and processing LEHD Origin-Destination Employment Statistics (LODES) data...")
-    od <- get_lodes(
-        states = config$states,
-        year = config$year,
-        census_unit = config$census_unit) |>
-      prep_lodes(
-        census_unit = config$census_unit
+  # Get Places----
+  places <- tigris_get_places(
+    states = states,
+    crs = crs,
+    year = year
+  )
+  
+  # Get Census Tracts----
+  census_tracts <- tigris_get_tracts(
+    states = states, 
+    crs = crs,
+    year = year
+  ) |>
+    sf::st_join(
+      places |>
+        dplyr::select(placefp), 
+      largest = TRUE
       )
   
-    od_census_units <- od |>
-      lodes_to_census_units(
-        census_units_geo = census_units,
-        census_unit = config$census_unit
-        )
+  # Get Block Groups----
+  block_groups <- tigris_get_block_groups(
+    states = states, 
+    crs = crs,
+    year = year
+  ) |>
+    sf::st_join(
+      places |>
+        dplyr::select(placefp), 
+      largest = TRUE
+    )
   
-    census_units_measured <- od_census_units |>
-      proximity_measures() |>
-      dplyr::filter(unit_id %in% census_units$unit_id)
+  # Get Area Water----
+  area_water <- tigris_get_area_water(
+    states = states, 
+    counties = counties, 
+    crs = crs,
+    year = year
+  )
   
-    if ("places" %in% names(config)) {
-      census_units_measured <- census_units_measured |>
-          dplyr::full_join(
-            od_census_units |>
-              selected_ods_poly(),
-            by = "unit_id"
-            ) |>
-        dplyr::mutate(
-          dplyr::across(
-            dplyr::where(is.numeric), ~tidyr::replace_na(.x, 0)
-          )
-        )
+  # Get Linear Water----
+  linear_water <- tigris_get_linear_water(
+    states = states, 
+    counties = counties, 
+    crs = crs,
+    year = year
+    )
+  
+  # Get Roads----
+  roads <- tigris_get_roads(
+    states = states, 
+    counties = counties, 
+    crs = crs,
+    year = year
+  )
+  
+  # Get Rails----
+  rails <- tigris_get_rails(
+    crs = crs,
+    year = year
+  )
+  
+  f <- function(var, params, geos = c("tract", "block_group", "place")) {
+    out <- list()
+    for (geo in geos) {
+      out[[geo]] <- do.call(
+        glue::glue("acs_get_{var}"), 
+        args=append(params, list(census_unit = geo))
+      )
     }
-  
-    census_units_measured |>
-      write_multi("census_unit_lodes", config = config)
-  
-    ods_lines(od_census_units, crs = config$crs) |>
-      write_multi("census_unit_lodes_lines", config = config)
-  
-    ods_lines_place_agg(od_census_units, crs = config$crs) |>
-      write_multi("place_lodes_lines", config = config)
+    out
   }
   
   
-  if ("age" %in% config$datasets) {
-    get_acs_age(states = config$states,
-                year = config$year,
-                census_unit = config$census_unit) |>
-      write_multi("census_unit_acs_age", config = config)
-  
-    get_acs_age(states = config$states,
-                year = config$year,
-                census_unit = "place") |>
-      write_multi("place_acs_age", config = config)
+  if ("age" %in% datasets) {
+    age <- f(
+      var = "age",
+      params = list(
+        states = states,
+        year = year
+      )
+    )
   }
   
-  if ("race" %in% config$datasets) {
-    get_acs_race(states = config$states,
-                 year = config$year,
-                 census_unit = config$census_unit) |>
-      write_multi("census_unit_acs_race", config = config)
-  
-    get_acs_race(states = config$states,
-                 year = config$year,
-                 census_unit = "place")  |>
-      write_multi("place_acs_race", config = config)
+  if ("race" %in% datasets) {
+    age <- f(
+      var = "race",
+      params = list(
+        states = states,
+        year = year
+      )
+    )
   }
   
-  if ("housing" %in% config$datasets) {
-    get_acs_housing(states = config$states,
-                    year = config$year,
-                    census_unit = config$census_unit) |>
-      write_multi("census_unit_acs_housing", config = config)
-  
-    get_acs_housing(states = config$states,
-                    year = config$year,
-                    census_unit = "place")|>
-      write_multi("place_acs_housing", config = config)
+  if ("housing" %in% datasets) {
+    age <- f(
+      var = "race",
+      params = list(
+        states = states,
+        year = year
+      )
+    )
   }
   
-  if ("occ" %in% config$datasets) {
-    message("Downloading ACS occupation estimates...")
-    get_acs_occupations(states = config$states,
-                    year = config$year,
-                    census_unit = config$census_unit) |>
-      pivot_and_write(name = "census_unit_acs_occ", config = config)
-  
-    get_acs_occupations(states = config$states,
-                    year = config$year,
-                    census_unit = "place") |>
-      pivot_and_write(name = "place_acs_occ", config = config)
+  if ("occ" %in% datasets) {
+    age <- f(
+      var = "race",
+      params = list(
+        states = states,
+        year = year
+      )
+    )
   }
-  
-  if ("ind" %in% config$datasets) {
-    message("Downloading ACS industry estimates...")
-    get_acs_industries(states = config$states,
-                   year = config$year,
-                   census_unit = config$census_unit)  |>
-      pivot_and_write(name = "census_unit_acs_ind", config = config)
-  
-    get_acs_industries(states = config$states,
-                    year = config$year,
-                    census_unit = "place") |>
-      pivot_and_write(name = "place_acs_ind", config = config)
-  }
+
+  # message("Downloading places...")
+  # place_geo <- place_decision(config$states, crs = config$crs)
+  # 
+  # if ("places" %in% names(config)) {
+  #   place_geo <- place_geo |>
+  #     select_places(places = config$places)
+  # }
+  # 
+  # place_geo |>
+  #   # TODO: Replace with specific column removal.
+  #   # remove_coords() |>
+  #   write_multi("places", config = config)
+  # 
+  # census_units |>
+  #   # TODO: Replace with specific column removal.
+  #   # remove_coords() |>
+  #   write_multi("census_unit", config = config)
+  # 
+  # if ("lodes" %in% config$datasets) {
+  #   message("Downloading and processing LEHD Origin-Destination Employment Statistics (LODES) data...")
+  #   od <- get_lodes(
+  #       states = config$states,
+  #       year = config$year,
+  #       census_unit = config$census_unit) |>
+  #     prep_lodes(
+  #       census_unit = config$census_unit
+  #     )
+  # 
+  #   od_census_units <- od |>
+  #     lodes_to_census_units(
+  #       census_units_geo = census_units,
+  #       census_unit = config$census_unit
+  #       )
+  # 
+  #   census_units_measured <- od_census_units |>
+  #     proximity_measures() |>
+  #     dplyr::filter(unit_id %in% census_units$unit_id)
+  # 
+  #   if ("places" %in% names(config)) {
+  #     census_units_measured <- census_units_measured |>
+  #         dplyr::full_join(
+  #           od_census_units |>
+  #             selected_ods_poly(),
+  #           by = "unit_id"
+  #           ) |>
+  #       dplyr::mutate(
+  #         dplyr::across(
+  #           dplyr::where(is.numeric), ~tidyr::replace_na(.x, 0)
+  #         )
+  #       )
+  #   }
+  # 
+  #   census_units_measured |>
+  #     write_multi("census_unit_lodes", config = config)
+  # 
+  #   ods_lines(od_census_units, crs = config$crs) |>
+  #     write_multi("census_unit_lodes_lines", config = config)
+  # 
+  #   ods_lines_place_agg(od_census_units, crs = config$crs) |>
+  #     write_multi("place_lodes_lines", config = config)
+  # }
 }
 
 if(!interactive()){

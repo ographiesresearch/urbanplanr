@@ -1,13 +1,3 @@
-set_census_api <- function(config) {
-  if ("census_api" %in% names(config)) {
-    message("Census API key set.")
-    suppressMessages(tidycensus::census_api_key(config$census_api))
-  } else {
-    message("No census API key privided. Consider setting `census_api` in `config.json`.")
-  }
-  config
-}
-
 get_config <- function(args) {
   if (length(args) > 0) {
     if (class(args[1]) != "character") {
@@ -21,41 +11,23 @@ get_config <- function(args) {
   config_json
 }
 
-std_census_units <- function(config) {
-  if (config$census_unit %in% c("tract", "tracts", "ct", "cts")) {
-    config$census_unit <- "tract"
-    config$lehd_unit <- "tract"
-  } else if (configG$census_unit %in% c("block groups", "block group", 
-                                        "cbg", "cbgs", "bg", "bgs")) {
-    config$census_unit <- "cbg"
-    config$lehd_unit <- "bg"
-  } else {
-    stop("census_unit parameter must be one of 'tracts' or 'block groups'.")
-  }
-  message(
-    glue::glue("Census areal unit set to '{config$census_unit}'.\n
-               LEHD areal unit set to '{config$lehd_unit}'."))
-  config
-}
-
-
-std_format <- function(config) {
-  if (config$format %in% c("shapefile", "shp")) {
-    config$format <- "shp"
-  } else if (config$format %in% c("geopackage", "gpkg")) {
-    config$format <- "gpkg"
-  } else if (config$format %in% c("geojson", "json")) {
-    config$format <- "geojson"
-  } else if (config$format == "postgis") {
+utils_std_output_format <- function(format) {
+  if (format %in% c("shapefile", "shp")) {
+    format <- "shp"
+  } else if (format %in% c("geopackage", "gpkg")) {
+    format <- "gpkg"
+  } else if (format %in% c("geojson", "json")) {
+    format <- "geojson"
+  } else if (format == "postgis") {
     # do nothing.
   }else {
     stop("'format' parameter must be one of 'postgis', 'shp', 'gpkg', or 'geojson'.")
   }
   message(glue::glue("Output format set to {config$format}."))
-  config
+  format
 }
 
-prompt_check <- function(prompt) {
+utils_prompt_check <- function(prompt) {
   message(prompt)
   if (interactive()) {
     r <- readline()

@@ -40,25 +40,28 @@
 #' @returns Simple Features dataframe.
 #' @export
 #'
-tigris_get_places <- function(states, crs, ...) {
-  tigris::places(state = states, ...) |>
-    sf_preprocess(crs) |>
-    dplyr::select(pl_name = name, state = stusps)
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_states <- function(states, crs, ...) {
-  tigris::states(state = states, ...) |>
-    sf_preprocess(crs) |>
-    dplyr::select(pl_name = name, state = stusps)
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_counties <- function(states, crs, ...) {
-  tigris::counties(state = states, ...) |>
+tigris_get_states <- function(states = NULL, crs, ...) {
+  df <- tigris::states(...) |>
     sf_preprocess(crs)
+  
+  if (!is.null(states)) {
+    df <- df |>
+      dplyr::filter(stusps %in% states)
+  }
+  df
+}
+
+#' @name tigris_get_*
+#' @export
+tigris_get_counties <- function(states, crs, counties = NULL, ...) {
+  df <- tigris::counties(state = states, ...) |>
+    sf_preprocess(crs)
+  
+  if (!is.null(counties)) {
+    df <- df |>
+      dplyr::filter(name %in% counties)
+  }
+  df
 }
 
 #' @name tigris_get_*
@@ -101,12 +104,39 @@ tigris_get_multistate_by_county <- function(.function, states, crs, counties = N
 
 #' @name tigris_get_*
 #' @export
+tigris_get_counties <- function(states, crs, ...) {
+  message("Downloading county geometries.")
+  tigris_get_multistate(
+    .function = tigris::counties,
+    states = states,
+    crs = crs,
+    ...
+  )
+}
+
+#' @name tigris_get_*
+#' @export
+tigris_get_places <- function(states, crs, ...) {
+  message("Downloading county geometries.")
+  tigris_get_multistate(
+    .function = tigris::places,
+    states = states,
+    crs = crs,
+    ...
+  )
+}
+
+
+#' @name tigris_get_*
+#' @export
 tigris_get_tracts <- function(states, crs, ...) {
   message("Downloading tract geometries.")
-  tigris_get_multistate(.function = tigris::tracts,
-                        states = states,
-                        crs = crs,
-                        ...)
+  tigris_get_multistate(
+    .function = tigris::tracts,
+    states = states,
+    crs = crs,
+    ...
+  )
 }
 
 #' @name tigris_get_*
@@ -136,7 +166,7 @@ tigris_get_roads <- function(states, crs, counties = NULL, ...) {
 #' @export
 tigris_get_primary_roads <- function(crs, ...) {
   message("Downloading road geometries.")
-  tigris::counties(...) |>
+  tigris::primary_roads(...) |>
     sf_preprocess(crs)
 }
 
@@ -148,6 +178,14 @@ tigris_get_primary_secondary_roads <- function(states, crs, ...) {
                                   states = states,
                                   crs = crs,
                                   ...)
+}
+
+#' @name tigris_get_*
+#' @export
+tigris_get_rails <- function(crs, ...) {
+  message("Downloading road geometries.")
+  tigris::rails(...) |>
+    sf_preprocess(crs)
 }
 
 #' @name tigris_get_*
