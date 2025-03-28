@@ -1,17 +1,3 @@
-#' Pre-processing operations for spatial data.
-#'
-#' @param df Simple features dataframe.
-#' @param crs EPSG code or `crs` object.
-#'
-#' @returns Simple Features dataframe.
-#' @export
-#'
-tigris_preprocess <- function(df, crs) {
-  df |> 
-    sf::st_transform(crs) |>
-    dplyr::rename_with(tolower)
-}
-
 #' Get Census-Designated Places
 #' @name tigris_get_*
 #' 
@@ -56,7 +42,7 @@ tigris_preprocess <- function(df, crs) {
 #'
 tigris_get_places <- function(states, crs, ...) {
   tigris::places(state = states, ...) |>
-    tigris_preprocess(crs) |>
+    sf_preprocess(crs) |>
     dplyr::select(pl_name = name, state = stusps)
 }
 
@@ -64,7 +50,7 @@ tigris_get_places <- function(states, crs, ...) {
 #' @export
 tigris_get_states <- function(states, crs, ...) {
   tigris::states(state = states, ...) |>
-    tigris_preprocess(crs) |>
+    sf_preprocess(crs) |>
     dplyr::select(pl_name = name, state = stusps)
 }
 
@@ -72,7 +58,7 @@ tigris_get_states <- function(states, crs, ...) {
 #' @export
 tigris_get_counties <- function(states, crs, ...) {
   tigris::counties(state = states, ...) |>
-    tigris_preprocess(crs)
+    sf_preprocess(crs)
 }
 
 #' @name tigris_get_*
@@ -84,7 +70,7 @@ tigris_get_multistate <- function(.function, states, crs, ...) {
   }
   units |>
     dplyr::bind_rows() |>
-    tigris_preprocess(crs)
+    sf_preprocess(crs)
 }
 
 #' @name tigris_get_*
@@ -110,7 +96,7 @@ tigris_get_multistate_by_county <- function(.function, states, crs, counties = N
   }
   units |>
     dplyr::bind_rows()  |>
-    tigris_preprocess(crs)
+    sf_preprocess(crs)
 }
 
 #' @name tigris_get_*
@@ -151,7 +137,7 @@ tigris_get_roads <- function(states, crs, counties = NULL, ...) {
 tigris_get_primary_roads <- function(crs, ...) {
   message("Downloading road geometries.")
   tigris::counties(...) |>
-    tigris_preprocess(crs)
+    sf_preprocess(crs)
 }
 
 #' @name tigris_get_*

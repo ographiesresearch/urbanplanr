@@ -1,3 +1,35 @@
+#' Pre-processing operations for spatial data.
+#'
+#' @param df Simple features dataframe.
+#' @param crs EPSG code or `crs` object.
+#'
+#' @returns Simple Features dataframe.
+#' @export
+#'
+sf_preprocess <- function(df, crs) {
+  df |> 
+    sf::st_transform(crs) |>
+    dplyr::rename_with(tolower)
+}
+
+#' Get DEM from AWS Terrain Tiles
+#'
+#' @param area Simple features data frame or tibble (ideally polygon).
+#' @param src One of "aws", "gl3", "gl1", "alos", "srtm15plus".
+#'
+#' @returns A `RasterLayer`.
+#' @export
+#'
+st_get_dem <- function(area, z=14, src="aws") {
+  dem <- elevatr::get_elev_raster(
+    locations=area,
+    z=z,
+    src=src,
+    clip="locations",
+    neg_to_na=TRUE
+  )
+}
+
 #' Calculate a Hillshade from a Digital Elevation Model.
 #'
 #' Can be used to calcualte a hillshade from a DEM `RasterLayer` of the type
@@ -16,7 +48,7 @@
 #' @returns A `RasterLayer`.
 #' @export
 #'
-rast_hillshade_from_dem <- function(dem,
+st_hillshade_from_dem <- function(dem,
                                     angle = 45,
                                     direction = 300,
                                     normalize = TRUE,

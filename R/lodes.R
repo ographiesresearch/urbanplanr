@@ -1,4 +1,4 @@
-get_lodes <- function(states, 
+lodes_get_data <- function(states, 
                       year, 
                       census_unit) {
   lodes_list <- list()
@@ -31,7 +31,7 @@ get_lodes <- function(states,
     dplyr::distinct()
 }
 
-prep_lodes <- function(od,
+lodes_prep <- function(od,
                        census_unit) {
   h_col <- stringr::str_c("h", census_unit, sep = "_")
   w_col <- stringr::str_c("w", census_unit, sep = "_")
@@ -40,39 +40,6 @@ prep_lodes <- function(od,
       w_unit = {{w_col}},
       h_unit = {{h_col}}
     )
-}
-
-select_places <- function(place_geo, places) {
-  searches <- dplyr::bind_rows(places) |>
-    dplyr::mutate(
-      pl_id = stringr::str_c(
-        stringr::str_to_lower(place), 
-        stringr::str_to_lower(state), 
-        sep="_"
-        ),
-      pl_id = stringr::str_c("^", pl_id, "$", sep="")
-    ) |>
-    dplyr::pull(pl_id) |>
-    stringr::str_c(collapse="|")
-  
-  places_vector <- dplyr::bind_rows(places) |>
-    dplyr::pull(place)
-  
-  matched <- place_geo |>
-    dplyr::mutate(
-      selected = stringr::str_detect(pl_id, searches)
-    )
-  match_count <- nrow(matched |> dplyr::filter(selected))
-  if (match_count == length(places)) {
-    message(glue::glue("Exact match found for all place names ({stringr::str_c(places_vector, collapse=', ')})."))
-  } else if (match_count > length(places)) {
-    message(glue::glue("Ambiguous place names provided."))
-    stop()
-  } else {
-    message(glue::glue("Unable to match all place names."))
-    stop()
-  }
-  matched
 }
 
 lodes_to_census_units <- function(df, 
@@ -112,7 +79,7 @@ lodes_to_census_units <- function(df,
     )
 }
 
-prox_workers_in_unit <- function(prox) {
+lodes_prox_workers_in_unit <- function(prox) {
   prox |>
     dplyr::group_by(in_unit, unit_id = w_unit) |>
     dplyr::summarize(
@@ -135,7 +102,7 @@ prox_workers_in_unit <- function(prox) {
     dplyr::select(-in_unit_FALSE)
 }
 
-prox_workers_in_town <- function(prox) {
+lodes_prox_workers_in_town <- function(prox) {
   prox |>
     dplyr::group_by(in_town, unit_id = w_unit) |>
     dplyr::summarize(
@@ -158,7 +125,7 @@ prox_workers_in_town <- function(prox) {
     dplyr::select(-in_town_FALSE)
 }
 
-prox_residents_in_unit <- function(prox) {
+lodes_prox_residents_in_unit <- function(prox) {
   # What % of working residents work in tract?
   prox |>
     dplyr::group_by(in_unit, unit_id = h_unit) |>
@@ -182,7 +149,7 @@ prox_residents_in_unit <- function(prox) {
     dplyr::select(-in_unit_FALSE)
 }
 
-prox_residents_in_town <- function(prox) {
+lodes_prox_residents_in_town <- function(prox) {
   prox |>
     dplyr::group_by(in_town, unit_id = h_unit) |>
     dplyr::summarize(
@@ -205,7 +172,7 @@ prox_residents_in_town <- function(prox) {
     dplyr::select(-in_town_FALSE)
 }
 
-proximity_measures <- function(od_census_units) {
+lodes_proximity_measures <- function(od_census_units) {
   prox <- od_census_units |>
     dplyr::mutate(
       in_unit = w_unit == h_unit,
@@ -220,13 +187,13 @@ proximity_measures <- function(od_census_units) {
   # Commence hacky copypaste...
   # TODO: Fight with dplyr programming.
   # What % of jobs in tract are held by people in that tract?
-  prox_workers_in_unit(prox) |>
-    dplyr::full_join(prox_workers_in_town(prox), by = "unit_id") |>
-    dplyr::full_join(prox_residents_in_unit(prox), by = "unit_id") |>
-    dplyr::full_join(prox_residents_in_town(prox), by = "unit_id")
+  lodes_prox_workers_in_unit(prox) |>
+    dplyr::full_join(lodes_prox_workers_in_town(prox), by = "unit_id") |>
+    dplyr::full_join(lodes_prox_residents_in_unit(prox), by = "unit_id") |>
+    dplyr::full_join(lodes_prox_residents_in_town(prox), by = "unit_id")
 }
 
-selected_ods_poly <- function(od_census_units) {
+lodes_selected_ods_poly <- function(od_census_units) {
   sel_workers <- od_census_units |>
     dplyr::filter(selected_w) |>
     dplyr::group_by(unit_id = h_unit, pl_n_w) |>
@@ -259,7 +226,7 @@ selected_ods_poly <- function(od_census_units) {
     dplyr::full_join(sel_residents, by = "unit_id")
 }
 
-ods_lines <- function(od_census_units, crs) {
+lodes_ods_lines <- function(od_census_units, crs) {
   if (
     ("selected_h" %in% names(od_census_units)) & ("selected_w" %in% names(od_census_units))
     ) {
@@ -282,10 +249,10 @@ ods_lines <- function(od_census_units, crs) {
       x_w,
       y_w
     ) |>
-    xyxy_to_lines(crs = crs)
+    st_xyxy_to_lines()
 }
 
-ods_lines_place_agg <- function(od_census_units, crs) {
+lodes_ods_lines_place_agg <- function(od_census_units) {
   if (
       ("selected_h" %in% names(od_census_units)) & ("selected_w" %in% names(od_census_units))
     ) {
@@ -308,5 +275,5 @@ ods_lines_place_agg <- function(od_census_units, crs) {
       count = sum(S000)
     ) |>
     dplyr::ungroup() |>
-    xyxy_to_lines(crs = crs)
+    st_xyxy_to_lines()
 }
