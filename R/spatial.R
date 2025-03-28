@@ -33,6 +33,14 @@ rast_hillshade_from_dem <- function(dem,
   )
 }
 
+#' GIS-esque Clip Function
+#'
+#' @param x Layer to be clipped.
+#' @param y Layer to do the clipping.
+#'
+#' @returns Layer `x` clipped to `y`.
+#' @export
+#'
 st_clip <- function(x, y) {
   init_type <- as.character(sf::st_geometry_type(x, by_geometry=FALSE))
   clip <- x |>
