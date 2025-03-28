@@ -135,7 +135,16 @@ munis_get_vt <- function(crs) {
     dplyr::select(pl_name = townnamemc, state)
 }
 
-select_places <- function(place_geo, places) {
+munis_process <- function(df) {
+  df |>
+    dplyr::mutate(
+      city = stringr::str_detect(
+        NAME, "city,"
+      )
+    )
+}
+
+munis_select <- function(place_geo, places) {
   searches <- dplyr::bind_rows(places) |>
     dplyr::mutate(
       pl_id = stringr::str_c(
@@ -168,7 +177,7 @@ select_places <- function(place_geo, places) {
   matched
 }
 
-place_decision <- function(states, crs) {
+muni_decision <- function(states, crs) {
   state_munis <- list()
   no_muni_st <- c()
   for (state in states) {

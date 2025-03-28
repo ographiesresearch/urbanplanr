@@ -10,7 +10,7 @@ pct_transform <- function(df, unique_col) {
     dplyr::ungroup()
 }
 
-get_acs_vars <- function(vars,
+acs_get_vars <- function(vars,
                          states,
                          year,
                          census_unit,
@@ -52,7 +52,7 @@ get_acs_vars <- function(vars,
     )
 }
 
-get_acs_table <- function(table, 
+acs_get_table <- function(table, 
                           states,
                           year,
                           census_unit,
@@ -154,15 +154,6 @@ process_nested_table <- function(df) {
     )
 }
 
-process_places <- function(df) {
-  df |>
-    dplyr::mutate(
-      city = stringr::str_detect(
-        NAME, "city,"
-      )
-    )
-}
-
 pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
   depths <- unique(df$level)
   depths_nonzero <- depths[ !depths == 0 ]
@@ -214,28 +205,28 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
 #' @name get_acs
 #' 
 #' @description
-#' `get_acs_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
+#' `acs_get_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
 #' Employed Population 16 Years and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
 #' 
-#' `get_acs_occupations()` obtains data on civilian occupation from ACS table 
+#' `acs_get_occupations()` obtains data on civilian occupation from ACS table 
 #' [S2401 (Occupation by Sex for the Civilan Employed Population 16 Years 
 #' and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
 #' 
-#' `get_acs_ancestry()` obtains data on reported ancestry from ACS table 
+#' `acs_get_ancestry()` obtains data on reported ancestry from ACS table 
 #' [B04006 (People Reporting Ancestry)](https://data.census.gov/table/ACSDT5Y2023.B04006).
 #' 
-#' `get_acs_place_of_birth()` obtains data on place of birth for migrant population from ACS table
+#' `acs_get_place_of_birth()` obtains data on place of birth for migrant population from ACS table
 #' [B05006 (Place of Birth for the Foreign-Born Population in the United States)](https://data.census.gov/table/ACSDT5Y2023.B05006).
 #' 
-#' `get_acs_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
+#' `acs_get_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
 #' [B25042 (Tenure by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25042), [B25024 (Units in Structure)](https://data.census.gov/table/ACSDT5Y2023.B25024), and
 #' [B25031 (Median Gross Rent by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25031).
 #' 
-#' `get_acs_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
+#' `acs_get_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
 #' [B03002 (Hispanic or Latino Origin by Race)](https://data.census.gov/table/ACSDT5Y2023.B03002), [B19301B-H (Per capita income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19301B), 
 #' and [B19013B-H (Median household income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19013B).
 #' 
-#' `get_acs_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
+#' `acs_get_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
 #'
 #' @param states A character vector of two-digit state abbreviations (e.g., `c("MA", "MI")).
 #' @param year Integer. Final year of 5-year ACS period.
@@ -247,14 +238,14 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
 #' @returns A tibble or sf tibble of ACS data.
 #' @export
 #' 
-get_acs_industries <- function(states,
+acs_get_industries <- function(states,
                            year,
                            census_unit,
                            county = NULL,
                            crs = 4326,
                            geometry = FALSE) {
   
-  get_acs_table("S2403", 
+  acs_get_table("S2403", 
                  census_unit = census_unit,
                  year = year,
                  state = states,
@@ -265,13 +256,13 @@ get_acs_industries <- function(states,
 
 #' @name get_acs
 #' @export
-get_acs_occupations <- function(states,
+acs_get_occupations <- function(states,
                             year,
                             census_unit,
                             county = NULL,
                             crs = 4326,
                             geometry = FALSE) {
-  get_acs_table("S2401", 
+  acs_get_table("S2401", 
                 census_unit = census_unit,
                 year = year,
                 state = states,
@@ -282,13 +273,13 @@ get_acs_occupations <- function(states,
 
 #' @name get_acs
 #' @export
-get_acs_ancestry <- function(states,
+acs_get_ancestry <- function(states,
                              year,
                              census_unit,
                              county = NULL,
                              crs = 4326,
                              geometry = FALSE) {
-  get_acs_table("B04006",
+  acs_get_table("B04006",
                 census_unit = census_unit,
                 year = year,
                 state = states,
@@ -299,13 +290,13 @@ get_acs_ancestry <- function(states,
 
 #' @name get_acs
 #' @export
-get_acs_place_of_birth <- function(states,
+acs_get_place_of_birth <- function(states,
                                    year,
                                    census_unit,
                                    county = NULL,
                                    crs = 4326,
                                    geometry = FALSE) {
-  get_acs_table("B05006",
+  acs_get_table("B05006",
                 census_unit = census_unit,
                 year = year,
                 state = states,
@@ -316,7 +307,7 @@ get_acs_place_of_birth <- function(states,
 
 #' @name get_acs
 #' @export
-get_acs_housing <- function(states,
+acs_get_housing <- function(states,
                             year,
                             census_unit,
                             crs = 4326,
@@ -359,7 +350,7 @@ get_acs_housing <- function(states,
             "mgr4br" = "B25031_006",
             "mgrgt5br" = "B25031_007"
             )
-  get_acs_vars(vars, 
+  acs_get_vars(vars, 
                states = states,
                year = year,
                census_unit = census_unit,
@@ -369,7 +360,7 @@ get_acs_housing <- function(states,
 
 #' @name get_acs
 #' @export
-get_acs_race <- function(states,
+acs_get_race <- function(states,
                          year,
                          census_unit,
                          crs = 4326,
@@ -410,7 +401,7 @@ get_acs_race <- function(states,
     "mti_mhi" = "B19013G_001",
     "hslt_mhi" = "B19013I_001"
   )
-  get_acs_vars(vars, 
+  acs_get_vars(vars, 
                states = states,
                year = year,
                census_unit = census_unit,
@@ -420,7 +411,7 @@ get_acs_race <- function(states,
 
 #' @name get_acs
 #' @export
-get_acs_age <- function(states,
+acs_get_age <- function(states,
                         year,
                         census_unit,
                         crs = 4326,
@@ -458,7 +449,7 @@ get_acs_age <- function(states,
     "f75_84" = "B01001_030",
     "fgt85" = "B01001_031")
   
-  get_acs_vars(vars, 
+  acs_get_vars(vars, 
                states = states,
                year = year,
                census_unit = census_unit,

@@ -2,16 +2,16 @@
 % Please edit documentation in R/acs.R
 \name{get_acs}
 \alias{get_acs}
-\alias{get_acs_industries}
-\alias{get_acs_occupations}
-\alias{get_acs_ancestry}
-\alias{get_acs_place_of_birth}
-\alias{get_acs_housing}
-\alias{get_acs_race}
-\alias{get_acs_age}
+\alias{acs_get_industries}
+\alias{acs_get_occupations}
+\alias{acs_get_ancestry}
+\alias{acs_get_place_of_birth}
+\alias{acs_get_housing}
+\alias{acs_get_race}
+\alias{acs_get_age}
 \title{Get ACS Variables by Census Unit}
 \usage{
-get_acs_industries(
+acs_get_industries(
   states,
   year,
   census_unit,
@@ -20,7 +20,7 @@ get_acs_industries(
   geometry = FALSE
 )
 
-get_acs_occupations(
+acs_get_occupations(
   states,
   year,
   census_unit,
@@ -29,7 +29,7 @@ get_acs_occupations(
   geometry = FALSE
 )
 
-get_acs_ancestry(
+acs_get_ancestry(
   states,
   year,
   census_unit,
@@ -38,7 +38,7 @@ get_acs_ancestry(
   geometry = FALSE
 )
 
-get_acs_place_of_birth(
+acs_get_place_of_birth(
   states,
   year,
   census_unit,
@@ -47,11 +47,11 @@ get_acs_place_of_birth(
   geometry = FALSE
 )
 
-get_acs_housing(states, year, census_unit, crs = 4326, geometry = FALSE)
+acs_get_housing(states, year, census_unit, crs = 4326, geometry = FALSE)
 
-get_acs_race(states, year, census_unit, crs = 4326, geometry = FALSE)
+acs_get_race(states, year, census_unit, crs = 4326, geometry = FALSE)
 
-get_acs_age(states, year, census_unit, crs = 4326, geometry = FALSE)
+acs_get_age(states, year, census_unit, crs = 4326, geometry = FALSE)
 }
 \arguments{
 \item{states}{A character vector of two-digit state abbreviations (e.g., `c("MA", "MI")).}
@@ -70,26 +70,26 @@ get_acs_age(states, year, census_unit, crs = 4326, geometry = FALSE)
 A tibble or sf tibble of ACS data.
 }
 \description{
-`get_acs_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
+`acs_get_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
 Employed Population 16 Years and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
 
-`get_acs_occupations()` obtains data on civilian occupation from ACS table 
+`acs_get_occupations()` obtains data on civilian occupation from ACS table 
 [S2401 (Occupation by Sex for the Civilan Employed Population 16 Years 
 and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
 
-`get_acs_ancestry()` obtains data on reported ancestry from ACS table 
+`acs_get_ancestry()` obtains data on reported ancestry from ACS table 
 [B04006 (People Reporting Ancestry)](https://data.census.gov/table/ACSDT5Y2023.B04006).
 
-`get_acs_place_of_birth()` obtains data on place of birth for migrant population from ACS table
+`acs_get_place_of_birth()` obtains data on place of birth for migrant population from ACS table
 [B05006 (Place of Birth for the Foreign-Born Population in the United States)](https://data.census.gov/table/ACSDT5Y2023.B05006).
 
-`get_acs_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
+`acs_get_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
 [B25042 (Tenure by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25042), [B25024 (Units in Structure)](https://data.census.gov/table/ACSDT5Y2023.B25024), and
 [B25031 (Median Gross Rent by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25031).
 
-`get_acs_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
+`acs_get_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
 [B03002 (Hispanic or Latino Origin by Race)](https://data.census.gov/table/ACSDT5Y2023.B03002), [B19301B-H (Per capita income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19301B), 
 and [B19013B-H (Median household income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19013B).
 
-`get_acs_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
+`acs_get_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
 }
