@@ -508,19 +508,6 @@
       ],
       "Hash": "be38bc740fc51783a78edb5a157e4104"
     },
-    "lwgeom": {
-      "Package": "lwgeom",
-      "Version": "0.2-14",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp",
-        "sf",
-        "units"
-      ],
-      "Hash": "f1fb7cc9fc60f3b039201174268aaad9"
-    },
     "magrittr": {
       "Package": "magrittr",
       "Version": "2.0.3",
