@@ -1,8 +1,8 @@
-source('R/globals.R')
-source('R/lodes.R')
-source('R/acs.R')
+# source('R/globals.R')
+# source('R/lodes.R')
+# source('R/acs.R')
 
-dotenv::load_dot_env()
+# dotenv::load_dot_env()
 
 options(
   # Suppress `summarise()` has grouped output by 'x'...'z' message.
@@ -27,6 +27,65 @@ run <- function(config) {
   if (config$format == "postgis") {
     db_create_if(config$project)
   }
+  
+  # # Get states----
+  # states <- states(year = year) |>
+  #   sf::st_transform(crs) |>
+  #   sf::st_filter(
+  #     study_radius,
+  #     .predicate = sf::st_intersects
+  #   ) |>
+  #   dplyr::pull(STATEFP)
+  # 
+  # # Get Counties----
+  # counties <- tigris::counties(states, year = year) |>
+  #   sf::st_transform(crs) |>
+  #   sf::st_filter(
+  #     study_radius,
+  #     .predicate = sf::st_intersects
+  #   ) |>
+  #   dplyr::pull(COUNTYFP)
+  # 
+  # # Get Hydro----
+  # water <- tigris::area_water(
+  #   state = states,
+  #   county = counties,
+  #   year = year
+  # ) |>
+  #   sf::st_transform(crs) |>
+  #   sf::st_intersection(dl_radius) |>
+  #   dplyr::mutate(
+  #     area = sf::st_area(geometry)
+  #   ) |>
+  #   dplyr::filter(
+  #     area > units::set_units(25000, m^2)
+  #   ) |>
+  #   sf::st_union() |>
+  #   st_as_sf()
+  # 
+  # # Get Roads----
+  # tigris::roads(
+  #   state = states,
+  #   county = counties,
+  #   year = year
+  # ) |>
+  #   sf::st_transform(crs) |>
+  #   sf::st_intersection(contour_joined) |>
+  #   write_to_formats("roads", out_dir, exts, scale_elements = se, thickness = thickness, z_scale = z_scale, contour_interval = contour_interval)
+  # 
+  # # Get Rails----
+  # tigris::rails(year = year) |>
+  #   sf::st_transform(crs) |>
+  #   sf::st_intersection(contour_joined) |>
+  #   write_to_formats(
+  #     "rails",
+  #     out_dir,
+  #     exts,
+  #     scale_elements = se,
+  #     thickness = thickness,
+  #     z_scale = z_scale,
+  #     contour_interval = contour_interval
+  #   )
 
   message("Downloading places...")
   place_geo <- place_decision(config$states, crs = config$crs)
@@ -40,7 +99,8 @@ run <- function(config) {
     write_multi("census_places", config = config)
   
   place_geo |>
-    remove_coords() |>
+    # TODO: Replace with specific column removal.
+    # remove_coords() |>
     write_multi("places", config = config)
   
   census_units <- get_census_units(
@@ -49,10 +109,12 @@ run <- function(config) {
     crs = config$crs,
     census_unit = config$census_unit
     ) |>
+    # TODO: Replace with `st_join(..., largest=TRUE)`.
     st_join_max_overlap(place_geo, x_id = "unit_id", y_id = "pl_id")
   
   census_units |>
-    remove_coords() |>
+    # TODO: Replace with specific column removal.
+    # remove_coords() |>
     write_multi("census_unit", config = config)
   
   if ("lodes" %in% config$datasets) {
