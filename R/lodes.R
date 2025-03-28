@@ -42,41 +42,6 @@ prep_lodes <- function(od,
     )
 }
 
-make_line <- function(xyxy){
-  sf::st_linestring(
-    base::matrix(
-      xyxy, 
-      nrow = 2, 
-      byrow = TRUE
-      )
-    )
-}
-
-xyxy_to_lines <- function(df, crs, names = c("x_h","y_h","x_w","y_w")){
-  #' Takes a dataframe with four columns containing two XY pairs (e.g., [X_{1}, 
-  #' Y_{1}], [X_{2}, Y{2}]) and returns an sf dataframe with the same number of
-  #' rows with those coordinates converted into linestrings.
-  #'
-  #' @param df A dataframe with four columns containing two XY pairs.
-  #' @param crs Coordinate reference system.
-  #' @param names list of the names of the four columns.
-  #'
-  #' @return A dataframe with LINESTRING geometries.
-  #'
-  #' @export
-  
-  sf::st_sf(
-    df, 
-    geometry = df |>
-      dplyr::select(dplyr::all_of(names)) |>
-      base::apply(1, make_line, simplify = FALSE) |>
-      sf::st_sfc(crs = crs)
-    ) |>
-    dplyr::select(
-      -all_of(names)
-    )
-}
-
 select_places <- function(place_geo, places) {
   searches <- dplyr::bind_rows(places) |>
     dplyr::mutate(
@@ -110,36 +75,12 @@ select_places <- function(place_geo, places) {
   matched
 }
 
-st_join_max_overlap <- function(x, y, x_id, y_id) {
-  # This is necessary to suppress 'st_point_on_surface assumes attributes are 
-  # constant over geometries' warning.
-  sf::st_agr(x) <- "constant"
-  sf::st_agr(y) <- "constant"
-  max_int <- x |>
-    sf::st_intersection(
-      dplyr::select(y, dplyr::all_of(y_id))
-    ) |>
-    dplyr::mutate(
-      area = sf::st_area(geometry)
-    ) |>
-    sf::st_drop_geometry() |>
-    dplyr::group_by(
-      dplyr::across(dplyr::all_of(x_id))
-      ) |>
-    dplyr::slice_max(order_by = area, na_rm = TRUE) |>
-    dplyr::ungroup() |>
-    dplyr::select(-area)
-  
-  x |>
-    dplyr::left_join(max_int, by=x_id) |>
-    dplyr::left_join(sf::st_drop_geometry(y), by=y_id)
-}
-
 lodes_to_census_units <- function(df, 
                                   census_units_geo,
                                   census_unit) {
   
   census_units_geo <- census_units_geo |>
+    # TODO: Replace with `st_geom_to_xy()``
     center_xy() |>
     sf::st_drop_geometry() |>
     dplyr::select(-c(state, pl_name))
