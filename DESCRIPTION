@@ -16,6 +16,7 @@ BugReports: https://github.com/ographiesresearch/urbanplanr/issues
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports: 
+    config (>= 0.3.2),
     dotenv (>= 1.0.3),
     dplyr (>= 1.1.4),
     elevatr (>= 0.99.0),

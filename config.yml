@@ -1,0 +1,15 @@
+default:
+  project_name: "beverly_salem"
+  project_code: NULL
+  study_area:
+    states: ["MA", "NH", "VT", "ME"]
+    places:
+      - place: "Salem"
+        state: "MA"
+      - place: "Beverly"
+        state: "MA"
+  crs: 2249
+  year: 2023
+  format: "gpkg"
+  census_api: NULL
+  datasets: ["lodes", "occ", "ind", "age", "race", "housing"]
