@@ -1,16 +1,9 @@
-get_config <- function(args) {
-  if (length(args) > 0) {
-    if (class(args[1]) != "character") {
-      stop("Expected the name of a configuration json, as a string")
-    } else {
-      config_json <- args[1]
-    }
-  } else {
-    config_json <- 'config.json'
-  }
-  config_json
-}
-
+#' Standardize Output File Format
+#'
+#' @param format A common name of shapefiles, geopackages, geojsons, or postgis.
+#'
+#' @returns Standardized character.
+#' @export
 utils_std_output_format <- function(format) {
   if (format %in% c("shapefile", "shp")) {
     format <- "shp"
@@ -27,6 +20,14 @@ utils_std_output_format <- function(format) {
   format
 }
 
+#' Boolean Checking Prompt
+#'
+#' Little helper that prompts a user and accepts binary responses.
+#'
+#' @param prompt Text of user prompt.
+#'
+#' @returns Boolean user response.
+#' @export
 utils_prompt_check <- function(prompt) {
   message(prompt)
   if (interactive()) {
@@ -59,7 +60,17 @@ utils_prompt_check <- function(prompt) {
   }
 }
 
-write_multi <- function(df, 
+#' Write Dataframe to One or Multiple Common Output Formats
+#'
+#' @param df Dataframe or data frame extension (e.g., tibble).
+#' @param name Character. Name of output table or file.
+#' @param dir_name Character. Name of directory or database.
+#' @param format Character vector including one or multiple of `"gpkg"`, 
+#' `"postgis"`, `"dxf"`, or `"csv"`.
+#'
+#' @returns Original dataframe.
+#' @export
+utils_write_multi <- function(df, 
                         name, 
                         dir_name, 
                         format) {
@@ -95,7 +106,7 @@ write_multi <- function(df,
       delete_layer = TRUE,
       quiet = TRUE
     )
-  } else {
+  } else if (format == "csv") {
     dir.create(dir_name, showWarnings = FALSE)
     if ("sf" %in% class(df)) {
       sf::st_write(
@@ -118,22 +129,51 @@ write_multi <- function(df,
         append = FALSE
       )
     }
+  } else {
+    stop("Invalid output format provided.")
   }
+  df
 }
 
-get_remote_file <- function(url, path) {
+#' Title
+#'
+#' @param url 
+#' @param path 
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+utils_get_remote <- function(url, path) {
   httr::GET(
     paste0(url), 
     httr::write_disk(path, overwrite = TRUE)
   )
 }
 
-get_shp_from_zip <- function(path, layer) {
+#' Title
+#'
+#' @param path 
+#' @param layer 
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+utils_get_zipped_shp <- function(path, layer) {
   path <- stringr::str_c("/vsizip/", path, "/", layer)
   sf::st_read(path, quiet=TRUE)
 }
 
-get_from_arc <- function(dataset, crs) {
+#' Title
+#'
+#' @param dataset 
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+utils_get_arc <- function(dataset) {
   prefix <- "https://opendata.arcgis.com/api/v3/datasets/"
   suffix <- "/downloads/data?format=geojson&spatialRefId=4326&where=1=1"
   sf::st_read(
@@ -141,14 +181,23 @@ get_from_arc <- function(dataset, crs) {
   )
 }
 
-get_shp_from_remote <- function(url, shpfile, crs) {
+#' Title
+#'
+#' @param url 
+#' @param layer 
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+utils_get_remote_shp <- function(url, layer) {
   message(
     glue::glue("Downloading {shpfile} from {url}...")
   )
   temp <- base::tempfile(fileext = ".zip")
-  get_remote_file(
+  utils_get_remote(
     url = url,
     path = temp
   )
-  get_shp_from_zip(temp, shpfile)
+  utils_get_zipped_shp(temp, layer)
 }
