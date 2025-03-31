@@ -85,8 +85,15 @@ utils_write_multi <- function(df,
       quiet = TRUE
     )
   } else if (format == "postgis") {
-    conn <- db_create_conn(dir_db, admin=TRUE)
-    on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
+    # conn <- RPostgres::dbConnect(
+    #   drv=RPostgres::Postgres(),
+    #   dbname=dbname,
+    #   host=Sys.getenv("DB_HOST"),
+    #   port=Sys.getenv("DB_PORT"),
+    #   password=password,
+    #   user=user
+    # )
+    # on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
     sf::st_write(
       df,
       conn,
@@ -96,8 +103,6 @@ utils_write_multi <- function(df,
       quiet = TRUE
     )
   } else if (format == "dxf") {
-    conn <- db_create_conn(dir_db, admin=TRUE)
-    on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
     sf::st_write(
       df,
       name,

@@ -1,23 +1,3 @@
-db_create_conn <-function(dbname, admin=FALSE) {
-  dotenv::load_dot_env()
-  if (admin) {
-    user <- Sys.getenv("DB_ADMIN_USER")
-    password <- Sys.getenv("DB_ADMIN_PASS")
-  }
-  else {
-    user <- Sys.getenv("DB_USER")
-    password <- Sys.getenv("DB_PASS")
-  }
-  RPostgres::dbConnect(
-    drv=RPostgres::Postgres(),
-    dbname=dbname,
-    host=Sys.getenv("DB_HOST"),
-    port=Sys.getenv("DB_PORT"),
-    password=password,
-    user=user
-  )
-}
-
 #' Test Whether Database Exists
 #'
 #' @param conn Database connection like that created by `RPostgres::dbConnect()`.
