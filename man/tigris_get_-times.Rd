@@ -2,29 +2,32 @@
 % Please edit documentation in R/tigris.R
 \name{tigris_get_*}
 \alias{tigris_get_*}
-\alias{tigris_get_places}
 \alias{tigris_get_states}
 \alias{tigris_get_counties}
 \alias{tigris_get_multistate}
 \alias{tigris_get_multistate_by_county}
+\alias{tigris_get_places}
 \alias{tigris_get_tracts}
 \alias{tigris_get_block_groups}
 \alias{tigris_get_roads}
 \alias{tigris_get_primary_roads}
 \alias{tigris_get_primary_secondary_roads}
+\alias{tigris_get_rails}
 \alias{tigris_get_area_water}
 \alias{tigris_get_linear_water}
 \title{Get Census-Designated Places}
 \usage{
-tigris_get_places(states, crs, ...)
-
-tigris_get_states(states, crs, ...)
+tigris_get_states(states = NULL, crs, ...)
 
 tigris_get_counties(states, crs, ...)
 
 tigris_get_multistate(.function, states, crs, ...)
 
 tigris_get_multistate_by_county(.function, states, crs, counties = NULL, ...)
+
+tigris_get_counties(states, crs, ...)
+
+tigris_get_places(states, crs, ...)
 
 tigris_get_tracts(states, crs, ...)
 
@@ -35,6 +38,8 @@ tigris_get_roads(states, crs, counties = NULL, ...)
 tigris_get_primary_roads(crs, ...)
 
 tigris_get_primary_secondary_roads(states, crs, ...)
+
+tigris_get_rails(crs, ...)
 
 tigris_get_area_water(states, crs, counties = NULL, ...)
 

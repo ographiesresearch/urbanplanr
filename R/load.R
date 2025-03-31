@@ -64,7 +64,7 @@ utils_prompt_check <- function(prompt) {
 #'
 #' @param df Dataframe or data frame extension (e.g., tibble).
 #' @param name Character. Name of output table or file.
-#' @param dir_name Character. Name of directory or database.
+#' @param dir_db Character. Name of directory or database.
 #' @param format Character vector including one or multiple of `"gpkg"`, 
 #' `"postgis"`, `"dxf"`, or `"csv"`.
 #'
@@ -72,20 +72,20 @@ utils_prompt_check <- function(prompt) {
 #' @export
 utils_write_multi <- function(df, 
                         name, 
-                        dir_name, 
+                        dir_db, 
                         format) {
   message(glue::glue("Writing {name}."))
   if (format == "gpkg") {
     sf::st_write(
       df,
-      stringr::str_c(dir_name, format, sep="."),
+      stringr::str_c(dir_db, format, sep="."),
       name,
       append = FALSE,
       delete_layer = TRUE,
       quiet = TRUE
     )
   } else if (format == "postgis") {
-    conn <- db_create_conn(dir_name, admin=TRUE)
+    conn <- db_create_conn(dir_db, admin=TRUE)
     on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
     sf::st_write(
       df,
@@ -96,7 +96,7 @@ utils_write_multi <- function(df,
       quiet = TRUE
     )
   } else if (format == "dxf") {
-    conn <- db_create_conn(dir_name, admin=TRUE)
+    conn <- db_create_conn(dir_db, admin=TRUE)
     on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
     sf::st_write(
       df,
@@ -107,12 +107,12 @@ utils_write_multi <- function(df,
       quiet = TRUE
     )
   } else if (format == "csv") {
-    dir.create(dir_name, showWarnings = FALSE)
+    dir.create(dir_db, showWarnings = FALSE)
     if ("sf" %in% class(df)) {
       sf::st_write(
         df,
         file.path(
-          dir_name,
+          dir_db,
           stringr::str_c(name, format, sep=".")
         ),
         append = FALSE,
@@ -123,7 +123,7 @@ utils_write_multi <- function(df,
       readr::write_csv(
         df, 
         file.path(
-          dir_name,
+          dir_db,
           stringr::str_c(name, "csv", sep=".")
         ),
         append = FALSE
@@ -135,15 +135,13 @@ utils_write_multi <- function(df,
   df
 }
 
-#' Title
+#' Get Remote File and Write to Disk
 #'
-#' @param url 
-#' @param path 
+#' @param url URL of remote file.
+#' @param path Path to saved file.
 #'
-#' @returns
+#' @returns A `response()` object.
 #' @export
-#'
-#' @examples
 utils_get_remote <- function(url, path) {
   httr::GET(
     paste0(url), 
@@ -151,45 +149,42 @@ utils_get_remote <- function(url, path) {
   )
 }
 
-#' Title
+#' Read Single Shapefile from `.zip` File
+#' 
+#' Given a `.zip` file that conceivably contains multiple shapefiles, read only
+#' one of them.
 #'
-#' @param path 
-#' @param layer 
+#' @param path Path to `.zip` file.
+#' @param layer Name of shapefile to read.
 #'
-#' @returns
+#' @returns Object of class `sf`.
 #' @export
-#'
-#' @examples
 utils_get_zipped_shp <- function(path, layer) {
   path <- stringr::str_c("/vsizip/", path, "/", layer)
   sf::st_read(path, quiet=TRUE)
 }
 
-#' Title
+#' Read Remote ArcGIS Open Data Layer
 #'
-#' @param dataset 
+#' @param id Character. ArcGIS online ID.
 #'
-#' @returns
+#' @returns Object of class `sf`.
 #' @export
-#'
-#' @examples
-utils_get_arc <- function(dataset) {
+utils_get_arc <- function(id) {
   prefix <- "https://opendata.arcgis.com/api/v3/datasets/"
   suffix <- "/downloads/data?format=geojson&spatialRefId=4326&where=1=1"
   sf::st_read(
-    glue::glue("{prefix}{dataset}{suffix}")
+    glue::glue("{prefix}{id}{suffix}")
   )
 }
 
-#' Title
+#' Read Remote Shapefile Stored in `.zip` File
 #'
-#' @param url 
-#' @param layer 
+#' @param url URL of remote file containing shapefiles.
+#' @param layer Name of Shapefile to read.
 #'
-#' @returns
+#' @returns Object of class `sf`.
 #' @export
-#'
-#' @examples
 utils_get_remote_shp <- function(url, layer) {
   message(
     glue::glue("Downloading {shpfile} from {url}...")

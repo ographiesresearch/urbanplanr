@@ -2,8 +2,8 @@
 % Please edit documentation in R/acs.R
 \name{get_acs}
 \alias{get_acs}
-\alias{acs_get_industries}
-\alias{acs_get_occupations}
+\alias{acs_get_ind}
+\alias{acs_get_occ}
 \alias{acs_get_ancestry}
 \alias{acs_get_place_of_birth}
 \alias{acs_get_housing}
@@ -11,7 +11,7 @@
 \alias{acs_get_age}
 \title{Get ACS Variables by Census Unit}
 \usage{
-acs_get_industries(
+acs_get_ind(
   states,
   year,
   census_unit,
@@ -20,7 +20,7 @@ acs_get_industries(
   geometry = FALSE
 )
 
-acs_get_occupations(
+acs_get_occ(
   states,
   year,
   census_unit,
