@@ -21,8 +21,7 @@ db_exists <- function(conn, dbname) {
 
 #' Create PostGIS extension.
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param dbname Character. Name of database.
+#' @inheritParams db_exists
 #'
 #' @returns NULL
 #' @export
@@ -37,8 +36,7 @@ db_create_postgis <- function(conn, dbname) {
 
 #' Drop Database If It Exists
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param dbname Character. Name of database.
+#' @inheritParams db_exists
 #'
 #' @returns NULL
 #' @export
@@ -53,8 +51,7 @@ db_drop <- function(conn, dbname) {
 
 #' Create Database
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param dbname Character. Name of database.
+#' @inheritParams db_exists
 #'
 #' @returns NULL
 #' @export
@@ -74,7 +71,7 @@ db_create <- function(conn, dbname) {
 
 #' Test Whether Role Exists
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
+#' @inheritParams db_exists
 #' @param role Character. Name of role.
 #'
 #' @returns Boolean
@@ -97,8 +94,7 @@ db_role_exists <- function(conn, role) {
 
 #' Create Role With a Password
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param role Character. Name of role.
+#' @inheritParams db_role_exists
 #' @param pass Character. Password
 #'
 #' @returns NULL
@@ -117,9 +113,8 @@ db_role_create <- function(conn, role, pass) {
 
 #' Grant DB Acess to Role
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param dbname Character. Name of database.
-#' @param role Character. Name of role.
+#' @inheritParams db_exists
+#' @inheritParams db_role_exists
 #'
 #' @returns NULL
 #' @export
@@ -138,9 +133,7 @@ db_grant_access <- function(conn, dbname, role) {
 
 #' Set Default Access for Role on Database
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param dbname Character. Name of database.
-#' @param role Character. Name of role.
+#' @inheritParams db_grant_access
 #'
 #' @returns NULL
 #' @export
@@ -158,9 +151,8 @@ db_set_defaults <- function(conn, dbname, role) {
 
 #' Create DB and User, Set Access
 #'
-#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
-#' @param dbname Character. Name of database.
-#' @param role Character. Name of role.
+#' @inheritParams db_grant_access
+#' @inheritParams db_role_create
 #'
 #' @returns NULL
 #' @export

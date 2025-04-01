@@ -12,6 +12,8 @@ db_create_if(conn, dbname, role, pass)
 \item{dbname}{Character. Name of database.}
 
 \item{role}{Character. Name of role.}
+
+\item{pass}{Character. Password}
 }
 \description{
 Create DB and User, Set Access
