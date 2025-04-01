@@ -107,9 +107,10 @@ acs_get_table <- function(table,
     ) |>
     dplyr::mutate(
       "level" = stringr::str_count(.data$label, "!!") - 1,
+      "label" = stringi::stri_trans_general(data$label, id="Latin-ASCII"),
       "label" = stringr::str_extract(
         .data$label,
-        "(?<=!!)[0-9A-Za-z\\s,()-áéíóúüñç]+(?=(?:$|:$))"
+        "(?<=!!)[0-9A-Za-z\\s,()-]+(?=(?:$|:$))"
       )
     )
 
@@ -148,7 +149,7 @@ process_nested_table <- function(df) {
     dplyr::mutate(
       label = stringr::str_replace_all(
         label,
-        c("[(),:]" = "", "\\-" = " ", "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ü" = "u", "ñ" = "n", "ç" = "c")
+        c("[(),:]" = "", "\\-" = " ")
       )
     ) |>
     dplyr::rename(
@@ -188,10 +189,7 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
       ) |>
       dplyr::ungroup() |>
       dplyr::mutate(
-        label = stringr::str_replace_all(
-          label,
-          c("[(),:]" = "", "\\-" = " ", "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ü" = "u", "ñ" = "n", "ç" = "c")
-        )
+        "label" = stringi::stri_trans_general(data$label, id="Latin-ASCII"),
       ) |>
       tidyr::pivot_wider(
         id_cols = dplyr::all_of("unit_id"),
