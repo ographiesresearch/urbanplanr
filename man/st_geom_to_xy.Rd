@@ -15,7 +15,7 @@ st_geom_to_xy(df, cols = c("x", "y"), retain_geom = FALSE, ...)
 \item{retain_geom}{Boolean. If `FALSE` (default), returns point geometry. If
 `TRUE`, returns original geometries}
 
-\item{...}{Arguments passed on to `sf_multi_type_center()`.}
+\item{...}{Arguments passed on to `st_multi_type_center()`.}
 }
 \value{
 Simple features dataframe.

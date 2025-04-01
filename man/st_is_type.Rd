@@ -6,8 +6,8 @@
 \alias{st_is_polygon}
 \alias{st_is_multilinestring}
 \alias{st_is_linestring}
-\alias{sf_is_multipoint}
-\alias{sf_is_point}
+\alias{st_is_multipoint}
+\alias{st_is_point}
 \title{Tests `sf` Dataframes for Geometry Types}
 \usage{
 st_is_type(df, type, exact = FALSE)
@@ -20,9 +20,9 @@ st_is_multilinestring(df, ...)
 
 st_is_linestring(df, ...)
 
-sf_is_multipoint(df, ...)
+st_is_multipoint(df, ...)
 
-sf_is_point(df, ...)
+st_is_point(df, ...)
 }
 \arguments{
 \item{df}{An `sf` dataframe.}

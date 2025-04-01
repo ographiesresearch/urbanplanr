@@ -6,7 +6,7 @@
 #' @returns Simple Features dataframe.
 #' @export
 #'
-sf_preprocess <- function(df, crs) {
+st_preprocess <- function(df, crs) {
   df |> 
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower)
@@ -316,13 +316,13 @@ st_is_linestring <- function(df, ...) {
 
 #' @name st_is_type
 #' @export
-sf_is_multipoint <- function(df, ...) {
+st_is_multipoint <- function(df, ...) {
   st_is_type(df = df, type = "MULTIPOINT", ...)
 }
 
 #' @name st_is_type
 #' @export
-sf_is_point <- function(df, ...) {
+st_is_point <- function(df, ...) {
   st_is_type(df = df, type = "POINT", ...)
 }
 
@@ -372,7 +372,7 @@ st_multi_type_center <- function(df,
 #' `c("x", "y")`.)
 #' @param retain_geom Boolean. If `FALSE` (default), returns point geometry. If
 #' `TRUE`, returns original geometries 
-#' @param ... Arguments passed on to `sf_multi_type_center()`.
+#' @param ... Arguments passed on to `st_multi_type_center()`.
 #'
 #' @return Simple features dataframe.
 #'
