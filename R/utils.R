@@ -1,3 +1,15 @@
+#' Initiate Environment
+#'
+#' @returns A list or vector as returned by `config()`.
+#' @export
+utils_init_env <- function() {
+  if(file.exists(".env")) {
+    dotenv::load_dot_env()
+  }
+  
+  config::get()
+}
+
 #' Standardize Output File Format
 #'
 #' @param format A common name of shapefiles, geopackages, geojsons, or postgis.
