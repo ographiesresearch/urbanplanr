@@ -196,6 +196,7 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
         names_from = c(type, label),
         names_glue = "{type}_{label}",
         values_from = estimate
+      )
   }
 }
 
