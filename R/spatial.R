@@ -15,6 +15,7 @@ sf_preprocess <- function(df, crs) {
 #' Get DEM from AWS Terrain Tiles
 #'
 #' @param area Simple features data frame or tibble (ideally polygon).
+#' @param z Zoom level to return.
 #' @param src One of "aws", "gl3", "gl1", "alos", "srtm15plus".
 #'
 #' @returns A `RasterLayer`.
@@ -47,7 +48,6 @@ st_get_dem <- function(area, z=14, src="aws") {
 #'
 #' @returns A `RasterLayer`.
 #' @export
-#'
 st_hillshade_from_dem <- function(dem,
                                     angle = 45,
                                     direction = 300,
@@ -221,8 +221,9 @@ st_make_line <- function(xyxy) {
 #' rows with those coordinates converted into linestrings.
 #'
 #' @param df A dataframe with four columns containing two XY pairs.
-#' @param crs Coordinate reference system.
 #' @param names list of the names of the four columns.
+#' @param retain_cols Boolean. If `FALSE` (the default), do not retain the
+#' OD coordinate columns.
 #'
 #' @return A dataframe with LINESTRING geometries.
 #'
@@ -275,6 +276,7 @@ st_xyxy_to_lines <- function(df,
 #' @param type Character. Type to match.
 #' @param exact Boolean. If `FALSE` (default), returns unexact matches. (E.g., 
 #' `"POLYGON"` will also match `"MULTIPOLYGON".`)
+#' @param ... Additional arguments passed to `st_is_type()`.
 #'
 #' @returns Boolean.
 #' @export
@@ -326,9 +328,10 @@ sf_is_point <- function(df, ...) {
 #' Return Geometry Centers for Multiple Types.
 #'
 #' @param df A dataframe with point geometries.
-#' @param on_surface If `TRUE`, generates polygon centroids using 
+#' @param on_surface If `TRUE` (the default), generates polygon centroids using 
 #' `st_point_on_surface()`. If `FALSE`, uses `st_centroid()`.
-#' @param retain_geom 
+#' @param retain_geom Boolean. If `TRUE` (the default), returns points. If 
+#' `FALSE` preserves geometry type of input. 
 #'
 #' @returns An `sf` dataframe.
 #' @export
