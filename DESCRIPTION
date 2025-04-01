@@ -25,6 +25,7 @@ Imports:
     lehdr (>= 1.1.4),
     raster (>= 3.6.31),
     readr (>= 2.1.5),
+    rlang (>= 1.1.4),
     RPostgres (>= 1.4.8),
     sf (>= 1.0.20),
     stringr (>= 1.5.1),

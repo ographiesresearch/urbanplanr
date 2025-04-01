@@ -13,15 +13,16 @@ st_xyxy_to_lines(
 \arguments{
 \item{df}{A dataframe with four columns containing two XY pairs.}
 
-\item{names}{list of the names of the four columns.}
+\item{names}{list of the names of the four columns in the form 
+`c("x_h", "y_h", "x_w", "y_w")`.}
 
-\item{crs}{Coordinate reference system.}
+\item{retain_cols}{Boolean. If `FALSE` (the default), do not retain the
+OD coordinate columns.}
 }
 \value{
 A dataframe with LINESTRING geometries.
 }
 \description{
-Takes a dataframe with four columns containing two XY pairs (e.g., [X_{1},
-Y_{1}], [X_{2}, Y{2}]) and returns an sf dataframe with the same number of
-rows with those coordinates converted into linestrings.
+Takes a dataframe with four columns containing two XY pairs (in the form 
+`c('x_h`, `y_h`, `x_w`, `y_w)`) and returns an sf dataframe with the same
 }

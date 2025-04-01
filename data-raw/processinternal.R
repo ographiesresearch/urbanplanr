@@ -21,6 +21,10 @@ counties <- function() {
     )
 }
 
+UTM_ZONES <- file.path("data-raw", "utm_zones.geojson") |>
+  sf::st_read() |>
+  dplyr::select(zone_num)
+
 COUNTIES <- counties()
 
-usethis::use_data(COUNTIES, overwrite = TRUE)
+usethis::use_data(COUNTIES, UTM_ZONES, internal=TRUE, overwrite = TRUE)

@@ -1,3 +1,5 @@
+#' @importFrom rlang .data
+
 pct_transform <- function(df, unique_col) {
   df |>
     dplyr::group_by(dplyr::across(dplyr::all_of(unique_col))) |>
@@ -48,7 +50,7 @@ acs_get_vars <- function(vars,
   }
   df |>
     dplyr::rename(
-      unit_id = GEOID
+      geoid = .data$GEOID
     )
 }
 
@@ -71,42 +73,42 @@ acs_get_table <- function(table,
       cache_table = TRUE
     ) |>
     dplyr::filter(
-      !stringr::str_detect(variable, "_C0[2-9]_")
+      !stringr::str_detect(.data$variable, "_C0[2-9]_")
     ) |>
     dplyr::mutate(
-      prefix = stringr::str_c(
+      "prefix" = stringr::str_c(
         "B",
         stringr::str_sub(table, 2),
         sep = ""
       ),
-      prefix = dplyr::case_when(
+      "prefix" = dplyr::case_when(
         var_suffix ~ stringr::str_c(
-          prefix,
+          .data$prefix,
           "1",
           sep = ""
         ),
-        .default = prefix
+        .default = .data$prefix
       ),
-      variable = stringr::str_c(
-        prefix,
-        stringr::str_extract(variable, "(?<=_)\\d+$"),
+      "variable" = stringr::str_c(
+        .data$prefix,
+        stringr::str_extract(.data$variable, "(?<=_)\\d+$"),
         sep="_"
       )
     ) |>
-    dplyr::select(-prefix) |>
+    dplyr::select(-"prefix") |>
     dplyr::left_join(
       tidycensus::load_variables(
         year = year,
         dataset = "acs5",
         cache = TRUE
       ) |>
-        dplyr::select(name, label),
+        dplyr::select("name", "label"),
       by = c("variable" = "name")
     ) |>
     dplyr::mutate(
-      level = stringr::str_count(label, "!!") - 1,
-      label = stringr::str_extract(
-        label,
+      "level" = stringr::str_count(.data$label, "!!") - 1,
+      "label" = stringr::str_extract(
+        .data$label,
         "(?<=!!)[0-9A-Za-z\\s,()-áéíóúüñç]+(?=(?:$|:$))"
       )
     )
@@ -114,7 +116,7 @@ acs_get_table <- function(table,
   if (nchar(var_match) > 0) {
     df <- df |>
       dplyr::filter(
-        stringr::str_detect(variable, pattern = var_match)
+        stringr::str_detect(.data$variable, pattern = var_match)
       )
   }
   if (geometry) {
@@ -150,7 +152,7 @@ process_nested_table <- function(df) {
       )
     ) |>
     dplyr::rename(
-      unit_id = GEOID
+      geoid = .data$GEOID
     )
 }
 
@@ -455,31 +457,31 @@ acs_get_age <- function(states,
                geometry = geometry
     )|>
     dplyr::mutate(
-      tlt5 = rowSums(dplyr::across(dplyr::matches("lt5")), na.rm = TRUE),
-      t5_9 = rowSums(dplyr::across(dplyr::matches("5_9")), na.rm = TRUE),
-      t10_14 = rowSums(dplyr::across(dplyr::matches("10_14")), na.rm = TRUE),
-      t15_17 = rowSums(dplyr::across(dplyr::matches("15_17")), na.rm = TRUE),
-      t18_19 = rowSums(dplyr::across(dplyr::matches("18_19")), na.rm = TRUE),
-      t20_24 = rowSums(dplyr::across(dplyr::matches("20_24")), na.rm = TRUE),
-      t25_29 = rowSums(dplyr::across(dplyr::matches("25_29")), na.rm = TRUE),
-      t30_34 = rowSums(dplyr::across(dplyr::matches("30_34")), na.rm = TRUE),
-      t35_44 = rowSums(dplyr::across(dplyr::matches("35_44")), na.rm = TRUE),
-      t45_54 = rowSums(dplyr::across(dplyr::matches("45_54")), na.rm = TRUE),
-      t55_64 = rowSums(dplyr::across(dplyr::matches("55_64")), na.rm = TRUE),
-      t65_74 = rowSums(dplyr::across(dplyr::matches("65_74")), na.rm = TRUE),
-      t75_84 = rowSums(dplyr::across(dplyr::matches("75_84")), na.rm = TRUE),
-      tgt85 = rowSums(dplyr::across(dplyr::matches("gt85")), na.rm = TRUE),
-      f5_17 = rowSums(dplyr::across(c(f5_9, f10_14, f15_17)), na.rm = TRUE),
-      f18_24 = rowSums(dplyr::across(c(f18_19, f20_24)), na.rm = TRUE),
-      f25_34 = rowSums(dplyr::across(c(f25_29, f30_34)), na.rm = TRUE),
-      fgt65 = rowSums(dplyr::across(c(f65_74, f75_84, fgt85)), na.rm = TRUE),
-      m5_17 = rowSums(dplyr::across(c(m5_9, m10_14, m15_17)), na.rm = TRUE),
-      m18_24 = rowSums(dplyr::across(c(m18_19, m20_24)), na.rm = TRUE),
-      m25_34 = rowSums(dplyr::across(c(m25_29, m30_34)), na.rm = TRUE),
-      mgt65 = rowSums(dplyr::across(c(m65_74, m75_84, mgt85)), na.rm = TRUE)
+      "tlt5" = rowSums(dplyr::across(dplyr::matches("lt5")), na.rm = TRUE),
+      "t5_9" = rowSums(dplyr::across(dplyr::matches("5_9")), na.rm = TRUE),
+      "t10_14" = rowSums(dplyr::across(dplyr::matches("10_14")), na.rm = TRUE),
+      "t15_17" = rowSums(dplyr::across(dplyr::matches("15_17")), na.rm = TRUE),
+      "t18_19" = rowSums(dplyr::across(dplyr::matches("18_19")), na.rm = TRUE),
+      "t20_24" = rowSums(dplyr::across(dplyr::matches("20_24")), na.rm = TRUE),
+      "t25_29" = rowSums(dplyr::across(dplyr::matches("25_29")), na.rm = TRUE),
+      "t30_34" = rowSums(dplyr::across(dplyr::matches("30_34")), na.rm = TRUE),
+      "t35_44" = rowSums(dplyr::across(dplyr::matches("35_44")), na.rm = TRUE),
+      "t45_54" = rowSums(dplyr::across(dplyr::matches("45_54")), na.rm = TRUE),
+      "t55_64" = rowSums(dplyr::across(dplyr::matches("55_64")), na.rm = TRUE),
+      "t65_74" = rowSums(dplyr::across(dplyr::matches("65_74")), na.rm = TRUE),
+      "t75_84" = rowSums(dplyr::across(dplyr::matches("75_84")), na.rm = TRUE),
+      "tgt85" = rowSums(dplyr::across(dplyr::matches("gt85")), na.rm = TRUE),
+      "f5_17" = rowSums(dplyr::across(c("f5_9", "f10_14", "f15_17")), na.rm = TRUE),
+      "f18_24" = rowSums(dplyr::across(c("f18_19", "f20_24")), na.rm = TRUE),
+      "f25_34" = rowSums(dplyr::across(c("f25_29", "f30_34")), na.rm = TRUE),
+      "fgt65" = rowSums(dplyr::across(c("f65_74", "f75_84", "fgt85")), na.rm = TRUE),
+      "m5_17" = rowSums(dplyr::across(c("m5_9", "m10_14", "m15_17")), na.rm = TRUE),
+      "m18_24" = rowSums(dplyr::across(c("m18_19", "m20_24")), na.rm = TRUE),
+      "m25_34" = rowSums(dplyr::across(c("m25_29", "m30_34")), na.rm = TRUE),
+      "mgt65" = rowSums(dplyr::across(c("m65_74", "m75_84", "mgt85")), na.rm = TRUE)
     ) |>
     dplyr::select(
-      unit_id,
+      "geoid",
       dplyr::starts_with("t"), 
       dplyr::starts_with("f"),
       dplyr::starts_with("m")

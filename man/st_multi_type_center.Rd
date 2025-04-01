@@ -9,10 +9,11 @@ st_multi_type_center(df, on_surface = TRUE, retain_geom = FALSE)
 \arguments{
 \item{df}{A dataframe with point geometries.}
 
-\item{on_surface}{If `TRUE`, generates polygon centroids using 
+\item{on_surface}{If `TRUE` (the default), generates polygon centroids using 
 `st_point_on_surface()`. If `FALSE`, uses `st_centroid()`.}
 
-\item{retain_geom}{}
+\item{retain_geom}{Boolean. If `TRUE` (the default), returns points. If 
+`FALSE` preserves geometry type of input.}
 }
 \value{
 An `sf` dataframe.

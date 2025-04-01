@@ -9,6 +9,8 @@ st_get_dem(area, z = 14, src = "aws")
 \arguments{
 \item{area}{Simple features data frame or tibble (ideally polygon).}
 
+\item{z}{Zoom level to return.}
+
 \item{src}{One of "aws", "gl3", "gl1", "alos", "srtm15plus".}
 }
 \value{

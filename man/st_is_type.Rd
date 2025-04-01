@@ -31,6 +31,8 @@ sf_is_point(df, ...)
 
 \item{exact}{Boolean. If `FALSE` (default), returns unexact matches. (E.g., 
 `"POLYGON"` will also match `"MULTIPOLYGON".`)}
+
+\item{...}{Additional arguments passed to `st_is_type()`.}
 }
 \value{
 Boolean.
