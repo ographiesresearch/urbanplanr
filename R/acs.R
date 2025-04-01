@@ -196,8 +196,6 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
         names_from = c(type, label),
         names_glue = "{type}_{label}",
         values_from = estimate
-      ) |>
-      write_multi(glue::glue("{name}_depth_{d}"), config = config)
   }
 }
 
@@ -248,7 +246,7 @@ acs_get_ind <- function(states,
   acs_get_table("S2403", 
                  census_unit = census_unit,
                  year = year,
-                 state = states,
+                 states = states,
                  county = county,
                  geometry = geometry) |>
     process_nested_table()
@@ -265,7 +263,7 @@ acs_get_occ <- function(states,
   acs_get_table("S2401", 
                 census_unit = census_unit,
                 year = year,
-                state = states,
+                states = states,
                 county = county,
                 geometry = geometry) |>
     process_nested_table()
@@ -282,7 +280,7 @@ acs_get_ancestry <- function(states,
   acs_get_table("B04006",
                 census_unit = census_unit,
                 year = year,
-                state = states,
+                states = states,
                 county = county,
                 geometry = geometry,
                 var_suffix = FALSE)
@@ -299,7 +297,7 @@ acs_get_place_of_birth <- function(states,
   acs_get_table("B05006",
                 census_unit = census_unit,
                 year = year,
-                state = states,
+                states = states,
                 county = county,
                 geometry = geometry,
                 var_suffix = FALSE)
@@ -485,4 +483,15 @@ acs_get_age <- function(states,
       dplyr::starts_with("f"),
       dplyr::starts_with("m")
     )
+}
+
+acs_get_multi <- function(var, params, geos = c("tract", "block_group", "place")) {
+  out <- list()
+  for (g in geos) {
+    out[[g]] <- do.call(
+      glue::glue("acs_get_{var}"), 
+      args=append(params, list(census_unit = g))
+    )
+  }
+  out
 }
