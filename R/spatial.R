@@ -216,12 +216,13 @@ st_make_line <- function(xyxy) {
 
 #' XY-XY To Lines
 #'
-#' Takes a dataframe with four columns containing two XY pairs (e.g., [X_{1},
-#' Y_{1}], [X_{2}, Y{2}]) and returns an sf dataframe with the same number of
-#' rows with those coordinates converted into linestrings.
+#' Takes a dataframe with four columns containing two XY pairs (in the form 
+#' `c('x_h`, `y_h`, `x_w`, `y_w)`) and returns an sf dataframe with the same 
+# number of rows with those coordinates converted into linestrings.
 #'
 #' @param df A dataframe with four columns containing two XY pairs.
-#' @param names list of the names of the four columns.
+#' @param names list of the names of the four columns in the form 
+#' `c("x_h", "y_h", "x_w", "y_w")`.
 #' @param retain_cols Boolean. If `FALSE` (the default), do not retain the
 #' OD coordinate columns.
 #'
