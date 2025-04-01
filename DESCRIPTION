@@ -5,12 +5,12 @@ Authors@R:
     person("Eric", "Robsky Huntley", , "eric@ographiesresearch.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8497-0589"))
 Description: High-level wrappers for American Community Survey,
-    TIGER/Line, Longitudial Employer-Household Dynamics (LEHD)
-    Origin-Destination Employment Statistics (LODES), and jursidiction
+    'TIGER/Line', Longitudial Employer-Household Dynamics ('LEHD')
+    Origin-Destination Employment Statistics ('LODES'), and jursidiction
     boundary data. Also provides automation workflows for gathering and
     collating these datasets for planning practice as well as writing to
-    common output formats (Geopackage, PostgreSQL/PostGIS, Shapefile).
-License: `use_mit_license()`
+    common output formats ('Geopackage', 'PostgreSQL'/'PostGIS', 'Shapefile').
+License: MIT + file LICENSE
 URL: https://github.com/ographiesresearch/urbanplanr
 BugReports: https://github.com/ographiesresearch/urbanplanr/issues
 Encoding: UTF-8
