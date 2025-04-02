@@ -46,7 +46,7 @@ tigris_get_states <- function(states = NULL, crs, ...) {
   
   if (!is.null(states)) {
     df <- df |>
-      dplyr::filter(stusps %in% states)
+      dplyr::filter("stusps" %in% states)
   }
   df
 }
@@ -78,20 +78,24 @@ tigris_get_multistate <- function(.function, states, crs, ...) {
 
 #' @name tigris_get_*
 #' @export
-tigris_get_multistate_by_county <- function(.function, states, crs, counties = NULL, ...) {
+tigris_get_multistate_by_county <- function(.function, 
+                                            states, 
+                                            crs, 
+                                            counties = NULL, 
+                                            ...) {
   units <- list()
   county_list <- COUNTIES |>
-    dplyr::filter(state_abbrev %in% states)
+    dplyr::filter("state_abbrev" %in% states)
   if (!is.null(counties)) {
     if (any(counties %in% county_list$county_name)) {
       county_list <- county_list |>
-        dplyr::filter(county_name %in% counties)
+        dplyr::filter("county_name" %in% counties)
     } else if (any(counties %in% county_list$county_id)) {
       county_list <- county_list |>
-        dplyr::filter(county_id %in% counties)
+        dplyr::filter("county_id" %in% counties)
     } else if (any(counties %in% county_list$county_geoid)) {
       county_list <- county_list |>
-        dplyr::filter(county_geoid %in% counties)
+        dplyr::filter("county_geoid" %in% counties)
     }
   }
   for (i in rownames(county_list)) {
