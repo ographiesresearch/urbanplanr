@@ -4,12 +4,22 @@
 \alias{st_get_dem}
 \title{Get DEM from AWS Terrain Tiles}
 \usage{
-st_get_dem(area, z = 14, src = "aws")
+st_get_dem(
+  extent,
+  tiles_on_side = 4,
+  z = st_zoom_from_extent(extent, tiles_on_side),
+  src = "aws"
+)
 }
 \arguments{
-\item{area}{Simple features data frame or tibble (ideally polygon).}
+\item{extent}{Simple features data frame or tibble (ideally polygon).}
 
-\item{z}{Zoom level to return.}
+\item{tiles_on_side}{Number of tiles on one side of extent. Must be the
+result of 2 raised to a power or 1.}
+
+\item{z}{Number. Zoom level. If specified, `tiles_on_side` is ignored. If not
+specified, the result of `st_zoom_from_extent(extent, tiles_on_side)`. Note
+that `elevatr::get_elev_raster()` has a max `z` of 14.}
 
 \item{src}{One of "aws", "gl3", "gl1", "alos", "srtm15plus".}
 }
