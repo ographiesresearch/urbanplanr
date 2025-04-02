@@ -15,7 +15,7 @@ gtfs_routes <- function(gtfs, crs) {
     tidytransit::get_route_geometry() |>
     dplyr::left_join(
       gtfs$routes,
-      by=dplyr::join_by(route_id)
+      by=dplyr::join_by("route_id")
     ) |>
     sf::st_transform(crs)
 }
@@ -35,7 +35,7 @@ gtfs_process <- function(gtfs, crs) {
     tidytransit::empty_strings_to_na()
   
   gtfs$stops <- gtfs$stops |> 
-    tidyr::drop_na(stop_lat, stop_lon)
+    tidyr::drop_na("stop_lat", "stop_lon")
   
   gtfs <- gtfs |>
     tidytransit::gtfs_as_sf()
