@@ -158,7 +158,7 @@ db_set_defaults <- function(conn, dbname, role) {
 #'
 db_create_if <- function(conn, dbname, role, pass) {
   if (db_exists(dbname)) {
-    overwrite <- prompt_check("Would you like to overwrite the database?")
+    overwrite <- utils_prompt_check("Would you like to overwrite the database?")
     if (overwrite) {
       db_drop(conn, dbname)
       db_create(conn, dbname)
