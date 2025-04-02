@@ -155,7 +155,7 @@ st_clip <- function(x, y) {
         sf::st_geometry()
     ) |>
     dplyr::filter(
-      as.character(sf::st_geometry_type(geometry)) %in% c(
+      as.character(sf::st_geometry_type(.data$geometry)) %in% c(
         init_type, 
         stringr::str_c("MULTI", init_type, sep=""),
         stringr::str_remove(init_type, "MULTI")
@@ -231,7 +231,9 @@ st_model_scale <- function(df, scale, thickness, z_scale, contour_int) {
     sf::st_geometry(df) <- scaled
     if ("z" %in% colnames(df)) {
       df <- df |>
-        dplyr::mutate(z = (z / (z_scale * contour_int)) * as.numeric(units::set_units(thickness, "m")))
+        dplyr::mutate(
+          z = (.data$z / (z_scale * contour_int)) * as.numeric(units::set_units(thickness, "m"))
+        )
     }
   }
   df <- df |>
@@ -250,7 +252,7 @@ st_detect_utm <- function(df) {
     sf::st_transform(
       sf::st_crs(UTM_ZONES)) |>
     sf::st_join(UTM_ZONES, sf::st_intersects, largest = TRUE) |>
-    dplyr::pull(zone_num)
+    dplyr::pull("zone_num")
   
   center <- df |>
     sf::st_transform(4326) |>
@@ -309,13 +311,13 @@ st_xyxy_to_lines <- function(df,
     sf::st_sf(
       geometry = df |>
         dplyr::select(dplyr::all_of(names)) |>
-        base::apply(1, make_line, simplify = FALSE) |>
+        base::apply(1, st_make_line, simplify = FALSE) |>
         sf::st_sfc(crs = sf::st_crs(df))
     )
   
   if (!retain_cols) {
     df <- df |>
-      dplyr::select(-all_of(names))
+      dplyr::select(-dplyr::all_of(names))
   }
   df
 }
@@ -459,10 +461,10 @@ st_geom_to_xy <- function(df, cols=c("x", "y"), retain_geom=FALSE, ...) {
   df <- df |>
     dplyr::mutate(
       coords = sf::st_coordinates(sf::st_geometry(df)),
-      "{cols[1]}" := coords[, "X"],
-      "{cols[2]}" := coords[, "Y"]
+      "{cols[1]}" := .data$coords[, "X"],
+      "{cols[2]}" := .data$coords[, "Y"]
     ) |>
-    dplyr::select(-c(coords))
+    dplyr::select(-c(.data$coords))
   
   if(retain_geom) {
     df |>

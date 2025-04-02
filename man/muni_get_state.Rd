@@ -12,21 +12,24 @@
 \alias{munis_get_vt}
 \title{Downloads Municipal Boundaries by State}
 \usage{
-munis_get_ma()
+munis_get_ma(crs)
 
-munis_get_ct()
+munis_get_ct(crs)
 
-munis_get_me()
+munis_get_me(crs)
 
-munis_get_nh()
+munis_get_nh(crs)
 
-munis_get_nj()
+munis_get_nj(crs)
 
-munis_get_ny()
+munis_get_ny(crs)
 
-munis_get_ri()
+munis_get_ri(crs)
 
-munis_get_vt()
+munis_get_vt(crs)
+}
+\arguments{
+\item{crs}{Target coordinate reference system.}
 }
 \value{
 An `sf` object.
