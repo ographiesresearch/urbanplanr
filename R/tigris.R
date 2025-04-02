@@ -42,7 +42,7 @@
 #'
 tigris_get_states <- function(states = NULL, crs, ...) {
   df <- tigris::states(...) |>
-    sf_preprocess(crs)
+    st_preprocess(crs)
   
   if (!is.null(states)) {
     df <- df |>
@@ -55,7 +55,7 @@ tigris_get_states <- function(states = NULL, crs, ...) {
 #' @export
 tigris_get_counties <- function(states, crs, counties = NULL, ...) {
   df <- tigris::counties(state = states, ...) |>
-    sf_preprocess(crs)
+    st_preprocess(crs)
   
   if (!is.null(counties)) {
     df <- df |>
@@ -73,7 +73,7 @@ tigris_get_multistate <- function(.function, states, crs, ...) {
   }
   units |>
     dplyr::bind_rows() |>
-    sf_preprocess(crs)
+    st_preprocess(crs)
 }
 
 #' @name tigris_get_*
@@ -99,7 +99,7 @@ tigris_get_multistate_by_county <- function(.function, states, crs, counties = N
   }
   units |>
     dplyr::bind_rows()  |>
-    sf_preprocess(crs)
+    st_preprocess(crs)
 }
 
 #' @name tigris_get_*
@@ -167,7 +167,7 @@ tigris_get_roads <- function(states, crs, counties = NULL, ...) {
 tigris_get_primary_roads <- function(crs, ...) {
   message("Downloading road geometries.")
   tigris::primary_roads(...) |>
-    sf_preprocess(crs)
+    st_preprocess(crs)
 }
 
 #' @name tigris_get_*
@@ -185,7 +185,7 @@ tigris_get_primary_secondary_roads <- function(states, crs, ...) {
 tigris_get_rails <- function(crs, ...) {
   message("Downloading road geometries.")
   tigris::rails(...) |>
-    sf_preprocess(crs)
+    st_preprocess(crs)
 }
 
 #' @name tigris_get_*
