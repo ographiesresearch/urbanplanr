@@ -65,7 +65,8 @@ gtfs_get_mbta <- function(crs) {
     gtfs_process(crs)
 }
 
-
+#' @name gtfs_feeds
+#' @export
 gtfs_get_mta <- function(crs) {
   tidytransit::read_gtfs(
     "http://web.mta.info/developers/data/nyct/subway/google_transit.zip"

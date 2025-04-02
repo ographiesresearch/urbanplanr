@@ -3,9 +3,12 @@
 \name{gtfs_feeds}
 \alias{gtfs_feeds}
 \alias{gtfs_get_mbta}
+\alias{gtfs_get_mta}
 \title{Retrieve Various GTFS Feeds}
 \usage{
 gtfs_get_mbta(crs)
+
+gtfs_get_mta(crs)
 }
 \arguments{
 \item{crs}{`crs` object or EPSG code.}
