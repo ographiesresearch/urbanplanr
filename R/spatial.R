@@ -127,8 +127,8 @@ st_hillshade_from_dem <- function(dem,
                                     overwrite = TRUE,
                                     filename = "") {
   raster::hillShade(
-    slope = terra::terrain(dem, v = "slope", unit = "radians"),
-    aspect = terra::terrain(dem, v = "aspect", unit = "radians"),
+    slope = raster::terrain(dem, opt = "slope", unit = "radians"),
+    aspect = raster::terrain(dem, opt = "aspect", unit = "radians"),
     angle = angle,
     direction = direction,
     filename = filename,

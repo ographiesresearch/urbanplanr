@@ -30,7 +30,6 @@ Imports:
     sf (>= 1.0.20),
     stringi (>= 1.8.4),
     stringr (>= 1.5.1),
-    terra (>= 1.8-29),
     tidycensus (>= 1.6.7),
     tidytransit (>= 1.7.0),
     tidyr (>= 1.3.1),
