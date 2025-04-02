@@ -1,3 +1,67 @@
+#' `stop()` if  Object is Not `sf`
+#'
+#' @param df Dataframe or `sf` object.
+#'
+#' @returns Nothing.
+#' @export
+st_is_sf <- function(df) {
+  if (!("sf" %in% class(df))) {
+    stop("Input must be an sf object.")
+  }
+}
+
+#' Check if Layer Projection Matches CRS and Transform if Not
+#'
+#' @param df `sf` object
+#' @param crs EPSG code or `crs` object.
+#'
+#' @returns Reprojected `sf` object.
+#' @export
+st_check_for_proj <- function(df, crs=4326) {
+  if (sf::st_crs(df)$epsg != crs) {
+    df <- df |>
+      sf::st_transform(crs)
+  }
+  df
+}
+
+#' Determine Zoom Level from Extent and Requested Tile Resolution
+#'
+#' @param df `sf` object
+#' @param tiles_on_side Numeric. Tile 'resolution' (i.e., number of map tiles on
+#' the longest side of the extent's bounding box). Must be two raised to a power
+#' or 1.
+#'
+#' @returns An integer zoom level.
+st_zoom_from_extent <- function(df, tiles_on_side = 2) {
+  st_is_sf(df)
+  
+  if (!(log2(tiles_on_side) %% 1 == 0)) {
+      stop("`tiles_on_side` must be two to a power or 1.")
+  }
+  
+  df <- df |>
+    st_check_for_proj()
+  
+  bbox <- sf::st_bbox(df)
+  
+  w <- bbox["xmax"] - bbox["xmin"]
+  h <- bbox["ymax"] - bbox["ymin"]
+  
+  h_scale <- cos(
+    mean(c(bbox["ymax"], bbox["ymin"])) * (pi / 180)
+  )
+  
+  zoom_w <- log2(360 / w)
+  zoom_h <- log2(180 / (h * h_scale))
+  
+  floor(min(zoom_w, zoom_h)) + log2(tiles_on_side)
+}
+
+st_zoom_from_extent(middlesex)
+
+# st_zoom_from_bbox(bbox_sf)
+
 #' Pre-processing operations for spatial data.
 #'
 #' @param df Simple features dataframe.
@@ -7,6 +71,8 @@
 #' @export
 #'
 st_preprocess <- function(df, crs) {
+  st_is_sf(df)
+  
   df |> 
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower)
@@ -14,16 +80,25 @@ st_preprocess <- function(df, crs) {
 
 #' Get DEM from AWS Terrain Tiles
 #'
-#' @param area Simple features data frame or tibble (ideally polygon).
-#' @param z Zoom level to return.
+#' @param extent Simple features data frame or tibble (ideally polygon).
+#' @param tiles_on_side Number of tiles on one side of extent. Must be the
+#' result of 2 raised to a power or 1.
+#' @param z Number. Zoom level. If specified, `tiles_on_side` is ignored. If not
+#' specified, the result of `st_zoom_from_extent(extent, tiles_on_side)`. Note
+#' that `elevatr::get_elev_raster()` has a max `z` of 14.
 #' @param src One of "aws", "gl3", "gl1", "alos", "srtm15plus".
 #'
 #' @returns A `RasterLayer`.
 #' @export
 #'
-st_get_dem <- function(area, z=14, src="aws") {
-  dem <- elevatr::get_elev_raster(
-    locations=area,
+st_get_dem <- function(extent, 
+                       tiles_on_side = 4, 
+                       z = st_zoom_from_extent(extent, tiles_on_side), 
+                       src = "aws") {
+  z <- min(c(14,z))
+  
+  elevatr::get_elev_raster(
+    locations=extent,
     z=z,
     src=src,
     clip="locations",
