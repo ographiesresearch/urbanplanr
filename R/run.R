@@ -1,39 +1,33 @@
-# dotenv::load_dot_env()
-
-options(
-  # Suppress `summarise()` has grouped output by 'x'...'z' message.
-  dplyr.summarise.inform = FALSE,
-  # Suppress read/write CSV progress bar.
-  readr.show_progress = FALSE
-)
-
-run <- function(config) {
-  if (class(config) == "character") {
-    config <- jsonlite::read_json(config)
-  }
+basemap <- function(
+    states, 
+    counties,
+    crs, 
+    year,
+    format,
+    acs_datasets,
+    census_api) {
   
-  states <- c("MA", "RI", "CT")
-  crs <- 2249
-  counties <- NULL
-  year <- 2023
+  # config <- utils_init_env()
   
-  tidycensus::census_api_key()
-  utils_std_output_format()
+  tidycensus::census_api_key(census_api)
+  format <- utils_std_output_format(format)
   
   # # Create database if it doesn't already exist.
   # # Also prompts user to overwrite or not.
-  # if (config$format == "postgis") {
-  #   db_create_if(config$project)
-  # }
+  if (format == "postgis") {
+    db_create_if(config$project)
+  }
   
-  # Get states----
+  # Get Tigris----
+  
+  ## States----
   states_ <- tigris_get_states(
     states = states, 
     crs = crs,
     year = year
   )
   
-  # Get Counties----
+  ## Counties----
   counties_ <- tigris_get_counties(
     states = states, 
     counties = counties, 
@@ -41,14 +35,14 @@ run <- function(config) {
     year = year
   )
   
-  # Get Places----
+  ## Places----
   places <- tigris_get_places(
     states = states,
     crs = crs,
     year = year
   )
   
-  # Get Census Tracts----
+  ## Census Tracts----
   census_tracts <- tigris_get_tracts(
     states = states, 
     crs = crs,
@@ -60,7 +54,7 @@ run <- function(config) {
       largest = TRUE
       )
   
-  # Get Block Groups----
+  ## Block Groups----
   block_groups <- tigris_get_block_groups(
     states = states, 
     crs = crs,
@@ -72,7 +66,7 @@ run <- function(config) {
       largest = TRUE
     )
   
-  # Get Area Water----
+  ## Area Water----
   area_water <- tigris_get_area_water(
     states = states, 
     counties = counties, 
@@ -80,7 +74,7 @@ run <- function(config) {
     year = year
   )
   
-  # Get Linear Water----
+  ## Linear Water----
   linear_water <- tigris_get_linear_water(
     states = states, 
     counties = counties, 
@@ -88,7 +82,7 @@ run <- function(config) {
     year = year
     )
   
-  # Get Roads----
+  ## Roads----
   roads <- tigris_get_roads(
     states = states, 
     counties = counties, 
@@ -96,27 +90,17 @@ run <- function(config) {
     year = year
   )
   
-  # Get Rails----
+  ## Rails----
   rails <- tigris_get_rails(
     crs = crs,
     year = year
   )
   
-  f <- function(var, params, geos = c("tract", "block_group", "place")) {
-    out <- list()
-    for (geo in geos) {
-      out[[geo]] <- do.call(
-        glue::glue("acs_get_{var}"), 
-        args=append(params, list(census_unit = geo))
-      )
-    }
-    out
-  }
-  
-  
-  if ("age" %in% datasets) {
-    age <- f(
-      var = "age",
+  # Get ACS----
+  acs <- list()
+  for (d in acs_datasets) {
+    acs[[d]]<- acs_get_multi(
+      var = d,
       params = list(
         states = states,
         year = year
@@ -124,35 +108,21 @@ run <- function(config) {
     )
   }
   
-  if ("race" %in% datasets) {
-    age <- f(
-      var = "race",
-      params = list(
-        states = states,
-        year = year
-      )
-    )
-  }
+  # Get LODES----
   
-  if ("housing" %in% datasets) {
-    age <- f(
-      var = "race",
-      params = list(
-        states = states,
-        year = year
-      )
+  od <- get_lodes(
+    states = states,
+    year = year,
+    census_unit = config$census_unit) |>
+    prep_lodes(
+      census_unit = config$census_unit
     )
-  }
   
-  if ("occ" %in% datasets) {
-    age <- f(
-      var = "race",
-      params = list(
-        states = states,
-        year = year
+  od_census_units <- od |>
+    lodes_to_census_units(
+      census_units_geo = census_units,
+      census_unit = config$census_unit
       )
-    )
-  }
 
   # message("Downloading places...")
   # place_geo <- place_decision(config$states, crs = config$crs)
@@ -167,26 +137,10 @@ run <- function(config) {
   #   # remove_coords() |>
   #   write_multi("places", config = config)
   # 
-  # census_units |>
-  #   # TODO: Replace with specific column removal.
-  #   # remove_coords() |>
-  #   write_multi("census_unit", config = config)
-  # 
   # if ("lodes" %in% config$datasets) {
   #   message("Downloading and processing LEHD Origin-Destination Employment Statistics (LODES) data...")
-  #   od <- get_lodes(
-  #       states = config$states,
-  #       year = config$year,
-  #       census_unit = config$census_unit) |>
-  #     prep_lodes(
-  #       census_unit = config$census_unit
-  #     )
-  # 
-  #   od_census_units <- od |>
-  #     lodes_to_census_units(
-  #       census_units_geo = census_units,
-  #       census_unit = config$census_unit
-  #       )
+
+ 
   # 
   #   census_units_measured <- od_census_units |>
   #     proximity_measures() |>
@@ -217,7 +171,7 @@ run <- function(config) {
   # }
 }
 
-if(!interactive()){
-  renv::init()
-  run(get_config(commandArgs(trailingOnly = TRUE)))
-}
+# if(!interactive()){
+#   renv::init()
+#   basemap()
+# }

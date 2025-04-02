@@ -54,17 +54,17 @@ acs_get_race(states, year, census_unit, crs = 4326, geometry = FALSE)
 acs_get_age(states, year, census_unit, crs = 4326, geometry = FALSE)
 }
 \arguments{
-\item{states}{A character vector of two-digit state abbreviations (e.g., `c("MA", "MI")).}
+\item{states}{Character vector of state abbreviations.}
 
-\item{year}{Integer. Final year of 5-year ACS period.}
+\item{year}{Integer. Final year of ACS estimates.}
 
-\item{census_unit}{Character. The desired geography.}
+\item{census_unit}{Census unit for which to download tables.}
 
-\item{county}{County for which you are requesting data.}
+\item{county}{Character. County name.}
 
-\item{crs}{Target coordinate reference system: object of class `crs`, or input string for `st_crs`.}
+\item{crs}{Target coordinate reference system: object of class `crs`.}
 
-\item{geometry}{If `FALSE` (the default), returns a table. If `TRUE`, returns a simple feature (`sf`) dataframe.}
+\item{geometry}{Boolean. If `TRUE` (default) retains Tiger/LINE geography.}
 }
 \value{
 A tibble or sf tibble of ACS data.

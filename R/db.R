@@ -40,7 +40,6 @@ db_create_postgis <- function(conn, dbname) {
 #'
 #' @returns NULL
 #' @export
-#'
 db_drop <- function(conn, dbname) {
   RPostgres::dbExecute(
     conn, 

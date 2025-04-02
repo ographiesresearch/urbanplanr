@@ -130,7 +130,7 @@ utils_write_multi <- function(df,
         df,
         file.path(
           dir_db,
-          stringr::str_c(name, format, sep=".")
+          stringr::str_c(name, format, sep = ".")
         ),
         append = FALSE,
         delete_dsn = TRUE,
@@ -141,7 +141,7 @@ utils_write_multi <- function(df,
         df, 
         file.path(
           dir_db,
-          stringr::str_c(name, "csv", sep=".")
+          stringr::str_c(name, "csv", sep = ".")
         ),
         append = FALSE
       )

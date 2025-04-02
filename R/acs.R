@@ -1,17 +1,16 @@
-#' @importFrom rlang .data
-
-pct_transform <- function(df, unique_col) {
-  df |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(unique_col))) |>
-    dplyr::mutate(
-      estimate = dplyr::case_when(
-        estimate == max(estimate) ~ 100,
-        .default = estimate / max(estimate) * 100
-      )
-    ) |>
-    dplyr::ungroup()
-}
-
+#' Get 5-Year ACS Estimates Based on Variable List
+#'
+#' @param vars Character vector of variables (see `tidycensus::load_variables`).
+#' @param states Character vector of state abbreviations.
+#' @param year Integer. Final year of ACS estimates.
+#' @param census_unit Census unit for which to download tables.
+#' @param crs Target coordinate reference system: object of class `crs`.
+#' @param county Character. County name.
+#' @param geometry Boolean. If `TRUE` (default) retains Tiger/LINE geography.
+#' @param drop_moe Boolean. If `TRUE` (default) drops margin of error estimates.
+#'
+#' @returns `sf` object if `geometry` is `TRUE`. Else data frame.
+#' @export
 acs_get_vars <- function(vars,
                          states,
                          year,
@@ -54,6 +53,17 @@ acs_get_vars <- function(vars,
     )
 }
 
+#' Get 5-Year ACS Estimates Based on Variable List
+#'
+#' @inheritParams acs_get_vars
+#' @param table The ACS table for which you would like to request all 
+#' variables.
+#' @param var_match Character. Retain only variables matching this string.
+#' @param var_suffix Boolean. If `TRUE` (default), adjusts for variable 
+#' suffixes.
+#'
+#' @returns `sf` object if `geometry` is `TRUE`. Else data frame.
+#' @export
 acs_get_table <- function(table, 
                           states,
                           year,
@@ -127,7 +137,13 @@ acs_get_table <- function(table,
   df
 }
 
-process_nested_table <- function(df) {
+#' Process Nested Data Structures in ACS Estimates.
+#'
+#' @param df A dataframe.
+#'
+#' @returns A dataframe.
+#' @export
+acs_process_nested <- function(df) {
   max_level <- max(df$level)
   
   df <- df |>
@@ -157,13 +173,44 @@ process_nested_table <- function(df) {
     )
 }
 
-pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
+#' Calculate Proportions from Long-Formatted ACS Subsets by Population
+#'
+#' @param df A dataframe.
+#' @param unique_col Character or integer. Column containing unique values of
+#' aggregating unit (i.e., the FIPS code).
+#' @param percent If `TRUE` (default), calculates a percentage. Otherwise, returns a
+#' proportion.
+#'
+#' @returns A dataframe.
+#' @export
+acs_pct_transform <- function(df, unique_col, percent = TRUE) {
+  mult <- ifelse(percent, 100, 1)
+  df |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(unique_col))) |>
+    dplyr::mutate(
+      estimate = dplyr::case_when(
+        estimate == max(estimate) ~ mult,
+        .default = estimate / max(estimate) * mult
+      )
+    ) |>
+    dplyr::ungroup()
+}
+
+#' Pivot ACS Estimates Long to Wide
+#'
+#' @param df A dataframe.
+#' @param percent Whether to calculate percentages from long-formatted table.
+#' Assumes that one value of `label` is a total.
+#'
+#' @returns A dataframe.
+#' @export
+acs_pivot <- function(df, percent = TRUE) {
   depths <- unique(df$level)
   depths_nonzero <- depths[ !depths == 0 ]
   
   if (percent) {
     df <- df |>
-      pct_transform("unit_id") |>
+      acs_pct_transform("geoid") |>
       dplyr::mutate(
         type = "pct"
       ) |>
@@ -192,7 +239,7 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
         "label" = stringi::stri_trans_general(data$label, id="Latin-ASCII"),
       ) |>
       tidyr::pivot_wider(
-        id_cols = dplyr::all_of("unit_id"),
+        id_cols = dplyr::all_of("geoid"),
         names_from = c(type, label),
         names_glue = "{type}_{label}",
         values_from = estimate
@@ -226,31 +273,25 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
 #' and [B19013B-H (Median household income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19013B).
 #' 
 #' `acs_get_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
-#'
-#' @param states A character vector of two-digit state abbreviations (e.g., `c("MA", "MI")).
-#' @param year Integer. Final year of 5-year ACS period.
-#' @param census_unit Character. The desired geography.
-#' @param county County for which you are requesting data.
-#' @param crs Target coordinate reference system: object of class `crs`, or input string for `st_crs`.
-#' @param geometry If `FALSE` (the default), returns a table. If `TRUE`, returns a simple feature (`sf`) dataframe.
+#' 
+#' @inheritParams acs_get_vars
 #'
 #' @returns A tibble or sf tibble of ACS data.
 #' @export
-#' 
+#'
 acs_get_ind <- function(states,
-                           year,
-                           census_unit,
-                           county = NULL,
-                           crs = 4326,
-                           geometry = FALSE) {
-  
+                        year,
+                        census_unit,
+                        county = NULL,
+                        crs = 4326,
+                        geometry = FALSE) {
   acs_get_table("S2403", 
                  census_unit = census_unit,
                  year = year,
                  states = states,
                  county = county,
                  geometry = geometry) |>
-    process_nested_table()
+    acs_process_nested()
 }
 
 #' @name get_acs
@@ -267,7 +308,7 @@ acs_get_occ <- function(states,
                 states = states,
                 county = county,
                 geometry = geometry) |>
-    process_nested_table()
+    acs_process_nested()
 }
 
 #' @name get_acs
