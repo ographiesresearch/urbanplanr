@@ -117,7 +117,7 @@ acs_get_table <- function(table,
     ) |>
     dplyr::mutate(
       "level" = stringr::str_count(.data$label, "!!") - 1,
-      "label" = stringi::stri_trans_general(data$label, id="Latin-ASCII"),
+      "label" = stringi::stri_trans_general(.data$label, id="Latin-ASCII"),
       "label" = stringr::str_extract(
         .data$label,
         "(?<=!!)[0-9A-Za-z\\s,()-]+(?=(?:$|:$))"
@@ -149,22 +149,22 @@ acs_process_nested <- function(df) {
   df <- df |>
     dplyr::mutate(
       levels_flag = dplyr::case_when(
-        (level == dplyr::lead(level)) ~ TRUE,
-        (level == dplyr::lag(level)) & (level > dplyr::lead(level)) ~ TRUE,
+        (.data$level == dplyr::lead(.data$level)) ~ TRUE,
+        (.data$level == dplyr::lag(.data$level)) & (.data$level > dplyr::lead(.data$level)) ~ TRUE,
         .default = FALSE
       )
     ) |>
     dplyr::rowwise() |>
     dplyr::mutate(
       levels = dplyr::case_when(
-        levels_flag ~ list(seq.int(level, max_level, 1)),
-        .default = list(level)
+        .data$levels_flag ~ list(seq.int(.data$level, max_level, 1)),
+        .default = list(.data$level)
       )
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(
       label = stringr::str_replace_all(
-        label,
+        .data$label,
         c("[(),:]" = "", "\\-" = " ")
       )
     ) |>
@@ -189,8 +189,8 @@ acs_pct_transform <- function(df, unique_col, percent = TRUE) {
     dplyr::group_by(dplyr::across(dplyr::all_of(unique_col))) |>
     dplyr::mutate(
       estimate = dplyr::case_when(
-        estimate == max(estimate) ~ mult,
-        .default = estimate / max(estimate) * mult
+        .data$estimate == max(.data$estimate) ~ mult,
+        .default = .data$estimate / max(.data$estimate) * mult
       )
     ) |>
     dplyr::ungroup()
@@ -214,7 +214,7 @@ acs_pivot <- function(df, percent = TRUE) {
       dplyr::mutate(
         type = "pct"
       ) |>
-      dplyr::filter(label != "Total") |>
+      dplyr::filter(.data$label != "Total") |>
       dplyr::bind_rows(
         df |>
           dplyr::mutate(
@@ -232,17 +232,17 @@ acs_pivot <- function(df, percent = TRUE) {
     df_out <- df |>
       dplyr::rowwise() |>
       dplyr::filter(
-        d %in% levels || 0 %in% levels
+        d %in% .data$levels || 0 %in% .data$levels
       ) |>
       dplyr::ungroup() |>
       dplyr::mutate(
-        "label" = stringi::stri_trans_general(data$label, id="Latin-ASCII"),
+        label = stringi::stri_trans_general(.data$label, id="Latin-ASCII"),
       ) |>
       tidyr::pivot_wider(
         id_cols = dplyr::all_of("geoid"),
-        names_from = c(type, label),
-        names_glue = "{type}_{label}",
-        values_from = estimate
+        names_from = c(.data$type, .data$label),
+        names_glue = "{.data$type}_{.data$label}",
+        values_from = .data$estimate
       )
   }
 }
@@ -496,28 +496,28 @@ acs_get_age <- function(states,
                geometry = geometry
     )|>
     dplyr::mutate(
-      "tlt5" = rowSums(dplyr::across(dplyr::matches("lt5")), na.rm = TRUE),
-      "t5_9" = rowSums(dplyr::across(dplyr::matches("5_9")), na.rm = TRUE),
-      "t10_14" = rowSums(dplyr::across(dplyr::matches("10_14")), na.rm = TRUE),
-      "t15_17" = rowSums(dplyr::across(dplyr::matches("15_17")), na.rm = TRUE),
-      "t18_19" = rowSums(dplyr::across(dplyr::matches("18_19")), na.rm = TRUE),
-      "t20_24" = rowSums(dplyr::across(dplyr::matches("20_24")), na.rm = TRUE),
-      "t25_29" = rowSums(dplyr::across(dplyr::matches("25_29")), na.rm = TRUE),
-      "t30_34" = rowSums(dplyr::across(dplyr::matches("30_34")), na.rm = TRUE),
-      "t35_44" = rowSums(dplyr::across(dplyr::matches("35_44")), na.rm = TRUE),
-      "t45_54" = rowSums(dplyr::across(dplyr::matches("45_54")), na.rm = TRUE),
-      "t55_64" = rowSums(dplyr::across(dplyr::matches("55_64")), na.rm = TRUE),
-      "t65_74" = rowSums(dplyr::across(dplyr::matches("65_74")), na.rm = TRUE),
-      "t75_84" = rowSums(dplyr::across(dplyr::matches("75_84")), na.rm = TRUE),
-      "tgt85" = rowSums(dplyr::across(dplyr::matches("gt85")), na.rm = TRUE),
-      "f5_17" = rowSums(dplyr::across(c("f5_9", "f10_14", "f15_17")), na.rm = TRUE),
-      "f18_24" = rowSums(dplyr::across(c("f18_19", "f20_24")), na.rm = TRUE),
-      "f25_34" = rowSums(dplyr::across(c("f25_29", "f30_34")), na.rm = TRUE),
-      "fgt65" = rowSums(dplyr::across(c("f65_74", "f75_84", "fgt85")), na.rm = TRUE),
-      "m5_17" = rowSums(dplyr::across(c("m5_9", "m10_14", "m15_17")), na.rm = TRUE),
-      "m18_24" = rowSums(dplyr::across(c("m18_19", "m20_24")), na.rm = TRUE),
-      "m25_34" = rowSums(dplyr::across(c("m25_29", "m30_34")), na.rm = TRUE),
-      "mgt65" = rowSums(dplyr::across(c("m65_74", "m75_84", "mgt85")), na.rm = TRUE)
+      tlt5 = rowSums(dplyr::across(dplyr::matches("lt5")), na.rm = TRUE),
+      t5_9 = rowSums(dplyr::across(dplyr::matches("5_9")), na.rm = TRUE),
+      t10_14 = rowSums(dplyr::across(dplyr::matches("10_14")), na.rm = TRUE),
+      t15_17 = rowSums(dplyr::across(dplyr::matches("15_17")), na.rm = TRUE),
+      t18_19 = rowSums(dplyr::across(dplyr::matches("18_19")), na.rm = TRUE),
+      t20_24 = rowSums(dplyr::across(dplyr::matches("20_24")), na.rm = TRUE),
+      t25_29 = rowSums(dplyr::across(dplyr::matches("25_29")), na.rm = TRUE),
+      t30_34 = rowSums(dplyr::across(dplyr::matches("30_34")), na.rm = TRUE),
+      t35_44 = rowSums(dplyr::across(dplyr::matches("35_44")), na.rm = TRUE),
+      t45_54 = rowSums(dplyr::across(dplyr::matches("45_54")), na.rm = TRUE),
+      t55_64 = rowSums(dplyr::across(dplyr::matches("55_64")), na.rm = TRUE),
+      t65_74 = rowSums(dplyr::across(dplyr::matches("65_74")), na.rm = TRUE),
+      t75_84 = rowSums(dplyr::across(dplyr::matches("75_84")), na.rm = TRUE),
+      tgt85 = rowSums(dplyr::across(dplyr::matches("gt85")), na.rm = TRUE),
+      f5_17 = rowSums(dplyr::across(c("f5_9", "f10_14", "f15_17")), na.rm = TRUE),
+      f18_24 = rowSums(dplyr::across(c("f18_19", "f20_24")), na.rm = TRUE),
+      f25_34 = rowSums(dplyr::across(c("f25_29", "f30_34")), na.rm = TRUE),
+      fgt65 = rowSums(dplyr::across(c("f65_74", "f75_84", "fgt85")), na.rm = TRUE),
+      m5_17 = rowSums(dplyr::across(c("m5_9", "m10_14", "m15_17")), na.rm = TRUE),
+      m18_24 = rowSums(dplyr::across(c("m18_19", "m20_24")), na.rm = TRUE),
+      m25_34 = rowSums(dplyr::across(c("m25_29", "m30_34")), na.rm = TRUE),
+      mgt65 = rowSums(dplyr::across(c("m65_74", "m75_84", "mgt85")), na.rm = TRUE)
     ) |>
     dplyr::select(
       "geoid",
