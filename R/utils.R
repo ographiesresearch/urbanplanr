@@ -56,7 +56,7 @@ utils_prompt_check <- function(prompt) {
     check <- FALSE
   }
   if (!check) {
-    prompt_check(prompt)
+    utils_prompt_check(prompt)
   } else {
     if (r %in% c("Y", "y")) {
       message(
@@ -97,15 +97,15 @@ utils_write_multi <- function(df,
       quiet = TRUE
     )
   } else if (format == "postgis") {
-    # conn <- RPostgres::dbConnect(
-    #   drv=RPostgres::Postgres(),
-    #   dbname=dbname,
-    #   host=Sys.getenv("DB_HOST"),
-    #   port=Sys.getenv("DB_PORT"),
-    #   password=password,
-    #   user=user
-    # )
-    # on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
+    conn <- RPostgres::dbConnect(
+      drv=RPostgres::Postgres(),
+      dbname=Sys.getenv("DB_NAME"),
+      host=Sys.getenv("DB_HOST"),
+      port=Sys.getenv("DB_PORT"),
+      password=Sys.getenv("DB_PASS"),
+      user=Sys.getenv("DB_USER")
+    )
+    on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
     sf::st_write(
       df,
       conn,
