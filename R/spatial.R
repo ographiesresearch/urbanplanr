@@ -58,10 +58,6 @@ st_zoom_from_extent <- function(df, tiles_on_side = 2) {
   floor(min(zoom_w, zoom_h)) + log2(tiles_on_side)
 }
 
-st_zoom_from_extent(middlesex)
-
-# st_zoom_from_bbox(bbox_sf)
-
 #' Pre-processing operations for spatial data.
 #'
 #' @param df Simple features dataframe.
@@ -95,7 +91,8 @@ st_get_dem <- function(extent,
                        tiles_on_side = 4, 
                        z = st_zoom_from_extent(extent, tiles_on_side), 
                        src = "aws") {
-  z <- min(c(14,z))
+  # get_elev_master has a max z of 14.
+  z <- min(c(14,z)) 
   
   elevatr::get_elev_raster(
     locations=extent,
