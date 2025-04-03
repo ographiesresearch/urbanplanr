@@ -4,10 +4,10 @@
 \alias{st_zoom_from_extent}
 \title{Determine Zoom Level from Extent and Requested Tile Resolution}
 \usage{
-st_zoom_from_extent(df, tiles_on_side = 2)
+st_zoom_from_extent(extent, tiles_on_side = 2)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{extent}{`sf` object}
 
 \item{tiles_on_side}{Numeric. Tile 'resolution' (i.e., number of map tiles on
 the longest side of the extent's bounding box). Must be two raised to a power

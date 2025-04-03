@@ -25,25 +25,42 @@ st_check_for_proj <- function(df, crs=4326) {
   df
 }
 
+#' Bounding Box as `sf` Object
+#'
+#' Given an input `sf` object, returns that object's bounding box as an `sf`
+#' object.
+#' 
+#' @param df An `sf` object.
+#'
+#' @returns An `sf` object.
+#' @export
+st_bbox_sf <- function(df) {
+  df |>
+    sf::st_bbox() |> 
+    sf::st_as_sfc() |>
+    sf::st_as_sf() |>
+    sf::st_set_geometry("geometry")
+}
+
 #' Determine Zoom Level from Extent and Requested Tile Resolution
 #'
-#' @param df `sf` object
+#' @param extent `sf` object
 #' @param tiles_on_side Numeric. Tile 'resolution' (i.e., number of map tiles on
 #' the longest side of the extent's bounding box). Must be two raised to a power
 #' or 1.
 #'
 #' @returns An integer zoom level.
-st_zoom_from_extent <- function(df, tiles_on_side = 2) {
-  st_is_sf(df)
+st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
+  st_is_sf(extent)
   
   if (!(log2(tiles_on_side) %% 1 == 0)) {
       stop("`tiles_on_side` must be two to a power or 1.")
   }
   
-  df <- df |>
-    st_check_for_proj()
+  extent <- extent |>
+    st_check_for_proj(4326)
   
-  bbox <- sf::st_bbox(df)
+  bbox <- sf::st_bbox(extent)
   
   w <- bbox["xmax"] - bbox["xmin"]
   h <- bbox["ymax"] - bbox["ymin"]
@@ -76,7 +93,8 @@ st_preprocess <- function(df, crs) {
 
 #' Get DEM from AWS Terrain Tiles
 #'
-#' @param extent Simple features data frame or tibble (ideally polygon).
+#' @param extent Simple features data frame or tibble (ideally polygon). Must be
+#' projected and in linear units.
 #' @param tiles_on_side Number of tiles on one side of extent. Must be the
 #' result of 2 raised to a power or 1.
 #' @param z Number. Zoom level. If specified, `tiles_on_side` is ignored. If not
@@ -89,8 +107,13 @@ st_preprocess <- function(df, crs) {
 #'
 st_get_dem <- function(extent, 
                        tiles_on_side = 4, 
-                       z = st_zoom_from_extent(extent, tiles_on_side), 
+                       expand=NULL,
+                       z = st_zoom_from_extent(
+                         extent = extent, 
+                         tiles_on_side = tiles_on_side
+                       ), 
                        src = "aws") {
+  
   # get_elev_master has a max z of 14.
   z <- min(c(14,z)) 
   
@@ -98,7 +121,8 @@ st_get_dem <- function(extent,
     locations=extent,
     z=z,
     src=src,
-    clip="locations",
+    clip="bbox",
+    expand=expand,
     neg_to_na=TRUE
   )
 }
@@ -120,12 +144,12 @@ st_get_dem <- function(extent,
 #'
 #' @returns A `RasterLayer`.
 #' @export
-st_hillshade_from_dem <- function(dem,
-                                    angle = 45,
-                                    direction = 300,
-                                    normalize = TRUE,
-                                    overwrite = TRUE,
-                                    filename = "") {
+st_hillshade <- function(dem,
+                         angle = 45,
+                         direction = 300,
+                         normalize = TRUE,
+                         overwrite = TRUE,
+                         filename = "") {
   raster::hillShade(
     slope = raster::terrain(dem, opt = "slope", unit = "radians"),
     aspect = raster::terrain(dem, opt = "aspect", unit = "radians"),
@@ -135,6 +159,142 @@ st_hillshade_from_dem <- function(dem,
     normalize = normalize,
     overwrite = overwrite
   )
+}
+
+#' Contours from Raster
+#' 
+#' Generally used to create contour lines from a digital elevation model (DEM).
+#'
+#' @param raster `RasterLayer`, for example returned by `st_get_dem()`.
+#' @param interval Numeric. Elevation interval at which contours should be 
+#' drawn. In units of crs.
+#' @param threshold_length Threshold length below which contours will be 
+#' dropped. Helps to remove shards. Defaults to `units::as_units(250, "m").`
+#'
+#' @returns `sf` object with `LINESTRING` geometries.
+#' @export
+st_contours <- function(raster, 
+                       interval,
+                       threshold_length = units::as_units(250, "m")
+                       ) {
+  raster |>
+    raster::rasterToContour(
+      levels = seq(
+        from = floor(raster::minValue(raster)),
+        to = ceiling(raster::maxValue(raster)),
+        by = interval
+      )
+    ) |>
+    sf::st_as_sf() |>
+    dplyr::rename(
+      z = "level"
+    ) |>
+    sf::st_cast("LINESTRING") |>
+    dplyr::mutate(
+      length = sf::st_length(.data$geometry)
+    ) |>
+    dplyr::filter(
+      .data$length > threshold_length
+    )
+}
+
+#' Enclose Contours Using Polygon Features
+#'
+#' @param contours `sf` object, as returned by `st_contour()`.
+#' @param enclosure_layer Feature layer used to enclose contour lines.
+#' @param bbox Boolean. If `FALSE` (default), contours are enclosed by feature
+#' boundaries. If `TRUE`, contours are enclosed by their bounding box.
+#' @param poly Boolean. If `FALSE` (default), returns `MULTILINESTRING`s. If 
+#' `TRUE`, returns `MULTIPOLYGON`s.
+#'
+#' @returns `sf` object, `POLYGON` geometries.
+#' @export
+st_contours_enclose <- function(
+    contours, 
+    enclosure_layer,
+    poly = FALSE,
+    bbox = FALSE
+    ) {
+  if (bbox) {
+    enclosure_layer <- st_bbox_sf(enclosure_layer)
+  }
+  
+  if(poly) {
+    out_geom <- "MULTIPOLYGON"
+  } else {
+    out_geom <- "MULTILINESTRING"
+  }
+  
+  enclosed <- enclosure_layer |>
+    sf::st_union() |>
+    sf::st_as_sf() |>
+    lwgeom::st_split(contours) |>
+    sf::st_collection_extract("POLYGON") |>
+    sf::st_set_geometry("geometry") |>
+    tibble::rowid_to_column("id")
+  
+  z <- enclosed |> 
+    sf::st_join(contours) |>
+    sf::st_drop_geometry() |>
+    dplyr::group_by(.data$id) |>
+    dplyr::summarize(
+      z = as.integer(min(.data$z))
+    ) |>
+    dplyr::ungroup()
+  
+  enclosed |>
+    dplyr::left_join(z, by = c("id" = "id")) |>
+    dplyr::group_by(.data$z) |>
+    dplyr::summarize(
+      geometry = sf::st_cast(sf::st_union(.data$geometry), out_geom)
+    ) |>
+    dplyr::ungroup()
+}
+
+#' Elevate Contours and Finish
+#' 
+#' This function is primarily used in the case where the user is preparing a
+#' stepped contour model in CAD (or using a laser cutter).
+#'
+#' @param enclosed_contours `sf` object, as returned by `st_contours_close()`
+#' @param full_plates If `TRUE` (default), contours extended to the edge of the
+#' model. If `FALSE`, they will emeerge in 'strips'.
+#' @param etch_guides If `TRUE`, guides are created by etching edge of the above
+#' level into each level. If `FALSE` (default), no guides created. Requires that
+#' `poly` and `full_plates` both be `TRUE`.
+#'
+#' @returns `sf` object.
+#' @export
+st_contours_model <- function(
+    enclosed_contours, 
+    full_plates = TRUE,
+    etch_guides = FALSE
+    ) {
+  
+  if (full_plates) {
+    enclosed_contours <- enclosed_contours |>
+      dplyr::arrange(dplyr::desc(.data$z)) |>
+      dplyr::mutate(
+        geometry = sf::st_as_sfc(
+          purrr::accumulate(
+            .data$geometry,
+            sf::st_union
+            ), 
+          crs = sf::st_crs(enclosed_contours)
+          )
+      )
+  }
+  if (etch_guides & full_plates) {
+    enclosed_contours <- enclosed_contours |>
+      dplyr::bind_rows(
+        enclosed_contours |>
+          dplyr::mutate(
+            z = dplyr::lead(.data$z)
+          ) |>
+          tidyr::drop_na("z")
+      )
+  }
+  enclosed_contours
 }
 
 #' GIS-esque Clip Function

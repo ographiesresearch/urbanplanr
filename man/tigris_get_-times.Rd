@@ -17,46 +17,52 @@
 \alias{tigris_get_linear_water}
 \title{Get Census-Designated Places}
 \usage{
-tigris_get_states(states = NULL, crs, ...)
+tigris_get_states(states = NULL, crs = 4326, ...)
 
-tigris_get_counties(states, crs, ...)
+tigris_get_counties(states, crs = 4326, counties = NULL, ...)
 
-tigris_get_multistate(.function, states, crs, ...)
+tigris_get_multistate(.function, states, crs = 4326, ...)
 
-tigris_get_multistate_by_county(.function, states, crs, counties = NULL, ...)
+tigris_get_multistate_by_county(
+  .function,
+  states,
+  crs = 4326,
+  counties = NULL,
+  ...
+)
 
-tigris_get_counties(states, crs, ...)
+tigris_get_counties(states, crs = 4326, counties = NULL, ...)
 
-tigris_get_places(states, crs, ...)
+tigris_get_places(states, crs = 4326, ...)
 
-tigris_get_tracts(states, crs, ...)
+tigris_get_tracts(states, crs = 4326, ...)
 
-tigris_get_block_groups(states, crs, ...)
+tigris_get_block_groups(states, crs = 4326, ...)
 
-tigris_get_roads(states, crs, counties = NULL, ...)
+tigris_get_roads(states, crs = 4326, counties = NULL, ...)
 
-tigris_get_primary_roads(crs, ...)
+tigris_get_primary_roads(crs = 4326, ...)
 
-tigris_get_primary_secondary_roads(states, crs, ...)
+tigris_get_primary_secondary_roads(states, crs = 4326, ...)
 
-tigris_get_rails(crs, ...)
+tigris_get_rails(crs = 4326, ...)
 
-tigris_get_area_water(states, crs, counties = NULL, ...)
+tigris_get_area_water(states, crs = 4326, counties = NULL, ...)
 
-tigris_get_linear_water(states, crs, counties = NULL, ...)
+tigris_get_linear_water(states, crs = 4326, counties = NULL, ...)
 }
 \arguments{
 \item{states}{Vector of two-character state codes.}
 
-\item{crs}{EPSG code or `crs` object.}
+\item{crs}{EPSG code or `crs` object. `4326` default.}
 
 \item{...}{Passed on to `tigris` download function (e.g., 
 `tigris::tracts()`).}
 
-\item{.function}{`tigris` function to run.}
-
-\item{counties}{Character vector of county names or 5/3-digit FIPS codes. If 
+\item{counties}{Character vector of county names. If 
 `NULL` (the default), all counties are returned.}
+
+\item{.function}{`tigris` function to run.}
 }
 \value{
 Simple Features dataframe.

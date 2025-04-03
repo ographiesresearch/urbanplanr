@@ -7,12 +7,14 @@
 st_get_dem(
   extent,
   tiles_on_side = 4,
-  z = st_zoom_from_extent(extent, tiles_on_side),
+  expand = NULL,
+  z = st_zoom_from_extent(extent = extent, tiles_on_side = tiles_on_side),
   src = "aws"
 )
 }
 \arguments{
-\item{extent}{Simple features data frame or tibble (ideally polygon).}
+\item{extent}{Simple features data frame or tibble (ideally polygon). Must be
+projected and in linear units.}
 
 \item{tiles_on_side}{Number of tiles on one side of extent. Must be the
 result of 2 raised to a power or 1.}
