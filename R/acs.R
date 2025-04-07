@@ -1,16 +1,17 @@
-pct_transform <- function(df, unique_col) {
-  df |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(unique_col))) |>
-    dplyr::mutate(
-      estimate = dplyr::case_when(
-        estimate == max(estimate) ~ 100,
-        .default = estimate / max(estimate) * 100
-      )
-    ) |>
-    dplyr::ungroup()
-}
-
-get_acs_vars <- function(vars,
+#' Get 5-Year ACS Estimates Based on Variable List
+#'
+#' @param vars Character vector of variables (see `tidycensus::load_variables`).
+#' @param states Character vector of state abbreviations.
+#' @param year Integer. Final year of ACS estimates.
+#' @param census_unit Census unit for which to download tables.
+#' @param crs Target coordinate reference system: object of class `crs`.
+#' @param county Character. County name.
+#' @param geometry Boolean. If `TRUE` (default) retains Tiger/LINE geography.
+#' @param drop_moe Boolean. If `TRUE` (default) drops margin of error estimates.
+#'
+#' @returns `sf` object if `geometry` is `TRUE`. Else data frame.
+#' @export
+acs_get_vars <- function(vars,
                          states,
                          year,
                          census_unit,
@@ -48,11 +49,22 @@ get_acs_vars <- function(vars,
   }
   df |>
     dplyr::rename(
-      unit_id = GEOID
+      geoid = .data$GEOID
     )
 }
 
-get_acs_table <- function(table, 
+#' Get 5-Year ACS Estimates Based on Variable List
+#'
+#' @inheritParams acs_get_vars
+#' @param table The ACS table for which you would like to request all 
+#' variables.
+#' @param var_match Character. Retain only variables matching this string.
+#' @param var_suffix Boolean. If `TRUE` (default), adjusts for variable 
+#' suffixes.
+#'
+#' @returns `sf` object if `geometry` is `TRUE`. Else data frame.
+#' @export
+acs_get_table <- function(table, 
                           states,
                           year,
                           census_unit,
@@ -71,50 +83,51 @@ get_acs_table <- function(table,
       cache_table = TRUE
     ) |>
     dplyr::filter(
-      !stringr::str_detect(variable, "_C0[2-9]_")
+      !stringr::str_detect(.data$variable, "_C0[2-9]_")
     ) |>
     dplyr::mutate(
-      prefix = stringr::str_c(
+      "prefix" = stringr::str_c(
         "B",
         stringr::str_sub(table, 2),
         sep = ""
       ),
-      prefix = dplyr::case_when(
+      "prefix" = dplyr::case_when(
         var_suffix ~ stringr::str_c(
-          prefix,
+          .data$prefix,
           "1",
           sep = ""
         ),
-        .default = prefix
+        .default = .data$prefix
       ),
-      variable = stringr::str_c(
-        prefix,
-        stringr::str_extract(variable, "(?<=_)\\d+$"),
+      "variable" = stringr::str_c(
+        .data$prefix,
+        stringr::str_extract(.data$variable, "(?<=_)\\d+$"),
         sep="_"
       )
     ) |>
-    dplyr::select(-prefix) |>
+    dplyr::select(-"prefix") |>
     dplyr::left_join(
       tidycensus::load_variables(
         year = year,
         dataset = "acs5",
         cache = TRUE
       ) |>
-        dplyr::select(name, label),
+        dplyr::select("name", "label"),
       by = c("variable" = "name")
     ) |>
     dplyr::mutate(
-      level = stringr::str_count(label, "!!") - 1,
-      label = stringr::str_extract(
-        label,
-        "(?<=!!)[0-9A-Za-z\\s,()-áéíóúüñç]+(?=(?:$|:$))"
+      "level" = stringr::str_count(.data$label, "!!") - 1,
+      "label" = stringi::stri_trans_general(.data$label, id="Latin-ASCII"),
+      "label" = stringr::str_extract(
+        .data$label,
+        "(?<=!!)[0-9A-Za-z\\s,()-]+(?=(?:$|:$))"
       )
     )
 
   if (nchar(var_match) > 0) {
     df <- df |>
       dplyr::filter(
-        stringr::str_detect(variable, pattern = var_match)
+        stringr::str_detect(.data$variable, pattern = var_match)
       )
   }
   if (geometry) {
@@ -124,56 +137,84 @@ get_acs_table <- function(table,
   df
 }
 
-process_nested_table <- function(df) {
+#' Process Nested Data Structures in ACS Estimates.
+#'
+#' @param df A dataframe.
+#'
+#' @returns A dataframe.
+#' @export
+acs_process_nested <- function(df) {
   max_level <- max(df$level)
   
   df <- df |>
     dplyr::mutate(
       levels_flag = dplyr::case_when(
-        (level == dplyr::lead(level)) ~ TRUE,
-        (level == dplyr::lag(level)) & (level > dplyr::lead(level)) ~ TRUE,
+        (.data$level == dplyr::lead(.data$level)) ~ TRUE,
+        (.data$level == dplyr::lag(.data$level)) & (.data$level > dplyr::lead(.data$level)) ~ TRUE,
         .default = FALSE
       )
     ) |>
     dplyr::rowwise() |>
     dplyr::mutate(
       levels = dplyr::case_when(
-        levels_flag ~ list(seq.int(level, max_level, 1)),
-        .default = list(level)
+        .data$levels_flag ~ list(seq.int(.data$level, max_level, 1)),
+        .default = list(.data$level)
       )
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(
       label = stringr::str_replace_all(
-        label,
-        c("[(),:]" = "", "\\-" = " ", "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ü" = "u", "ñ" = "n", "ç" = "c")
+        .data$label,
+        c("[(),:]" = "", "\\-" = " ")
       )
     ) |>
     dplyr::rename(
-      unit_id = GEOID
+      geoid = .data$GEOID
     )
 }
 
-process_places <- function(df) {
+#' Calculate Proportions from Long-Formatted ACS Subsets by Population
+#'
+#' @param df A dataframe.
+#' @param unique_col Character or integer. Column containing unique values of
+#' aggregating unit (i.e., the FIPS code).
+#' @param percent If `TRUE` (default), calculates a percentage. Otherwise, returns a
+#' proportion.
+#'
+#' @returns A dataframe.
+#' @export
+acs_pct_transform <- function(df, unique_col, percent = TRUE) {
+  mult <- ifelse(percent, 100, 1)
   df |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(unique_col))) |>
     dplyr::mutate(
-      city = stringr::str_detect(
-        NAME, "city,"
+      estimate = dplyr::case_when(
+        .data$estimate == max(.data$estimate) ~ mult,
+        .default = .data$estimate / max(.data$estimate) * mult
       )
-    )
+    ) |>
+    dplyr::ungroup()
 }
 
-pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
+#' Pivot ACS Estimates Long to Wide
+#'
+#' @param df A dataframe.
+#' @param percent Whether to calculate percentages from long-formatted table.
+#' Assumes that one value of `label` is a total.
+#'
+#' @returns A dataframe.
+#' @export
+acs_pivot <- function(df, percent = TRUE) {
   depths <- unique(df$level)
   depths_nonzero <- depths[ !depths == 0 ]
   
   if (percent) {
     df <- df |>
-      pct_transform("unit_id") |>
+      acs_pct_transform("geoid") |>
       dplyr::mutate(
         type = "pct"
       ) |>
-      dplyr::filter(label != "Total") |>
+      dplyr::filter(.data$label != "Total") |>
       dplyr::bind_rows(
         df |>
           dplyr::mutate(
@@ -191,92 +232,122 @@ pivot_and_write <- function(df, name, percent = TRUE, config = NULL) {
     df_out <- df |>
       dplyr::rowwise() |>
       dplyr::filter(
-        d %in% levels || 0 %in% levels
+        d %in% .data$levels || 0 %in% .data$levels
       ) |>
       dplyr::ungroup() |>
       dplyr::mutate(
-        label = stringr::str_replace_all(
-          label,
-          c("[(),:]" = "", "\\-" = " ", "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ü" = "u", "ñ" = "n", "ç" = "c")
-        )
+        label = stringi::stri_trans_general(.data$label, id="Latin-ASCII"),
       ) |>
       tidyr::pivot_wider(
-        id_cols = dplyr::all_of("unit_id"),
-        names_from = c(type, label),
-        names_glue = "{type}_{label}",
-        values_from = estimate
-      ) |>
-      write_multi(glue::glue("{name}_depth_{d}"), config = config)
+        id_cols = dplyr::all_of("geoid"),
+        names_from = c(.data$type, .data$label),
+        names_glue = "{.data$type}_{.data$label}",
+        values_from = .data$estimate
+      )
   }
 }
 
-
-
-get_acs_industries <- function(states,
-                           year,
-                           census_unit,
-                           county = NULL,
-                           crs = 4326,
-                           geometry = FALSE) {
-  # Industry data from ACS Table S2403: Industry by Sex for the Civilian 
-  # Employed Population 16 Years and Over
-  # https://data.census.gov/table/ACSST5Y2022.S2401
-  get_acs_table("S2403", 
+#' Get ACS Variables by Census Unit
+#' @name get_acs
+#' 
+#' @description
+#' `acs_get_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
+#' Employed Population 16 Years and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
+#' 
+#' `acs_get_occupations()` obtains data on civilian occupation from ACS table 
+#' [S2401 (Occupation by Sex for the Civilan Employed Population 16 Years 
+#' and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
+#' 
+#' `acs_get_ancestry()` obtains data on reported ancestry from ACS table 
+#' [B04006 (People Reporting Ancestry)](https://data.census.gov/table/ACSDT5Y2023.B04006).
+#' 
+#' `acs_get_place_of_birth()` obtains data on place of birth for migrant population from ACS table
+#' [B05006 (Place of Birth for the Foreign-Born Population in the United States)](https://data.census.gov/table/ACSDT5Y2023.B05006).
+#' 
+#' `acs_get_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
+#' [B25042 (Tenure by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25042), [B25024 (Units in Structure)](https://data.census.gov/table/ACSDT5Y2023.B25024), and
+#' [B25031 (Median Gross Rent by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25031).
+#' 
+#' `acs_get_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
+#' [B03002 (Hispanic or Latino Origin by Race)](https://data.census.gov/table/ACSDT5Y2023.B03002), [B19301B-H (Per capita income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19301B), 
+#' and [B19013B-H (Median household income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19013B).
+#' 
+#' `acs_get_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
+#' 
+#' @inheritParams acs_get_vars
+#'
+#' @returns A tibble or sf tibble of ACS data.
+#' @export
+#'
+acs_get_ind <- function(states,
+                        year,
+                        census_unit,
+                        county = NULL,
+                        crs = 4326,
+                        geometry = FALSE) {
+  acs_get_table("S2403", 
                  census_unit = census_unit,
                  year = year,
-                 state = states,
+                 states = states,
                  county = county,
                  geometry = geometry) |>
-    process_nested_table()
+    acs_process_nested()
 }
 
-get_acs_occupations <- function(states,
+#' @name get_acs
+#' @export
+acs_get_occ <- function(states,
                             year,
                             census_unit,
                             county = NULL,
                             crs = 4326,
                             geometry = FALSE) {
-  # Industry data from ACS Table S2401: Occupation by Sex for the Civilian 
-  # Employed Population 16 Years and Over
-  # https://data.census.gov/table/ACSST5Y2022.S2401
-  get_acs_table("S2401", 
+  acs_get_table("S2401", 
                 census_unit = census_unit,
                 year = year,
-                state = states,
+                states = states,
                 county = county,
                 geometry = geometry) |>
-    process_nested_table()
+    acs_process_nested()
 }
 
-get_acs_ancestry <- function(states,
+#' @name get_acs
+#' @export
+acs_get_ancestry <- function(states,
                              year,
                              census_unit,
+                             county = NULL,
                              crs = 4326,
                              geometry = FALSE) {
-  get_acs_table("B04006",
+  acs_get_table("B04006",
                 census_unit = census_unit,
                 year = year,
-                state = states,
+                states = states,
                 county = county,
                 geometry = geometry,
                 var_suffix = FALSE)
 }
 
-get_acs_place_of_birth <- function(states,
+#' @name get_acs
+#' @export
+acs_get_place_of_birth <- function(states,
                                    year,
                                    census_unit,
+                                   county = NULL,
                                    crs = 4326,
                                    geometry = FALSE) {
-  get_acs_table("B05006",
+  acs_get_table("B05006",
                 census_unit = census_unit,
                 year = year,
-                state = states,
+                states = states,
                 county = county,
                 geometry = geometry,
                 var_suffix = FALSE)
 }
 
-get_acs_housing <- function(states,
+#' @name get_acs
+#' @export
+acs_get_housing <- function(states,
                             year,
                             census_unit,
                             crs = 4326,
@@ -319,7 +390,7 @@ get_acs_housing <- function(states,
             "mgr4br" = "B25031_006",
             "mgrgt5br" = "B25031_007"
             )
-  get_acs_vars(vars, 
+  acs_get_vars(vars, 
                states = states,
                year = year,
                census_unit = census_unit,
@@ -327,7 +398,9 @@ get_acs_housing <- function(states,
                )
 }
 
-get_acs_race <- function(states,
+#' @name get_acs
+#' @export
+acs_get_race <- function(states,
                          year,
                          census_unit,
                          crs = 4326,
@@ -368,7 +441,7 @@ get_acs_race <- function(states,
     "mti_mhi" = "B19013G_001",
     "hslt_mhi" = "B19013I_001"
   )
-  get_acs_vars(vars, 
+  acs_get_vars(vars, 
                states = states,
                year = year,
                census_unit = census_unit,
@@ -376,45 +449,47 @@ get_acs_race <- function(states,
   )
 }
 
-get_acs_age <- function(states,
+#' @name get_acs
+#' @export
+acs_get_age <- function(states,
                         year,
                         census_unit,
                         crs = 4326,
                         geometry = FALSE) {
   vars <- c(
-    "tot" = "B01001A_001",
-    "mtot" = "B01001A_002",
-    "mlt5" = "B01001A_003",
-    "m5_9" = "B01001A_004",
-    "m10_14" = "B01001A_005",
-    "m15_17" = "B01001A_006",
-    "m18_19" = "B01001A_007",
-    "m20_24" = "B01001A_008",
-    "m25_29" = "B01001A_009",
-    "m30_34" = "B01001A_010",
-    "m35_44" = "B01001A_011",
-    "m45_54" = "B01001A_012",
-    "m55_64" = "B01001A_013",
-    "m65_74" = "B01001A_014",
-    "m75_84" = "B01001A_015",
-    "mgt85" = "B01001A_016",
-    "ftot" = "B01001A_017",
-    "flt5" = "B01001A_018",
-    "f5_9" = "B01001A_019",
-    "f10_14" = "B01001A_020",
-    "f15_17" = "B01001A_021",
-    "f18_19" = "B01001A_022",
-    "f20_24" = "B01001A_023",
-    "f25_29" = "B01001A_024",
-    "f30_34" = "B01001A_025",
-    "f35_44" = "B01001A_026",
-    "f45_54" = "B01001A_027",
-    "f55_64" = "B01001A_028",
-    "f65_74" = "B01001A_029",
-    "f75_84" = "B01001A_030",
-    "fgt85" = "B01001A_031")
+    "tot" = "B01001_001",
+    "mtot" = "B01001_002",
+    "mlt5" = "B01001_003",
+    "m5_9" = "B01001_004",
+    "m10_14" = "B01001_005",
+    "m15_17" = "B01001_006",
+    "m18_19" = "B01001_007",
+    "m20_24" = "B01001_008",
+    "m25_29" = "B01001_009",
+    "m30_34" = "B01001_010",
+    "m35_44" = "B01001_011",
+    "m45_54" = "B01001_012",
+    "m55_64" = "B01001_013",
+    "m65_74" = "B01001_014",
+    "m75_84" = "B01001_015",
+    "mgt85" = "B01001_016",
+    "ftot" = "B01001_017",
+    "flt5" = "B01001_018",
+    "f5_9" = "B01001_019",
+    "f10_14" = "B01001_020",
+    "f15_17" = "B01001_021",
+    "f18_19" = "B01001_022",
+    "f20_24" = "B01001_023",
+    "f25_29" = "B01001_024",
+    "f30_34" = "B01001_025",
+    "f35_44" = "B01001_026",
+    "f45_54" = "B01001_027",
+    "f55_64" = "B01001_028",
+    "f65_74" = "B01001_029",
+    "f75_84" = "B01001_030",
+    "fgt85" = "B01001_031")
   
-  get_acs_vars(vars, 
+  acs_get_vars(vars, 
                states = states,
                year = year,
                census_unit = census_unit,
@@ -435,19 +510,30 @@ get_acs_age <- function(states,
       t65_74 = rowSums(dplyr::across(dplyr::matches("65_74")), na.rm = TRUE),
       t75_84 = rowSums(dplyr::across(dplyr::matches("75_84")), na.rm = TRUE),
       tgt85 = rowSums(dplyr::across(dplyr::matches("gt85")), na.rm = TRUE),
-      f5_17 = rowSums(dplyr::across(c(f5_9, f10_14, f15_17)), na.rm = TRUE),
-      f18_24 = rowSums(dplyr::across(c(f18_19, f20_24)), na.rm = TRUE),
-      f25_34 = rowSums(dplyr::across(c(f25_29, f30_34)), na.rm = TRUE),
-      fgt65 = rowSums(dplyr::across(c(f65_74, f75_84, fgt85)), na.rm = TRUE),
-      m5_17 = rowSums(dplyr::across(c(m5_9, m10_14, m15_17)), na.rm = TRUE),
-      m18_24 = rowSums(dplyr::across(c(m18_19, m20_24)), na.rm = TRUE),
-      m25_34 = rowSums(dplyr::across(c(m25_29, m30_34)), na.rm = TRUE),
-      mgt65 = rowSums(dplyr::across(c(m65_74, m75_84, mgt85)), na.rm = TRUE)
+      f5_17 = rowSums(dplyr::across(c("f5_9", "f10_14", "f15_17")), na.rm = TRUE),
+      f18_24 = rowSums(dplyr::across(c("f18_19", "f20_24")), na.rm = TRUE),
+      f25_34 = rowSums(dplyr::across(c("f25_29", "f30_34")), na.rm = TRUE),
+      fgt65 = rowSums(dplyr::across(c("f65_74", "f75_84", "fgt85")), na.rm = TRUE),
+      m5_17 = rowSums(dplyr::across(c("m5_9", "m10_14", "m15_17")), na.rm = TRUE),
+      m18_24 = rowSums(dplyr::across(c("m18_19", "m20_24")), na.rm = TRUE),
+      m25_34 = rowSums(dplyr::across(c("m25_29", "m30_34")), na.rm = TRUE),
+      mgt65 = rowSums(dplyr::across(c("m65_74", "m75_84", "mgt85")), na.rm = TRUE)
     ) |>
     dplyr::select(
-      unit_id,
+      "geoid",
       dplyr::starts_with("t"), 
       dplyr::starts_with("f"),
       dplyr::starts_with("m")
     )
+}
+
+acs_get_multi <- function(var, params, geos = c("tract", "block_group", "place")) {
+  out <- list()
+  for (g in geos) {
+    out[[g]] <- do.call(
+      glue::glue("acs_get_{var}"), 
+      args=append(params, list(census_unit = g))
+    )
+  }
+  out
 }

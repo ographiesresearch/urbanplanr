@@ -5,7 +5,7 @@ So far, the automated workflows download and process data from the **LEHD Origin
 
 ## Setup
 
-Currently, to set up the automated process, you modify [config.json](https://github.com/OGRAPHIES-Research-Design/urban-plannr/blob/main/config.json) with the following parameters:
+Currently, to set up the automated process, you modify `config.json` with the following parameters:
 
 + **project – string** \
 Name of the project. Currently, this only appears as the name of the output geopackage (or results folder, if format is ‘shapefile’ or ‘geojson’).
