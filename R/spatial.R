@@ -97,6 +97,8 @@ st_preprocess <- function(df, crs) {
 #' projected and in linear units.
 #' @param tiles_on_side Number of tiles on one side of extent. Must be the
 #' result of 2 raised to a power or 1.
+#' @param expand 	A numeric value of a distance, in map units, used to expand 
+#' the bounding box that is used to fetch the terrain tiles. 
 #' @param z Number. Zoom level. If specified, `tiles_on_side` is ignored. If not
 #' specified, the result of `st_zoom_from_extent(extent, tiles_on_side)`. Note
 #' that `elevatr::get_elev_raster()` has a max `z` of 14.
@@ -175,6 +177,8 @@ st_hillshade <- function(dem,
 #' @param raster `RasterLayer`, for example returned by `st_get_dem()`.
 #' @param interval Numeric. Elevation interval at which contours should be 
 #' drawn. In units of crs.
+#' @param maxpixels Maximum number of raster cells to use. Reduce if function is 
+#' failing.
 #' @param threshold_length Threshold length below which contours will be 
 #' dropped. Helps to remove shards. Defaults to `units::as_units(250, "m").`
 #'
@@ -386,13 +390,12 @@ st_scale_to_model <- function(df, model_size = NULL) {
 #' @param df Simple features dataframe or tibble.
 #' @param scale Scaling parameters, as returend by `scale_to_model()`.
 #' @param thickness Numeric. Thickness of model plywood sheets.
-#' @param z_scale Numeric. Z-exaggeration for elevation.
 #' @param contour_int Nuemeric. Intervals for contours.
 #'
 #' @returns Scaled simple features dataframe or tibble.
 #' @export
 #'
-st_model_scale <- function(df, scale, thickness, z_scale, contour_int) {
+st_model_scale <- function(df, scale, thickness, contour_int) {
   crs <- sf::st_crs(df)
   scaled <- (sf::st_geometry(df) - c(scale["x_delta"], scale["y_delta"])) * scale["factor"]
   
@@ -401,7 +404,7 @@ st_model_scale <- function(df, scale, thickness, z_scale, contour_int) {
     if ("z" %in% colnames(df)) {
       df <- df |>
         dplyr::mutate(
-          z = (.data$z / (z_scale * contour_int)) * as.numeric(units::set_units(thickness, "m"))
+          z = (.data$z / (contour_int)) * as.numeric(units::set_units(thickness, "m"))
         )
     }
   }

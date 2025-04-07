@@ -19,6 +19,9 @@ projected and in linear units.}
 \item{tiles_on_side}{Number of tiles on one side of extent. Must be the
 result of 2 raised to a power or 1.}
 
+\item{expand}{A numeric value of a distance, in map units, used to expand 
+the bounding box that is used to fetch the terrain tiles.}
+
 \item{z}{Number. Zoom level. If specified, `tiles_on_side` is ignored. If not
 specified, the result of `st_zoom_from_extent(extent, tiles_on_side)`. Note
 that `elevatr::get_elev_raster()` has a max `z` of 14.}

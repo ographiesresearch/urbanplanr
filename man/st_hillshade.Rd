@@ -8,6 +8,7 @@ st_hillshade(
   dem,
   angle = 45,
   direction = 300,
+  z_scale = 1,
   normalize = TRUE,
   overwrite = TRUE,
   filename = ""
@@ -20,6 +21,9 @@ st_hillshade(
 
 \item{direction}{Azimuth angle of the light source (degrees). Defaults to
 300.}
+
+\item{z_scale}{How much to exaggerate the z scale. Default is 1. Values of 
+3-4 are fairly standard in cartographic practice.}
 
 \item{normalize}{Logical. If `TRUE` (default), values below zero are set to
 zero and the results are multiplied by 255.}

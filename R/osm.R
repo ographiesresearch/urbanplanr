@@ -12,7 +12,7 @@
 #' @export
 osm_get_key <- function(extent, key) {
   df <- extent |>
-    st_transform(4326) |>
+    sf::st_transform(4326) |>
     sf::st_bbox() |>
     osmdata::opq() |>
     osmdata::add_osm_feature(key = key) |>

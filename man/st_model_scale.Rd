@@ -4,7 +4,7 @@
 \alias{st_model_scale}
 \title{Scale Layer Based on Scaling Parameters}
 \usage{
-st_model_scale(df, scale, thickness, z_scale, contour_int)
+st_model_scale(df, scale, thickness, contour_int)
 }
 \arguments{
 \item{df}{Simple features dataframe or tibble.}
@@ -12,8 +12,6 @@ st_model_scale(df, scale, thickness, z_scale, contour_int)
 \item{scale}{Scaling parameters, as returend by `scale_to_model()`.}
 
 \item{thickness}{Numeric. Thickness of model plywood sheets.}
-
-\item{z_scale}{Numeric. Z-exaggeration for elevation.}
 
 \item{contour_int}{Nuemeric. Intervals for contours.}
 }

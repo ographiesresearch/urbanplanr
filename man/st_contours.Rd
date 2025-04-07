@@ -4,13 +4,21 @@
 \alias{st_contours}
 \title{Contours from Raster}
 \usage{
-st_contours(raster, interval, threshold_length = units::as_units(250, "m"))
+st_contours(
+  raster,
+  interval,
+  maxpixels = (attr(raster, "nrows") * attr(raster, "ncols"))/4,
+  threshold_length = units::as_units(250, "m")
+)
 }
 \arguments{
 \item{raster}{`RasterLayer`, for example returned by `st_get_dem()`.}
 
 \item{interval}{Numeric. Elevation interval at which contours should be 
 drawn. In units of crs.}
+
+\item{maxpixels}{Maximum number of raster cells to use. Reduce if function is 
+failing.}
 
 \item{threshold_length}{Threshold length below which contours will be 
 dropped. Helps to remove shards. Defaults to `units::as_units(250, "m").`}
