@@ -136,6 +136,8 @@ st_get_dem <- function(extent,
 #' @param angle Elevation angle of the light source (degrees). Defaults to 45.
 #' @param direction Azimuth angle of the light source (degrees). Defaults to
 #' 300.
+#' @param z_scale How much to exaggerate the z scale. Default is 1. Values of 
+#' 3-4 are fairly standard in cartographic practice.
 #' @param normalize Logical. If `TRUE` (default), values below zero are set to
 #' zero and the results are multiplied by 255.
 #' @param overwrite Logical. If `TRUE` (and `filename` is set), overwrites
@@ -147,9 +149,15 @@ st_get_dem <- function(extent,
 st_hillshade <- function(dem,
                          angle = 45,
                          direction = 300,
+                         z_scale = 1,
                          normalize = TRUE,
                          overwrite = TRUE,
                          filename = "") {
+  if (z_scale > 1) {
+    dem <- dem * z_scale
+  } else {
+    stop("Invalid z_scale. Must be >= 1.")
+  }
   raster::hillShade(
     slope = raster::terrain(dem, opt = "slope", unit = "radians"),
     aspect = raster::terrain(dem, opt = "aspect", unit = "radians"),
@@ -160,7 +168,6 @@ st_hillshade <- function(dem,
     overwrite = overwrite
   )
 }
-
 #' Contours from Raster
 #' 
 #' Generally used to create contour lines from a digital elevation model (DEM).
@@ -175,10 +182,12 @@ st_hillshade <- function(dem,
 #' @export
 st_contours <- function(raster, 
                        interval,
+                       maxpixels=(attr(raster, "nrows") * attr(raster, "ncols")) / 4,
                        threshold_length = units::as_units(250, "m")
                        ) {
   raster |>
     raster::rasterToContour(
+      maxpixels = maxpixels,
       levels = seq(
         from = floor(raster::minValue(raster)),
         to = ceiling(raster::maxValue(raster)),
