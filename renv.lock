@@ -1350,9 +1350,15 @@
     },
     "tigris": {
       "Package": "tigris",
-      "Version": "2.1",
-      "Source": "Repository",
-      "Repository": "RSPM",
+      "Version": "2.2.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "tigris",
+      "RemoteUsername": "walkerke",
+      "RemotePkgRef": "walkerke/tigris@ftp-patch",
+      "RemoteRef": "ftp-patch",
+      "RemoteSha": "99b45062a24facbdbfdb6749ca531811d64a52b6",
       "Requirements": [
         "R",
         "dplyr",
@@ -1365,7 +1371,7 @@
         "utils",
         "uuid"
       ],
-      "Hash": "d750d0f06536d915f01d433254451204"
+      "Hash": "5894be2cdada5bddaf4eff8a42d40960"
     },
     "timechange": {
       "Package": "timechange",
