@@ -1,15 +1,3 @@
-#' `stop()` if  Object is Not `sf`
-#'
-#' @param df Dataframe or `sf` object.
-#'
-#' @returns Nothing.
-#' @export
-st_is_sf <- function(df) {
-  if (!("sf" %in% class(df))) {
-    stop("Input must be an sf object.")
-  }
-}
-
 #' Check if Layer Projection Matches CRS and Transform if Not
 #'
 #' @param df `sf` object
@@ -51,7 +39,6 @@ st_bbox_sf <- function(df) {
 #'
 #' @returns An integer zoom level.
 st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
-  st_is_sf(extent)
   
   if (!(log2(tiles_on_side) %% 1 == 0)) {
       stop("`tiles_on_side` must be two to a power or 1.")
@@ -79,16 +66,17 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
 #'
 #' @param df Simple features dataframe.
 #' @param crs EPSG code or `crs` object.
+#' @param name Character. Name of geometry column. `"geometry"` is default.
 #'
 #' @returns Simple Features dataframe.
 #' @export
 #'
-st_preprocess <- function(df, crs) {
-  st_is_sf(df)
-  
+st_preprocess <- function(df, crs, name="geometry") {
   df |> 
     sf::st_transform(crs) |>
-    dplyr::rename_with(tolower)
+    dplyr::rename_with(tolower) |>
+    sf::st_set_geometry(name) |>
+    st_geom_to_xy()
 }
 
 #' Get DEM from AWS Terrain Tiles
@@ -160,9 +148,9 @@ st_hillshade <- function(dem,
   } else {
     stop("Invalid z_scale. Must be >= 1.")
   }
-  raster::hillShade(
-    slope = raster::terrain(dem, opt = "slope", unit = "radians"),
-    aspect = raster::terrain(dem, opt = "aspect", unit = "radians"),
+  terra::Shade(
+    slope = terra::terrain(dem, v = "slope", unit = "radians"),
+    aspect = terra::terrain(dem, v = "aspect", unit = "radians"),
     angle = angle,
     direction = direction,
     filename = filename,
@@ -190,11 +178,11 @@ st_contours <- function(raster,
                        threshold_length = units::as_units(250, "m")
                        ) {
   raster |>
-    raster::rasterToContour(
+    terra::as.contour(
       maxpixels = maxpixels,
       levels = seq(
-        from = floor(raster::minValue(raster)),
-        to = ceiling(raster::maxValue(raster)),
+        from = floor(terra::min(raster)),
+        to = ceiling(terra::max(raster)),
         by = interval
       )
     ) |>
@@ -586,6 +574,7 @@ st_is_point <- function(df, ...) {
 st_multi_type_center <- function(df,
                                  on_surface = TRUE,
                                  retain_geom = FALSE) {
+  
   if (retain_geom) {
     center_col <- "center"
   } else {
@@ -624,10 +613,17 @@ st_multi_type_center <- function(df,
 #'
 #' @export
 #'
-st_geom_to_xy <- function(df, cols=c("x", "y"), retain_geom=FALSE, ...) {
-  sf_col <- attr(df, "sf_column")
+st_geom_to_xy <- function(df, 
+                          cols = c("x", "y"), 
+                          crs = 4326,
+                          retain_geom=FALSE, 
+                          ...
+                          ) {
+  init_geo_col <- attr(df, "sf_column")
+  init_crs <- sf::st_crs(df)
   
   df <- df |> 
+    sf::st_transform(crs) |>
     st_multi_type_center(retain_geom=retain_geom, ...)
   
   df <- df |>
@@ -636,13 +632,15 @@ st_geom_to_xy <- function(df, cols=c("x", "y"), retain_geom=FALSE, ...) {
       "{cols[1]}" := .data$coords[, "X"],
       "{cols[2]}" := .data$coords[, "Y"]
     ) |>
-    dplyr::select(-c(.data$coords))
+    dplyr::select(-c(.data$coords)) |>
+    sf::st_transform(init_crs)
   
   if(retain_geom) {
     df |>
       sf::st_drop_geometry() |>
-      sf::st_set_geometry(sf_col)
+      sf::st_set_geometry(init_geo_col)
   }
+  df
 }
 
 #' Add Z Dimension to Points from Column

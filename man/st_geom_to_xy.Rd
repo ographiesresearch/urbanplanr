@@ -4,7 +4,7 @@
 \alias{st_geom_to_xy}
 \title{Geometry to XY Columns}
 \usage{
-st_geom_to_xy(df, cols = c("x", "y"), retain_geom = FALSE, ...)
+st_geom_to_xy(df, cols = c("x", "y"), crs = 4326, retain_geom = FALSE, ...)
 }
 \arguments{
 \item{df}{A dataframe with point geometries.}
