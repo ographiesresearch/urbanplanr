@@ -4,12 +4,14 @@
 \alias{st_preprocess}
 \title{Pre-processing operations for spatial data.}
 \usage{
-st_preprocess(df, crs)
+st_preprocess(df, crs, name = "geometry")
 }
 \arguments{
 \item{df}{Simple features dataframe.}
 
 \item{crs}{EPSG code or `crs` object.}
+
+\item{name}{Character. Name of geometry column. `"geometry"` is default.}
 }
 \value{
 Simple Features dataframe.
