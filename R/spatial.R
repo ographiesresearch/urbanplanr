@@ -76,7 +76,7 @@ st_preprocess <- function(df, crs, name="geometry") {
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
     sf::st_set_geometry(name) |>
-    st_geom_to_xy()
+    st_geom_to_xy(retain_geom = TRUE)
 }
 
 #' Get DEM from AWS Terrain Tiles
@@ -114,7 +114,8 @@ st_get_dem <- function(extent,
     clip="bbox",
     expand=expand,
     neg_to_na=TRUE
-  )
+  ) |>
+    terra::rast()
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -148,7 +149,7 @@ st_hillshade <- function(dem,
   } else {
     stop("Invalid z_scale. Must be >= 1.")
   }
-  terra::Shade(
+  terra::shade(
     slope = terra::terrain(dem, v = "slope", unit = "radians"),
     aspect = terra::terrain(dem, v = "aspect", unit = "radians"),
     angle = angle,
@@ -165,7 +166,7 @@ st_hillshade <- function(dem,
 #' @param raster `RasterLayer`, for example returned by `st_get_dem()`.
 #' @param interval Numeric. Elevation interval at which contours should be 
 #' drawn. In units of crs.
-#' @param maxpixels Maximum number of raster cells to use. Reduce if function is 
+#' @param maxcells Maximum number of raster cells to use. Reduce if function is 
 #' failing.
 #' @param threshold_length Threshold length below which contours will be 
 #' dropped. Helps to remove shards. Defaults to `units::as_units(250, "m").`
@@ -174,15 +175,15 @@ st_hillshade <- function(dem,
 #' @export
 st_contours <- function(raster, 
                        interval,
-                       maxpixels=(attr(raster, "nrows") * attr(raster, "ncols")) / 4,
+                       maxcells=terra::ncell(raster) / 4,
                        threshold_length = units::as_units(250, "m")
                        ) {
   raster |>
     terra::as.contour(
-      maxpixels = maxpixels,
+      maxcells = maxcells,
       levels = seq(
-        from = floor(terra::min(raster)),
-        to = ceiling(terra::max(raster)),
+        from = floor(terra::minmax(dem)[1]),
+        to = ceiling(terra::minmax(dem)[2]),
         by = interval
       )
     ) |>
@@ -190,6 +191,7 @@ st_contours <- function(raster,
     dplyr::rename(
       z = "level"
     ) |>
+    sf::st_cast("MULTILINESTRING") |>
     sf::st_cast("LINESTRING") |>
     dplyr::mutate(
       length = sf::st_length(.data$geometry)
@@ -632,15 +634,15 @@ st_geom_to_xy <- function(df,
       "{cols[1]}" := .data$coords[, "X"],
       "{cols[2]}" := .data$coords[, "Y"]
     ) |>
-    dplyr::select(-c(.data$coords)) |>
-    sf::st_transform(init_crs)
+    dplyr::select(-c(.data$coords))
   
   if(retain_geom) {
-    df |>
+    df <- df |>
       sf::st_drop_geometry() |>
       sf::st_set_geometry(init_geo_col)
   }
-  df
+  df |>
+    sf::st_transform(init_crs)
 }
 
 #' Add Z Dimension to Points from Column
