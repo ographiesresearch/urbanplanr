@@ -13,6 +13,9 @@ db_grant_access(conn, dbname, role)
 
 \item{role}{Character. Name of role.}
 }
+\value{
+conn
+}
 \description{
 Grant DB Acess to Role
 }

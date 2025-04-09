@@ -11,6 +11,9 @@ db_create_postgis(conn, dbname)
 
 \item{dbname}{Character. Name of database.}
 }
+\value{
+conn
+}
 \description{
 Create PostGIS extension.
 }

@@ -22,37 +22,60 @@ db_exists <- function(conn, dbname) {
 #' Create PostGIS extension.
 #'
 #' @inheritParams db_exists
+#' @param extension Character. Name of extension to create.
 #'
-#' @returns NULL
+#' @returns conn
+#' @export
+#'
+db_create_extension <- function(conn, dbname, extension) {
+  RPostgres::dbExecute(conn, glue::glue("CREATE EXTENSION {extension};"))
+  message(
+    glue::glue("Created {extension} extension on database '{dbname}'.")
+  )
+  conn
+}
+
+#' Create PostGIS extension.
+#'
+#' @inheritParams db_exists
+#'
+#' @returns conn
 #' @export
 #'
 db_create_postgis <- function(conn, dbname) {
-  RPostgres::dbExecute(conn, "CREATE EXTENSION postgis;")
-  message(
-    glue::glue("Created PostGIS extension on database '{dbname}'.")
-  )
-  NULL
+  db_create_extension(conn, dbname, "postgis")
+}
+
+#' Create PostGIS Raster extension.
+#'
+#' @inheritParams db_exists
+#'
+#' @returns conn
+#' @export
+#'
+db_create_postgis_raster <- function(conn, dbname) {
+  db_create_extension(conn, dbname, "postgis_raster")
 }
 
 #' Drop Database If It Exists
 #'
 #' @inheritParams db_exists
 #'
-#' @returns NULL
+#' @returns conn
 #' @export
 db_drop <- function(conn, dbname) {
   RPostgres::dbExecute(
     conn, 
     glue::glue("DROP DATABASE IF EXISTS {dbname};")
   )
-  NULL
+  conn
 }
 
 #' Create Database
 #'
 #' @inheritParams db_exists
 #'
-#' @returns NULL
+#' @returns conn
 #' @export
 #'
 db_create <- function(conn, dbname) {
@@ -65,7 +88,7 @@ db_create <- function(conn, dbname) {
     glue::glue("Created database '{dbname}'.")
   )
   
-  NULL
+  conn
 }
 
 #' Test Whether Role Exists
@@ -96,7 +119,7 @@ db_role_exists <- function(conn, role) {
 #' @inheritParams db_role_exists
 #' @param pass Character. Password
 #'
-#' @returns NULL
+#' @returns conn
 #' @export
 #'
 db_role_create <- function(conn, role, pass) {
@@ -107,7 +130,7 @@ db_role_create <- function(conn, role, pass) {
   message(
     glue::glue("Role '{role}' created.")
   )
-  NULL
+  conn
 }
 
 #' Grant DB Acess to Role
@@ -115,7 +138,7 @@ db_role_create <- function(conn, role, pass) {
 #' @inheritParams db_exists
 #' @inheritParams db_role_exists
 #'
-#' @returns NULL
+#' @returns conn
 #' @export
 #'
 db_grant_access <- function(conn, dbname, role) {
@@ -126,7 +149,7 @@ db_grant_access <- function(conn, dbname, role) {
   message(
     glue::glue("Granted CONNECT privilege on database '{dbname}' to role '{role}'.")
   )
-  NULL
+  conn
 }
 
 
@@ -160,25 +183,31 @@ db_create_if <- function(conn, dbname, role, pass) {
   if (db_exists(dbname)) {
     overwrite <- utils_prompt_check("Would you like to overwrite the database?")
     if (overwrite) {
-      db_drop(conn, dbname)
-      db_create(conn, dbname)
-      db_create_postgis(conn, dbname)
+      conn |>
+        db_drop(dbname) |>
+        db_create(dbname) |>
+        db_create_postgis(conn, dbname)
     } else {
       message(
         glue::glue("User chose to not overwrite database '{dbname}'.")
       )
     }
   } else {
-    db_create(conn, dbname)
-    db_create_postgis(conn, dbname)
+    conn |>
+      db_create(dbname) |>
+      db_create_postgis(dbname) |>
+      db_create_postgis_raster(dbname)
   }
   
   if (!db_role_exists(role)) {
-    db_role_create(conn, role, pass)
-    db_grant_access(conn, dbname, role)
-    db_set_defaults(conn, dbname, role)
+    conn |>
+      db_role_create(role, pass) |>
+      db_grant_access(dbname, role) |>
+      db_set_defaults(dbname, role)
   } else {
-    db_grant_access(conn, dbname, role)
-    db_set_defaults(conn, dbname, role)
+    conn |>
+      db_grant_access(dbname, role) |>
+      db_set_defaults(dbname, role)
   }
+  conn
 }

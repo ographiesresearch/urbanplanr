@@ -13,6 +13,9 @@ db_role_create(conn, role, pass)
 
 \item{pass}{Character. Password}
 }
+\value{
+conn
+}
 \description{
 Create Role With a Password
 }

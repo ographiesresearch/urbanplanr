@@ -7,7 +7,7 @@
 st_contours(
   raster,
   interval,
-  maxpixels = (attr(raster, "nrows") * attr(raster, "ncols"))/4,
+  maxcells = terra::ncell(raster)/4,
   threshold_length = units::as_units(250, "m")
 )
 }
@@ -17,7 +17,7 @@ st_contours(
 \item{interval}{Numeric. Elevation interval at which contours should be 
 drawn. In units of crs.}
 
-\item{maxpixels}{Maximum number of raster cells to use. Reduce if function is 
+\item{maxcells}{Maximum number of raster cells to use. Reduce if function is 
 failing.}
 
 \item{threshold_length}{Threshold length below which contours will be 

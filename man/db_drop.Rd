@@ -11,6 +11,9 @@ db_drop(conn, dbname)
 
 \item{dbname}{Character. Name of database.}
 }
+\value{
+conn
+}
 \description{
 Drop Database If It Exists
 }
