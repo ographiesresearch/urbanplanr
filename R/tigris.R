@@ -59,11 +59,11 @@ tigris_get_counties <- function(states, crs = 4326, counties = NULL, ...) {
   df <- tigris::counties(state = states, ...) |>
     st_preprocess(crs)
   
-  # if (!is.null(counties)) {
-  #   df <- df |>
-  #     dplyr::filter("name" %in% counties)
-  # }
-  # df
+  if (!is.null(counties)) {
+    df <- df |>
+      dplyr::filter("name" %in% counties)
+  }
+  df
 }
 
 #' @name tigris_get_*
