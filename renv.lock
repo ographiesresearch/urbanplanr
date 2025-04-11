@@ -68,6 +68,18 @@
       ],
       "Hash": "470851b6d5d0ac559e9d01bb352b4021"
     },
+    "RPostgreSQL": {
+      "Package": "RPostgreSQL",
+      "Version": "0.7-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "DBI",
+        "R",
+        "methods"
+      ],
+      "Hash": "b16ccdf1009ea27f8545f443593155d0"
+    },
     "RPostgres": {
       "Package": "RPostgres",
       "Version": "1.4.8",
@@ -1051,6 +1063,24 @@
       ],
       "Hash": "724dcc1490cd7071ee75ca2994a5446e"
     },
+    "rpostgis": {
+      "Package": "rpostgis",
+      "Version": "1.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "DBI",
+        "R",
+        "RPostgreSQL",
+        "cli",
+        "lifecycle",
+        "methods",
+        "sf",
+        "stats",
+        "terra"
+      ],
+      "Hash": "1b0951ff2efc02a53a1ae2bc0788f901"
+    },
     "rprojroot": {
       "Package": "rprojroot",
       "Version": "2.0.4",
@@ -1205,7 +1235,7 @@
     },
     "terra": {
       "Package": "terra",
-      "Version": "1.8-29",
+      "Version": "1.8-42",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1213,7 +1243,7 @@
         "Rcpp",
         "methods"
       ],
-      "Hash": "10321b092e16e7c5c02a3bf22727ef39"
+      "Hash": "e52c0fabedf6cbaf41e7e9c625a0fbd3"
     },
     "testthat": {
       "Package": "testthat",
@@ -1350,15 +1380,9 @@
     },
     "tigris": {
       "Package": "tigris",
-      "Version": "2.2.0",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "tigris",
-      "RemoteUsername": "walkerke",
-      "RemotePkgRef": "walkerke/tigris@ftp-patch",
-      "RemoteRef": "ftp-patch",
-      "RemoteSha": "99b45062a24facbdbfdb6749ca531811d64a52b6",
+      "Version": "2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "dplyr",
@@ -1371,7 +1395,7 @@
         "utils",
         "uuid"
       ],
-      "Hash": "5894be2cdada5bddaf4eff8a42d40960"
+      "Hash": "d750d0f06536d915f01d433254451204"
     },
     "timechange": {
       "Package": "timechange",
@@ -1397,14 +1421,14 @@
     },
     "units": {
       "Package": "units",
-      "Version": "0.8-5",
+      "Version": "0.8-7",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "Rcpp"
       ],
-      "Hash": "119d19da480e873f72241ff6962ffd83"
+      "Hash": "5d0b024902d5da97a2b64f002e92a869"
     },
     "usethis": {
       "Package": "usethis",
