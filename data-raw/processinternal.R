@@ -23,7 +23,8 @@ counties <- function() {
 
 UTM_ZONES <- file.path("data-raw", "utm_zones.geojson") |>
   sf::st_read() |>
-  dplyr::select(zone_num)
+  dplyr::select(zone_num) |>
+  sf::st_make_valid()
 
 COUNTIES <- counties()
 
