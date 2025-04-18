@@ -1,13 +1,46 @@
+#' Extent to State/County
+#'
+#' @param extent `sf` object.
+#'
+#' @returns A named list of counties that the.extent intersects. Takes the form 
+#' `list("MI" = c("Saginaw"))`.
+#' @export
+utils_extent_to_census <- function(extent) {
+  c <-  COUNTIES |>
+    sf::st_filter(
+      extent |>
+        sf::st_transform(sf::st_crs(COUNTIES))
+      )
+  if (nrow(c) == 0) {
+    stop("Extent does not overlap with any US counties. 
+    Currently this tool only supports US jurisdictions!")
+  }
+  c |>
+    sf::st_drop_geometry() |>
+    dplyr::group_by(state_name) |>
+    dplyr::summarize(
+      counties = list(county_name)
+    ) |>
+    dplyr::ungroup() |>
+    tibble::deframe()
+}
+
 #' Initiate Environment
+#'
+#' @param config_name Name of configuration to read values from.
+#' @param config_file Configuration file to read values from (config.yml is the 
+#' default).
 #'
 #' @returns A list or vector as returned by `config()`.
 #' @export
-utils_init_env <- function() {
+utils_init_env <- function(config_name = "default", 
+                           config_file = "config.yml") {
   if(file.exists(".env")) {
     dotenv::load_dot_env()
+    tidycensus::census_api_key(Sys.getenv("CENSUS_API"))
   }
   
-  config::get()
+  config::get(config=config_name, file=config_file)
 }
 
 #' Standardize Output File Format
@@ -28,7 +61,6 @@ utils_std_output_format <- function(format) {
   }else {
     stop("'format' parameter must be one of 'postgis', 'shp', 'gpkg', or 'geojson'.")
   }
-  message(glue::glue("Output format set to {config$format}."))
   format
 }
 
@@ -72,6 +104,26 @@ utils_prompt_check <- function(prompt) {
   }
 }
 
+utils_write_pg_raster <- function(raster, name, dbname, host, role, pass, port) {
+  conn <- RPostgreSQL::dbConnect(
+    drv = DBI::dbDriver("PostgreSQL"),
+    dbname = dbname,
+    host = host,
+    user = role,
+    pass = pass,
+    port = port
+  )
+  on.exit(RPostgreSQL::dbDisconnect(conn))
+  
+  rpostgis::pgWriteRast(
+    conn=conn, 
+    name=name, 
+    raster=raster, 
+    overwrite=TRUE
+  )
+  raster
+}
+
 #' Write Dataframe to One or Multiple Common Output Formats
 #'
 #' @param df Dataframe or data frame extension (e.g., tibble).
@@ -82,53 +134,88 @@ utils_prompt_check <- function(prompt) {
 #'
 #' @returns Original dataframe.
 #' @export
-utils_write_multi <- function(df, 
+utils_write_multi <- function(data, 
                         name, 
                         dir_db, 
-                        format) {
+                        format,
+                        conn = NULL) {
   message(glue::glue("Writing {name}."))
+  raster <- "SpatRaster" %in% class(data)
+  sf <- "sf" %in% class(data)
   if (format == "gpkg") {
-    sf::st_write(
-      df,
-      stringr::str_c(dir_db, format, sep="."),
-      name,
-      append = FALSE,
-      delete_layer = TRUE,
-      quiet = TRUE
-    )
+    if (!raster) {
+      sf::st_write(
+        obj = data,
+        dsn = stringr::str_c(dir_db, format, sep="."),
+        layer = name,
+        append = FALSE,
+        delete_layer = TRUE,
+        quiet = TRUE
+      )
+    } else {
+      sf::st_delete(
+        dsn = stringr::str_c(dir_db, format, sep="."),
+        layer = name,
+        driver = "GPKG",
+        quiet = FALSE
+        )
+      terra::writeRaster(
+        x = data,
+        filename = stringr::str_c(dir_db, format, sep="."),
+        filetype = "GPKG",
+        gdal = c(glue::glue("RASTER_TABLE={name}"), "APPEND_SUBDATASET=YES", "OVERWRITE=YES")
+      )
+    }
   } else if (format == "postgis") {
-    conn <- RPostgres::dbConnect(
-      drv=RPostgres::Postgres(),
-      dbname=Sys.getenv("DB_NAME"),
-      host=Sys.getenv("DB_HOST"),
-      port=Sys.getenv("DB_PORT"),
-      password=Sys.getenv("DB_PASS"),
-      user=Sys.getenv("DB_USER")
-    )
-    on.exit(RPostgres::dbDisconnect(conn), add = TRUE)
-    sf::st_write(
-      df,
-      conn,
-      name,
-      append = FALSE,
-      delete_layer = TRUE,
-      quiet = TRUE
-    )
+    if (!raster) {
+      sf::st_write(
+        obj = data,
+        dsn = conn,
+        layer = name,
+        append = FALSE,
+        delete_layer = TRUE,
+        quiet = TRUE
+      )
+    } else {
+      rpostgis::pgWriteRast(
+        conn = conn, 
+        name = name, 
+        raster = data, 
+        overwrite = TRUE
+      )
+    }
   } else if (format == "dxf") {
-    sf::st_write(
-      df,
-      name,
-      driver = "dxf",
-      append = FALSE,
-      delete_layer = TRUE,
-      quiet = TRUE
-    )
+    dir.create(dir_db, showWarnings = FALSE)
+    if (!raster) {
+      sf::st_write(
+        obj = data,
+        dsn = file.path(
+          dir_db,
+          stringr::str_c(dir_db, format, sep = ".")
+        ),
+        name = name,
+        driver = format,
+        append = FALSE,
+        delete_layer = TRUE,
+        quiet = TRUE
+      )
+    }
+    else {
+      terra::writeRaster(
+        x = data, 
+        filename = file.path(
+          dir_db,
+          stringr::str_c(name, "tif", sep = ".")
+        ),
+        overwrite = TRUE
+      )
+    }
   } else if (format == "csv") {
     dir.create(dir_db, showWarnings = FALSE)
-    if ("sf" %in% class(df)) {
+    if (!raster) {
       sf::st_write(
-        df,
-        file.path(
+        obj = data,
+        dsn = file.path(
           dir_db,
           stringr::str_c(name, format, sep = ".")
         ),
@@ -136,9 +223,9 @@ utils_write_multi <- function(df,
         delete_dsn = TRUE,
         quiet = TRUE
       )
-    } else {
+    } else if (!sf) {
       readr::write_csv(
-        df, 
+        data, 
         file.path(
           dir_db,
           stringr::str_c(name, "csv", sep = ".")
@@ -146,10 +233,20 @@ utils_write_multi <- function(df,
         append = FALSE
       )
     }
+    else if (raster) {
+      terra::writeRaster(
+        x = data, 
+        filename = file.path(
+          dir_db,
+          stringr::str_c(name, "tif", sep = ".")
+        ),
+        overwrite = TRUE
+      )
+    }
   } else {
     stop("Invalid output format provided.")
   }
-  df
+  data
 }
 
 #' Get Remote File and Write to Disk
