@@ -1,14 +1,16 @@
-counties <- function() {
-  states <- tigris::states() |>
-    sf::st_drop_geometry() |>
+states <- function() {
+  tigris::states() |>
+    st_bbox_sf() |>
     dplyr::select(
       geoid=GEOID,
       state_abbrev=STUSPS,
       state_name=NAME
     )
-  
+}
+
+counties <- function(states) {
   counties <- tigris::counties() |>
-    sf::st_drop_geometry() |>
+    st_bbox_sf() |>
     dplyr::select(
       county_name = NAME,
       state_geoid = STATEFP,
@@ -16,7 +18,7 @@ counties <- function() {
       county_geoid = GEOID
     ) |>
     dplyr::left_join(
-      states,
+      states |> sf::st_drop_geometry(),
       by = dplyr::join_by("state_geoid"=="geoid")
     )
 }
@@ -26,6 +28,8 @@ UTM_ZONES <- file.path("data-raw", "utm_zones.geojson") |>
   dplyr::select(zone_num) |>
   sf::st_make_valid()
 
-COUNTIES <- counties()
+STATES <- states()
 
-usethis::use_data(COUNTIES, UTM_ZONES, internal=TRUE, overwrite = TRUE)
+COUNTIES <- counties(STATES)
+
+usethis::use_data(COUNTIES, STATES, UTM_ZONES, internal=TRUE, overwrite = TRUE)
