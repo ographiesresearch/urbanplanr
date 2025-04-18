@@ -667,8 +667,8 @@ st_geom_to_xy <- function(df,
   init_crs <- sf::st_crs(df)
   
   df <- df |> 
-    sf::st_transform(crs) |>
-    st_multi_type_center(retain_geom=retain_geom, ...)
+    st_multi_type_center(retain_geom=retain_geom, ...) |>
+    sf::st_transform(crs = crs)
   
   df <- df |>
     dplyr::mutate(
@@ -676,7 +676,8 @@ st_geom_to_xy <- function(df,
       "{cols[1]}" := .data$coords[, "X"],
       "{cols[2]}" := .data$coords[, "Y"]
     ) |>
-    dplyr::select(-c(.data$coords))
+    dplyr::select(-c("coords")) |>
+    sf::st_transform(init_crs)
   
   if(retain_geom) {
     df <- df |>
