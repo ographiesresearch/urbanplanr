@@ -46,7 +46,7 @@ st_point_from_coords <- function(coords, crs, name, coord_crs=4326) {
     sf::st_sfc(crs=coord_crs) |>
     sf::st_as_sf() |>
     sf::st_set_geometry("geometry") |>
-    sf::st_transform(crs)
+    st_preprocess(crs = 2249)
   
   if(!missing(name)) {
     df <- df |>
@@ -634,6 +634,11 @@ st_multi_type_center <- function(df,
     df <- df |>
       dplyr::mutate(
         "{center_col}" := sf::st_centroid(sf::st_geometry(df))
+      )
+  } else if (st_is_point(df)) {
+    df <- df |>
+      dplyr::mutate(
+        "{center_col}" := sf::st_geometry(df)
       )
   }
   df |>
