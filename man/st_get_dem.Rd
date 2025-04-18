@@ -6,7 +6,7 @@
 \usage{
 st_get_dem(
   extent,
-  tiles_on_side = 4,
+  tiles_on_side = 8,
   expand = NULL,
   z = st_zoom_from_extent(extent = extent, tiles_on_side = tiles_on_side),
   src = "aws"

@@ -3,6 +3,8 @@
 #' @inheritParams st_get_dem
 #' @inheritParams st_contours
 #' @inheritParams st_hillshade
+#' @param mask Boolean. If `TRUE`, DEM and subsequent processed rasters are
+#' masked to the boundaries of the extent.
 #' @param stepped Boolean. If `TRUE`, returns rasterized stepped topography 
 #' based on contours.
 #'
@@ -10,6 +12,7 @@
 #' @export
 flow_terrain <- function(extent,
                          expand = NULL,
+                         mask = FALSE,
                          interval = 10,
                          z_scale = 3,
                          tiles_on_side = 8,
@@ -26,7 +29,7 @@ flow_terrain <- function(extent,
   
   message("Cropping digital elevation model...")
   dem <- dem |> 
-    terra::crop(extent, mask=TRUE)
+    terra::crop(extent, mask=mask)
   message("Done.")
   
   message(terra::crs(dem))

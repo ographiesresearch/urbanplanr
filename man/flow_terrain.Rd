@@ -7,6 +7,7 @@
 flow_terrain(
   extent,
   expand = NULL,
+  mask = FALSE,
   interval = 10,
   z_scale = 3,
   tiles_on_side = 8,
@@ -19,6 +20,9 @@ projected and in linear units.}
 
 \item{expand}{A numeric value of a distance, in map units, used to expand 
 the bounding box that is used to fetch the terrain tiles.}
+
+\item{mask}{Boolean. If `TRUE`, DEM and subsequent processed rasters are
+masked to the boundaries of the extent.}
 
 \item{interval}{Numeric. Elevation interval at which contours should be 
 drawn. In units of crs.}
