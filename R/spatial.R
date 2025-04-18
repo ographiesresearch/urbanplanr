@@ -24,10 +24,37 @@ st_check_for_proj <- function(df, crs=4326) {
 #' @export
 st_bbox_sf <- function(df) {
   df |>
-    sf::st_bbox() |> 
-    sf::st_as_sfc() |>
+    dplyr::rowwise() |>
+    dplyr::mutate(
+      geometry = sf::st_as_sfc(sf::st_bbox(geometry))
+      ) |>
+    dplyr::ungroup()
+}
+
+#' Create a Point Dataframe Row from Coordinate Pair
+#'
+#' @param coords vector of longitude, latitude coordinates (in EPSG:4326, unless
+#' coord_crs is changed).
+#' @param name Name to give point (in name field).
+#' @param crs output `crs`
+#' @param coord_crs `crs` of provided points. 4326 default.
+#'
+#' @returns `sf` object
+#' @export
+st_point_from_coords <- function(coords, crs, name, coord_crs=4326) {
+  df <- sf::st_point(x=coords, dim="XY") |>
+    sf::st_sfc(crs=coord_crs) |>
     sf::st_as_sf() |>
-    sf::st_set_geometry("geometry")
+    sf::st_set_geometry("geometry") |>
+    sf::st_transform(crs)
+  
+  if(!missing(name)) {
+    df <- df |>
+      dplyr::mutate(
+        name = name
+      )
+  }
+  df
 }
 
 #' Determine Zoom Level from Extent and Requested Tile Resolution
@@ -96,7 +123,7 @@ st_preprocess <- function(df, crs, name="geometry") {
 #' @export
 #'
 st_get_dem <- function(extent, 
-                       tiles_on_side = 4, 
+                       tiles_on_side = 8, 
                        expand=NULL,
                        z = st_zoom_from_extent(
                          extent = extent, 
@@ -107,15 +134,27 @@ st_get_dem <- function(extent,
   # get_elev_master has a max z of 14.
   z <- min(c(14,z)) 
   
-  elevatr::get_elev_raster(
-    locations=extent,
-    z=z,
-    src=src,
-    clip="bbox",
-    expand=expand,
-    neg_to_na=TRUE
-  ) |>
+  dem <- extent |>
+    elevatr::get_elev_raster(
+      z=z,
+      src=src,
+      clip="bbox",
+      expand=expand,
+      neg_to_na=TRUE,
+      verbose=FALSE
+    ) |>
     terra::rast()
+  
+  terra::set.crs(dem, glue::glue("epsg:{sf::st_crs(extent)$epsg}"))
+  
+  min_res <- 256 * tiles_on_side
+  
+  fact <- ceiling(min_res / terra::ncol(dem))
+  
+  if (fact > 1) {
+    dem <- terra::disagg(dem, fact = fact, method = "bilinear")
+  }
+  dem
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -175,15 +214,15 @@ st_hillshade <- function(dem,
 #' @export
 st_contours <- function(raster, 
                        interval,
-                       maxcells=terra::ncell(raster) / 4,
+                       maxcells = terra::ncell(raster) / 4,
                        threshold_length = units::as_units(250, "m")
                        ) {
   raster |>
     terra::as.contour(
       maxcells = maxcells,
       levels = seq(
-        from = floor(terra::minmax(dem)[1]),
-        to = ceiling(terra::minmax(dem)[2]),
+        from = floor(terra::minmax(raster)[1]),
+        to = ceiling(terra::minmax(raster)[2]),
         by = interval
       )
     ) |>
@@ -222,6 +261,8 @@ st_contours_enclose <- function(
     enclosure_layer <- st_bbox_sf(enclosure_layer)
   }
   
+  message(sf::st_crs(contours)$epsg)
+  message(sf::st_crs(enclosure_layer)$epsg)
   if(poly) {
     out_geom <- "MULTIPOLYGON"
   } else {
@@ -412,7 +453,8 @@ st_model_scale <- function(df, scale, thickness, contour_int) {
 st_detect_utm <- function(df) {
   zone <- df |>
     sf::st_transform(
-      sf::st_crs(UTM_ZONES)) |>
+      sf::st_crs(UTM_ZONES)
+      ) |>
     sf::st_join(UTM_ZONES, sf::st_intersects, largest = TRUE) |>
     dplyr::pull("zone_num")
   
