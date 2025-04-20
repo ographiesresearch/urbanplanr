@@ -7,16 +7,14 @@
 #' @export
 munis_preprocess <- function(df, crs) {
   df |>
-    st_check_for_proj(crs) |>
-    st_geom_to_xy() |>
     dplyr::select(
       "name",
       "state",
-      x_pl = "x",
-      y_pl = "y"
+      "x",
+      "y"
     ) |>
     dplyr::mutate(
-      pl_id = stringr::str_c(
+      id = stringr::str_c(
         stringr::str_to_lower(.data$name), 
         stringr::str_to_lower(.data$state),
         sep = "_"
