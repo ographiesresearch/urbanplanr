@@ -10,6 +10,6 @@ default:
         state: "MA"
   crs: 2249
   year: 2023
-  format: "gpkg"
+  format: "postgis"
   census_api: NULL
   datasets: ["lodes", "occ", "ind", "age", "race", "housing"]
