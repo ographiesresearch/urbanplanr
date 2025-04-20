@@ -10,7 +10,8 @@ flow_terrain(
   interval = 10,
   z_scale = 3,
   tiles_on_side = 8,
-  stepped = FALSE
+  stepped = FALSE,
+  mask = TRUE
 )
 }
 \arguments{

@@ -19,7 +19,7 @@
 \usage{
 tigris_get_states(states = NULL, crs = 4326, ...)
 
-tigris_get_counties(states, crs = 4326, counties = NULL, ...)
+tigris_get_counties(states = NULL, crs = 4326, counties = NULL, ...)
 
 tigris_get_multistate(.function, states, crs = 4326, ...)
 
@@ -31,7 +31,7 @@ tigris_get_multistate_by_county(
   ...
 )
 
-tigris_get_counties(states, crs = 4326, counties = NULL, ...)
+tigris_get_counties(states = NULL, crs = 4326, counties = NULL, ...)
 
 tigris_get_places(states, crs = 4326, ...)
 

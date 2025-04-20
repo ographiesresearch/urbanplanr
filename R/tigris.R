@@ -55,7 +55,6 @@ tigris_get_states <- function(states = NULL, crs = 4326, ...) {
 #' @name tigris_get_*
 #' @export
 tigris_get_counties <- function(states, crs = 4326, counties = NULL, ...) {
-  print(states)
   df <- tigris::counties(state = states, ...) |>
     st_preprocess(crs)
   
@@ -69,11 +68,8 @@ tigris_get_counties <- function(states, crs = 4326, counties = NULL, ...) {
 #' @name tigris_get_*
 #' @export
 tigris_get_multistate <- function(.function, states, crs = 4326, ...) {
-  units <- list()
-  for (s in states) {
-    units[[s]] <- .function(state = s, ...)
-  }
-  units |>
+  states |>
+    purrr::map(\(x) .function(state = x, ...)) |>
     dplyr::bind_rows() |>
     st_preprocess(crs)
 }
@@ -85,7 +81,6 @@ tigris_get_multistate_by_county <- function(.function,
                                             crs = 4326, 
                                             counties = NULL, 
                                             ...) {
-  units <- list()
   county_list <- COUNTIES |>
     dplyr::filter(.data$state_abbrev %in% states)
   if (!is.null(counties)) {
@@ -100,29 +95,29 @@ tigris_get_multistate_by_county <- function(.function,
         dplyr::filter(.data$county_geoid %in% counties)
     }
   }
-  for (i in rownames(county_list)) {
-    units[[i]] <- .function(state = county_list[i, "state_geoid"], county = county_list[i, "county_id"], ...)
-  }
-  units |>
+  county_list |>
+    purrr::pmap(
+      \(state_geoid, county_id) .function(state = state_geoid, county = county_id, ...)
+    ) |>
     dplyr::bind_rows()  |>
     st_preprocess(crs)
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_counties <- function(states, crs = 4326, counties = NULL, ...) {
+tigris_get_counties <- function(states = NULL, crs = 4326, counties = NULL, ...) {
   message("Downloading county geometries.")
-  df <- tigris_get_multistate(
-    .function = tigris::counties,
-    states = states,
-    crs = crs,
-    ...
-  ) 
+  df <- tigris::counties(
+    state = states
+  )  |>
+    st_preprocess(crs)
   
   if (!is.null(counties)) {
     df <- df |>
       dplyr::filter(.data$name %in% counties)
   }
+  df |>
+    sf::st_transform()
 }
 
 #' @name tigris_get_*

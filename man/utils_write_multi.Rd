@@ -4,17 +4,17 @@
 \alias{utils_write_multi}
 \title{Write Dataframe to One or Multiple Common Output Formats}
 \usage{
-utils_write_multi(df, name, dir_db, format)
+utils_write_multi(data, name, dir_db, format, conn = NULL)
 }
 \arguments{
-\item{df}{Dataframe or data frame extension (e.g., tibble).}
-
 \item{name}{Character. Name of output table or file.}
 
 \item{dir_db}{Character. Name of directory or database.}
 
 \item{format}{Character vector including one or multiple of `"gpkg"`, 
 `"postgis"`, `"dxf"`, or `"csv"`.}
+
+\item{df}{Dataframe or data frame extension (e.g., tibble).}
 }
 \value{
 Original dataframe.

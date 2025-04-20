@@ -13,6 +13,9 @@ db_set_defaults(conn, dbname, role)
 
 \item{role}{Character. Name of role.}
 }
+\value{
+conn
+}
 \description{
 Set Default Access for Role on Database
 }
