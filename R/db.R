@@ -19,6 +19,27 @@ db_exists <- function(conn, dbname) {
   exists
 }
 
+db_extension_exists <- function(conn, ext) {
+   ext %in% RPostgres::dbGetQuery(
+    conn,
+    glue::glue("SELECT extname FROM pg_extension WHERE extname = '{ext}'")
+  )$extname
+}
+
+db_create_extension <- function(conn, ext) {
+  current <- RPostgres::dbGetInfo(conn)
+  if(!db_extension_exists(conn, ext)) {
+    RPostgres::dbExecute(conn, glue::glue("CREATE EXTENSION {ext}"))
+    message(
+      glue::glue("Created '{ext}' extension on database '{current$dbname}'.")
+    )
+  } else {
+    message(
+      glue::glue("'{ext}' already exists on database '{current$dbname}'.")
+    )
+  }
+}
+
 #' Create PostGIS extension.
 #'
 #' @inheritParams db_exists
@@ -27,34 +48,10 @@ db_exists <- function(conn, dbname) {
 #' @returns conn
 #' @export
 #'
-db_create_extension <- function(conn, dbname, extension) {
-  RPostgres::dbExecute(conn, glue::glue("CREATE EXTENSION {extension};"))
-  message(
-    glue::glue("Created {extension} extension on database '{dbname}'.")
-  )
+db_create_extensions <- function(conn, 
+                                 extensions = c("postgis", "postgis_raster")) {
+  purrr::walk(extensions, \(x) db_create_extension(conn, x))
   conn
-}
-
-#' Create PostGIS extension.
-#'
-#' @inheritParams db_exists
-#'
-#' @returns conn
-#' @export
-#'
-db_create_postgis <- function(conn, dbname) {
-  db_create_extension(conn, dbname, "postgis")
-}
-
-#' Create PostGIS Raster extension.
-#'
-#' @inheritParams db_exists
-#'
-#' @returns conn
-#' @export
-#'
-db_create_postgis_raster <- function(conn, dbname) {
-  db_create_extension(conn, dbname, "postgis_raster")
 }
 
 #' Drop Database If It Exists
@@ -157,7 +154,7 @@ db_grant_access <- function(conn, dbname, role) {
 #'
 #' @inheritParams db_grant_access
 #'
-#' @returns NULL
+#' @returns conn
 #' @export
 #'
 db_set_defaults <- function(conn, dbname, role) {
@@ -168,7 +165,30 @@ db_set_defaults <- function(conn, dbname, role) {
   message(
     glue::glue("Set default SELECT privileges in '{dbname}' to role '{role}'.")
   )
-  NULL
+  conn
+}
+
+#' Create connection to DB
+#' 
+#' Thin wrapper around RPostgres::dbConnect().
+#'
+#' @inheritParams db_grant_access
+#' @inheritParams db_role_create
+#' @param pass Character. Password.
+#' @param host Character. Host address. Defaults to "localhost".
+#' @param port Integer. Port number. Defaults to 5432.
+#'
+#' @returns conn
+#' @export
+db_conn <- function(dbname, role, pass, host = "localhost", port = 5432) {
+  RPostgres::dbConnect(
+    drv = RPostgres::Postgres(),
+    dbname = dbname,
+    user = role,
+    password = pass,
+    host = host,
+    port = port
+    )
 }
 
 #' Create DB and User, Set Access
@@ -176,38 +196,52 @@ db_set_defaults <- function(conn, dbname, role) {
 #' @inheritParams db_grant_access
 #' @inheritParams db_role_create
 #'
-#' @returns NULL
+#' @returns conn
 #' @export
-#'
-db_create_if <- function(conn, dbname, role, pass) {
-  if (db_exists(dbname)) {
+db_create_flow <- function(conn,
+                           dbname,
+                           role,
+                           role_pass,
+                           admin_pass,
+                           extensions = c("postgis", "postgis_raster")
+                           ) {
+  if (db_exists(conn, dbname)) {
     overwrite <- utils_prompt_check("Would you like to overwrite the database?")
+    overwrite <- ifelse(
+      overwrite, 
+      utils_prompt_check("Are you sure?"), 
+      FALSE
+      )
     if (overwrite) {
       conn |>
         db_drop(dbname) |>
-        db_create(dbname) |>
-        db_create_postgis(conn, dbname)
-    } else {
-      message(
-        glue::glue("User chose to not overwrite database '{dbname}'.")
-      )
+        db_create(dbname)
     }
   } else {
-    conn |>
-      db_create(dbname) |>
-      db_create_postgis(dbname) |>
-      db_create_postgis_raster(dbname)
+    db_create(conn, dbname)
   }
   
-  if (!db_role_exists(role)) {
-    conn |>
-      db_role_create(role, pass) |>
-      db_grant_access(dbname, role) |>
-      db_set_defaults(dbname, role)
-  } else {
-    conn |>
-      db_grant_access(dbname, role) |>
-      db_set_defaults(dbname, role)
+  current <- RPostgres::dbGetInfo(conn)
+  
+  new_conn <- db_conn(
+    dbname = dbname,
+    role = current$username,
+    pass = admin_pass,
+    host = current$host,
+    port = current$port
+  )
+  
+  on.exit(RPostgres::dbDisconnect(new_conn))
+  
+  if (!db_role_exists(new_conn, role)) {
+    new_conn |>
+      db_role_create(role, pass)
   }
+
+  new_conn |>
+    db_grant_access(dbname, role) |>
+    db_set_defaults(dbname, role) |>
+    db_create_extensions(extensions)
+
   conn
 }
