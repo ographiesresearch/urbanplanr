@@ -70,7 +70,7 @@ tigris_get_counties <- function(states, crs = 4326, counties = NULL, ...) {
 tigris_get_multistate <- function(.function, states, crs = 4326, ...) {
   states |>
     purrr::map(\(x) .function(state = x, ...)) |>
-    dplyr::bind_rows() |>
+    purrr::list_rbind() |>
     st_preprocess(crs)
 }
 
@@ -99,7 +99,7 @@ tigris_get_multistate_by_county <- function(.function,
     purrr::pmap(
       \(state_geoid, county_id) .function(state = state_geoid, county = county_id, ...)
     ) |>
-    dplyr::bind_rows()  |>
+    purrr::list_rbind()  |>
     st_preprocess(crs)
 }
 
