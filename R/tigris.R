@@ -71,6 +71,7 @@ tigris_get_multistate <- function(.function, states, crs = 4326, ...) {
   states |>
     purrr::map(\(x) .function(state = x, ...)) |>
     purrr::list_rbind() |>
+    sf::st_as_sf() |>
     st_preprocess(crs)
 }
 
@@ -97,15 +98,16 @@ tigris_get_multistate_by_county <- function(.function,
   }
   county_list |>
     purrr::pmap(
-      \(state_geoid, county_id) .function(state = state_geoid, county = county_id, ...)
+      \(s, c) .function(state = s, county = c, ...)
     ) |>
-    purrr::list_rbind()  |>
+    purrr::list_rbind() |>
+    sf::st_as_sf() |>
     st_preprocess(crs)
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_counties <- function(states = NULL, crs = 4326, counties = NULL, ...) {
+tigris_get_counties <- function(states = NULL, counties = NULL, crs = 4326, ...) {
   message("Downloading county geometries.")
   df <- tigris::counties(
     state = states
@@ -137,7 +139,7 @@ tigris_get_places <- function(states, crs = 4326, ...) {
 #' @export
 tigris_get_tracts <- function(states, crs = 4326, ...) {
   message("Downloading tract geometries.")
-  tigris_get_multistate(
+  tigris_get_multistate_by_county(
     .function = tigris::tracts,
     states = states,
     crs = crs,
