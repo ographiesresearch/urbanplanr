@@ -28,8 +28,11 @@ UTM_ZONES <- file.path("data-raw", "utm_zones.geojson") |>
   dplyr::select(zone_num) |>
   sf::st_make_valid()
 
+MUNIS <- munis_all(crs = 3857) |>
+  st_bbox_sf()
+
 STATES <- states()
 
 COUNTIES <- counties(STATES)
 
-usethis::use_data(COUNTIES, STATES, UTM_ZONES, internal=TRUE, overwrite = TRUE)
+usethis::use_data(COUNTIES, STATES, UTM_ZONES, MUNIS, internal=TRUE, overwrite = TRUE)

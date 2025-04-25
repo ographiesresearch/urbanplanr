@@ -1,3 +1,21 @@
+utils_slugify <- function(df, ..., slug_col = "id", sep = "-") {
+  cols <- rlang::enquos(...)
+  df |>
+    dplyr::mutate(
+      !!slug_col := df |>
+        sf::st_drop_geometry() |>
+        dplyr::select(!!!rlang::enquos(...)) |>
+        purrr::pmap_chr(~ stringr::str_c(..., sep = sep) |> stringr::str_to_lower())
+    )
+}
+
+utils_list_unique_by_index <- function(list, idx) {
+  list |>
+    purrr::map(idx) |>
+    unlist() |>
+    unique()
+}
+
 #' Extent to State/County
 #'
 #' @param extent `sf` object.
@@ -300,9 +318,6 @@ utils_get_arc <- function(id) {
 #' @returns Object of class `sf`.
 #' @export
 utils_get_remote_shp <- function(url, layer) {
-  message(
-    glue::glue("Downloading {shpfile} from {url}...")
-  )
   temp <- base::tempfile(fileext = ".zip")
   utils_get_remote(
     url = url,

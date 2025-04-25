@@ -1,29 +1,3 @@
-#' Preprocessing Workflow for Municipalities
-#'
-#' @param df An `sf` object.
-#' @param crs Target coordinate reference system.
-#'
-#' @returns An `sf` object.
-#' @export
-munis_preprocess <- function(df, crs) {
-  df |>
-    st_check_for_proj(crs) |>
-    st_geom_to_xy() |>
-    dplyr::select(
-      "name",
-      "state",
-      x_pl = "x",
-      y_pl = "y"
-    ) |>
-    dplyr::mutate(
-      pl_id = stringr::str_c(
-        stringr::str_to_lower(.data$name), 
-        stringr::str_to_lower(.data$state),
-        sep = "_"
-      )
-    )
-}
-
 #' Downloads Municipal Boundaries by State
 #' @name muni_get_state
 #' 
@@ -43,8 +17,6 @@ munis_preprocess <- function(df, crs) {
 #' `muni_get_ri()` Downloads municipal boundaries for Rhode Island.
 #' 
 #' `muni_get_vt()` Downloads municipal boundaries for Vermont.
-#'
-#' @inheritParams munis_preprocess
 #'
 #' @returns An `sf` object.
 #' @export
@@ -183,62 +155,52 @@ munis_get_vt <- function(crs) {
     dplyr::select(name = "townnamemc", "state")
 }
 
-#' Execute Municipality-Getter Using State Name
+#' Get Municipality by State and Munis
 #'
 #' @param states Character vector of state names.
 #' @param crs target coordinate reference system.
 #'
 #' @returns An `sf` object
 #' @export
-munis_decision <- function(states, crs) {
-  state_munis <- list()
-  no_muni_st <- c()
-  states <- stringr::str_to_lower(states)
-  for (s in states) {
-    func <- glue::glue("munis_get_{s}")
-    if (exists(func) && is.function(func)) {
-      state_munis[[s]] <- do.call(func, args=list())
-    } else {
-      message(glue::glue("No source for municipalities defined via {func}."))
-      no_muni_st <- append(no_muni_st, s)
-    }
+munis_get <- function(states, crs, munis = NULL) {
+  df <- states |>
+    stringr::str_to_lower() |>
+    purrr::map(\(x) {
+        do.call(glue::glue("munis_get_{x}"), args=list(crs=crs))
+      }
+    ) |>
+    purrr::list_rbind() |>
+    sf::st_as_sf() |>
+    dplyr::mutate(
+      name = dplyr::case_when(
+        stringr::str_detect(name, "^ *$") ~ NA_character_,
+        .default = name
+      )
+    ) |>
+    tidyr::drop_na(name) |>
+    utils_slugify(name, state) |>
+    sf::st_cast("MULTIPOLYGON")|>
+    st_preprocess(crs)
+  
+  if (!is.null(munis)) {
+    df <- df |>
+      dplyr::filter(
+        stringr::str_to_upper(name) %in% stringr::str_to_upper(munis)
+        )
   }
-  if (length(no_muni_st) > 0) {
-    state_munis[["Other"]] <- tigris_get_places(states = no_muni_st)
-  }
-  dplyr::bind_rows(state_munis) |>
-    munis_preprocess(crs)
+  df
 }
 
-# munis_select <- function(place_geo, places) {
-#   searches <- dplyr::bind_rows(places) |>
-#     dplyr::mutate(
-#       pl_id = stringr::str_c(
-#         stringr::str_to_lower(place), 
-#         stringr::str_to_lower(state), 
-#         sep="_"
-#       ),
-#       pl_id = stringr::str_c("^", pl_id, "$", sep="")
-#     ) |>
-#     dplyr::pull(pl_id) |>
-#     stringr::str_c(collapse="|")
-#   
-#   places_vector <- dplyr::bind_rows(places) |>
-#     dplyr::pull(place)
-#   
-#   matched <- place_geo |>
-#     dplyr::mutate(
-#       selected = stringr::str_detect(pl_id, searches)
-#     )
-#   match_count <- nrow(matched |> dplyr::filter(selected))
-#   if (match_count == length(places)) {
-#     message(glue::glue("Exact match found for all place names ({stringr::str_c(places_vector, collapse=', ')})."))
-#   } else if (match_count > length(places)) {
-#     message(glue::glue("Ambiguous place names provided."))
-#     stop()
-#   } else {
-#     message(glue::glue("Unable to match all place names."))
-#     stop()
-#   }
-#   matched
-# }
+munis_all <- function(crs) {
+  funcs <- stringr::str_c(
+    "munis_get_",
+    stringr::str_to_lower(state.abb)
+  )
+  
+  state.abb[
+    funcs |> 
+      purrr::map(exists) |> 
+      unlist()
+  ] |>
+    munis_get(crs)
+}
