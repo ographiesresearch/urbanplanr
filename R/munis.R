@@ -155,24 +155,18 @@ munis_get_vt <- function(crs) {
     dplyr::select(name = "townnamemc", "state")
 }
 
-#' Execute Municipality-Getter Using State Name
+#' Get Municipality by State and Munis
 #'
 #' @param states Character vector of state names.
 #' @param crs target coordinate reference system.
 #'
 #' @returns An `sf` object
 #' @export
-munis_decision <- function(states, crs) {
-  states |>
+munis_get <- function(states, crs, munis = NULL) {
+  df <- states |>
     stringr::str_to_lower() |>
     purrr::map(\(x) {
-        func <- glue::glue("munis_get_{x}")
-        if (exists(func)) {
-          r <- do.call(func, args=list(crs=crs))
-        } else {
-          message(glue::glue("No source for municipalities defined via {func}."))
-        }
-        r
+        do.call(glue::glue("munis_get_{x}"), args=list(crs=crs))
       }
     ) |>
     purrr::list_rbind() |>
@@ -187,6 +181,14 @@ munis_decision <- function(states, crs) {
     utils_slugify(name, state) |>
     sf::st_cast("MULTIPOLYGON")|>
     st_preprocess(crs)
+  
+  if (!is.null(munis)) {
+    df <- df |>
+      dplyr::filter(
+        stringr::str_to_upper(name) %in% stringr::str_to_upper(munis)
+        )
+  }
+  df
 }
 
 munis_all <- function(crs) {
@@ -200,5 +202,5 @@ munis_all <- function(crs) {
       purrr::map(exists) |> 
       unlist()
   ] |>
-    munis_decision(crs)
+    munis_get(crs)
 }
