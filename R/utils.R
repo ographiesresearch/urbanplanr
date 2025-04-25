@@ -1,3 +1,10 @@
+utils_list_unique_by_index <- function(list, idx) {
+  list |>
+    purrr::map(idx) |>
+    unlist() |>
+    unique()
+}
+
 #' Extent to State/County
 #'
 #' @param extent `sf` object.

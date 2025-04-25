@@ -57,6 +57,75 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df
 }
 
+st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
+  if (!is.null(point)) {
+    if (all(c("coords", "radius") %in% names(point))){
+      extent <- c(point$coords[2], point$coords[1]) |>
+        st_point_from_coords(
+          crs = 4326
+        ) |>
+        sf::st_buffer(
+          dist = units::as_units(point$radius, "miles")
+        )
+      if ("name" %in% names(point)) {
+        extent <- extent |>
+          dplyr::mutate(
+            name = point$name
+          )
+      }
+    } else {
+      stop(
+        glue::glue("utils_get_study_area(): Point requires both coords and radius.")
+      )
+    }
+  } else if (!is.null(path)) {
+    format <- tools::file_ext(path)
+    if (format == "shp" | format == "geojson") {
+      extent <- sf::st_read(path)
+    } else {
+      stop(
+        glue::glue("utils_get_study_area(): Invalid file format ({format}) passed to path.")
+      )
+    }
+  } else if (!is.null(places)) {
+    if (all(c("names", "type") %in% names(places))) {
+      places_parse <- places$names |>
+        stringr::str_to_upper() |>
+        stringr::str_split(pattern = "( COUNTY)?, ?")
+      
+      if (places$type == "muni") {
+        
+      } else if (places$type == "state") {
+        extent <- places_parse |>
+          utils_list_unique_by_index(1) |>
+          tigris_get_states(
+            crs = crs
+          )
+      } else if (places$type == "county") {
+        states <- utils_list_unique_by_index(places_parse, 2)
+        counties <- utils_list_unique_by_index(places_parse, 1)
+        
+        extent <- tigris_get_counties(states = states, counties = counties, crs = crs)
+      } else {
+        stop(
+          glue::glue("utils_get_study_area(): place type must be state, county or muni.")
+        )
+      }
+      if(nrow(extent) < length(places$names)) {
+        stop(glue::glue("Found no matches for at least one of {stringr::str_c(places$names, collapse = ',')}"))
+      } else if (nrow(extent) > length(places$names)) {
+        stop(glue::glue("Non-unique matches for at least one of {stringr::str_c(places$names, collapse = ',')}"))
+      }
+    } else {
+      stop(
+        glue::glue("utils_get_study_area(): place requires names, type params.")
+      )
+    }
+  }
+  extent |>
+    st_preprocess(crs)
+}
+
 #' Determine Zoom Level from Extent and Requested Tile Resolution
 #'
 #' @param extent `sf` object
