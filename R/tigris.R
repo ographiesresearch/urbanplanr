@@ -116,7 +116,7 @@ tigris_get_counties <- function(states = NULL, counties = NULL, crs = 4326, ...)
   
   if (!is.null(counties)) {
     df <- df |>
-      dplyr::filter(.data$name %in% counties)
+      dplyr::filter(stringr::str_to_upper(.data$name) %in% counties)
   }
   df |>
     sf::st_transform()
