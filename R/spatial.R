@@ -35,20 +35,20 @@ st_bbox_sf <- function(df) {
 #'
 #' @param coords vector of longitude, latitude coordinates (in EPSG:4326, unless
 #' coord_crs is changed).
-#' @param name Name to give point (in name field).
 #' @param crs output `crs`
+#' @param name Optional. Name to give point (in name field).
 #' @param coord_crs `crs` of provided points. 4326 default.
 #'
 #' @returns `sf` object
 #' @export
-st_point_from_coords <- function(coords, crs, name, coord_crs=4326) {
+st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df <- sf::st_point(x=coords, dim="XY") |>
     sf::st_sfc(crs=coord_crs) |>
     sf::st_as_sf() |>
     sf::st_set_geometry("geometry") |>
     sf::st_transform(crs)
   
-  if(!missing(name)) {
+  if(!is.null(name)) {
     df <- df |>
       dplyr::mutate(
         name = name
