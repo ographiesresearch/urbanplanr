@@ -104,16 +104,12 @@ st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
       } else if (places$type == "county") {
         states <- utils_list_unique_by_index(places_parse, 2)
         counties <- utils_list_unique_by_index(places_parse, 1)
-        print(states)
-        print(counties)
         extent <- tigris_get_counties(states = states, counties = counties, crs = crs)
       } else {
         stop(
           glue::glue("utils_get_study_area(): place type must be state, county or muni.")
         )
       }
-      print(nrow(extent))
-      print(length(places$names))
       if(nrow(extent) < length(places$names)) {
         stop(glue::glue("Found no matches for at least one of {stringr::str_c(places$names, collapse = ',')}"))
       } else if (nrow(extent) > length(places$names)) {
