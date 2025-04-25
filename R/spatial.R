@@ -59,13 +59,13 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
 
 st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
   if (!is.null(point)) {
-    if (all(c("coords", "radius") %in% names(point))){
+    if (all(c("coords", "dist") %in% names(point))){
       extent <- c(point$coords[2], point$coords[1]) |>
         st_point_from_coords(
           crs = 4326
         ) |>
         sf::st_buffer(
-          dist = units::as_units(point$radius, "miles")
+          dist = units::as_units(point$dist, "miles")
         )
       if ("name" %in% names(point)) {
         extent <- extent |>
@@ -75,7 +75,7 @@ st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
       }
     } else {
       stop(
-        glue::glue("utils_get_study_area(): Point requires both coords and radius.")
+        glue::glue("utils_get_study_area(): Point requires both coords and dist.")
       )
     }
   } else if (!is.null(path)) {
@@ -104,13 +104,16 @@ st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
       } else if (places$type == "county") {
         states <- utils_list_unique_by_index(places_parse, 2)
         counties <- utils_list_unique_by_index(places_parse, 1)
-        
+        print(states)
+        print(counties)
         extent <- tigris_get_counties(states = states, counties = counties, crs = crs)
       } else {
         stop(
           glue::glue("utils_get_study_area(): place type must be state, county or muni.")
         )
       }
+      print(nrow(extent))
+      print(length(places$names))
       if(nrow(extent) < length(places$names)) {
         stop(glue::glue("Found no matches for at least one of {stringr::str_c(places$names, collapse = ',')}"))
       } else if (nrow(extent) > length(places$names)) {
