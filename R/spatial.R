@@ -97,6 +97,7 @@ st_get_extent <- function(point = NULL, path = NULL, places = NULL, crs = 4326) 
       if (places$type == "muni") {
         extent <- munis_get(
             places = places$names,
+            munis = places$names,
             crs = crs,
             munis = munis,
             fallback = TRUE
@@ -170,10 +171,25 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
 #'
 st_preprocess <- function(df, crs, name="geometry") {
   df |> 
+  df <- df |> 
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
     sf::st_set_geometry(name) |>
     st_geom_to_xy(retain_geom = TRUE)
+  
+  if (st_is_polygon(df)) {
+    df <- df |>
+      dplyr::mutate(
+        area = sf::st_area(sf::st_geometry(df))
+      )
+  }
+  if (st_is_linestring(df)) {
+    df <- df |>
+      dplyr::mutate(
+        area = sf::st_length(sf::st_geometry(df))
+      )
+  }
+  df
 }
 
 #' Get DEM from AWS Terrain Tiles
@@ -748,14 +764,19 @@ st_geom_to_xy <- function(df,
     ) |>
     dplyr::select(-c("coords")) |>
     sf::st_transform(init_crs)
+    dplyr::select(-c("coords"))
   
   if(retain_geom) {
     df <- df |>
       sf::st_drop_geometry() |>
       sf::st_set_geometry(init_geo_col)
+      sf::st_set_geometry(init_geo_col) |>
+      sf::st_set_crs(init_crs)
+  } else {
+    df |>
+      sf::st_transform(init_crs)
   }
-  df |>
-    sf::st_transform(init_crs)
+  df
 }
 
 #' Add Z Dimension to Points from Column
