@@ -96,10 +96,8 @@ st_get_extent <- function(point = NULL, path = NULL, places = NULL, crs = 4326) 
     if (all(c("names", "type") %in% names(places))) {
       if (places$type == "muni") {
         extent <- munis_get(
-            places = places$names,
             munis = places$names,
             crs = crs,
-            munis = munis,
             fallback = TRUE
           )
       } else if (places$type == "state") {
@@ -170,7 +168,6 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
 #' @export
 #'
 st_preprocess <- function(df, crs, name="geometry") {
-  df |> 
   df <- df |> 
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
@@ -762,14 +759,11 @@ st_geom_to_xy <- function(df,
       "{cols[1]}" := .data$coords[, "X"],
       "{cols[2]}" := .data$coords[, "Y"]
     ) |>
-    dplyr::select(-c("coords")) |>
-    sf::st_transform(init_crs)
     dplyr::select(-c("coords"))
   
   if(retain_geom) {
     df <- df |>
       sf::st_drop_geometry() |>
-      sf::st_set_geometry(init_geo_col)
       sf::st_set_geometry(init_geo_col) |>
       sf::st_set_crs(init_crs)
   } else {
