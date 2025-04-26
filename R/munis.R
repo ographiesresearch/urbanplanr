@@ -157,20 +157,24 @@ munis_get_vt <- function(crs) {
 
 #' Get Municipality by State and Munis
 #'
-#' @param states Character vector of state names.
+#' @param munis Character vector of state names.
 #' @param crs target coordinate reference system.
 #'
 #' @returns An `sf` object
 #' @export
-munis_get <- function(states, crs, munis = NULL) {
-  df <- states |>
+munis_get <- function(munis, crs = 4326) {
+  parsed <- utils_parse_place_state(munis)
+  if (!all(parsed$states %in% munis_defined())) {
+    unmatched <- subset(parsed$states, !(parsed$states %in% munis_defined()))
+    stop("No municipal boundary function defined for {stringr::str_c(unmatched, sep=',')}")
+  }
+  df <- parsed$states |>
     stringr::str_to_lower() |>
     purrr::map(\(x) {
         do.call(glue::glue("munis_get_{x}"), args=list(crs=crs))
       }
     ) |>
     purrr::list_rbind() |>
-    sf::st_as_sf() |>
     dplyr::mutate(
       name = dplyr::case_when(
         stringr::str_detect(name, "^ *$") ~ NA_character_,
@@ -179,28 +183,36 @@ munis_get <- function(states, crs, munis = NULL) {
     ) |>
     tidyr::drop_na(name) |>
     utils_slugify(name, state) |>
+    sf::st_as_sf() |>
     sf::st_cast("MULTIPOLYGON")|>
     st_preprocess(crs)
   
-  if (!is.null(munis)) {
+  if (!is.null(parsed$places)) {
     df <- df |>
       dplyr::filter(
-        stringr::str_to_upper(name) %in% stringr::str_to_upper(munis)
+        stringr::str_to_upper(name) %in% stringr::str_to_upper(parsed$places)
         )
   }
   df
 }
 
+munis_defined <- function() {
+  state.abb |>
+    subset(
+      "munis_get_" |> 
+        stringr::str_c(
+          stringr::str_to_lower(
+            state.abb
+          )
+        ) |> 
+        purrr::map(exists) |> 
+        unlist()
+    )
+}
+
+
+
 munis_all <- function(crs) {
-  funcs <- stringr::str_c(
-    "munis_get_",
-    stringr::str_to_lower(state.abb)
-  )
-  
-  state.abb[
-    funcs |> 
-      purrr::map(exists) |> 
-      unlist()
-  ] |>
+  munis_defined() |>
     munis_get(crs)
 }

@@ -310,6 +310,37 @@ utils_get_arc <- function(id) {
   )
 }
 
+utils_parse_place_state <- function(ps) {
+  upper <- ps |>
+    stringr::str_to_upper() |>
+    stringr::str_replace("( COUNTY)?, ", ",")
+  
+  parsed <- upper |>
+    stringr::str_split(pattern = ",")
+  parsed_length <- purrr::map(parsed, length)
+  places <- NULL
+  if (all(parsed_length == 2)) {
+    elem <- 2
+    places <- utils_list_unique_by_index(parsed, elem - 1)
+  } else if (all(parsed_length == 1)) {
+    elem <- 1
+  } else {
+    stop("Misspecified places input. Should be either a list of states or a list
+         of counties/municipalities in the form c('Saginaw, MI',...).")
+  }
+  states <- utils_list_unique_by_index(parsed, elem)
+  if (!all(states %in% STATES$state_abbrev)) {
+    stop("Provided states do not exist.")
+  }
+  
+  list(
+    upper = upper,
+    parsed = parsed,
+    states = states,
+    places = places
+  )
+}
+
 #' Read Remote Shapefile Stored in `.zip` File
 #'
 #' @param url URL of remote file containing shapefiles.
