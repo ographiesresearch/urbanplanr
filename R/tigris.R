@@ -49,7 +49,7 @@ tigris_get_states <- function(states = NULL, crs = 4326, ...) {
   
   if (!is.null(states)) {
     df <- df |>
-      dplyr::filter(.data$stusps %in% states)
+      dplyr::filter(.data$STUSPS %in% states)
   }
   df |>
     st_preprocess(crs)
@@ -64,39 +64,31 @@ tigris_get_zctas <- function(starts_with = NULL, crs = 4326, counties = NULL, ..
 
 #' @name tigris_get_*
 #' @export
-tigris_get_multistate <- function(.function, states, crs = 4326, ...) {
-  states |>
-    purrr::map(\(x) .function(state = x, ...)) |>
-    purrr::list_rbind() |>
-    sf::st_as_sf() |>
-    st_preprocess(crs)
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_multistate_by_county <- function(.function, 
-                                            states, 
-                                            crs = 4326, 
-                                            counties = NULL, 
-                                            ...) {
-  county_list <- COUNTIES |>
-    dplyr::filter(.data$state_abbrev %in% states)
-  if (!is.null(counties)) {
-    if (any(counties %in% county_list$county_name)) {
-      county_list <- county_list |>
-        dplyr::filter(.data$county_name %in% counties)
-    } else if (any(counties %in% county_list$county_id)) {
-      county_list <- county_list |>
-        dplyr::filter(.data$county_id %in% counties)
-    } else if (any(counties %in% county_list$county_geoid)) {
-      county_list <- county_list |>
-        dplyr::filter(.data$county_geoid %in% counties)
-    }
+tigris_get_multi <- function(.function, 
+                              places, 
+                              crs = 4326,
+                              ...) {
+  parsed <- utils_parse_place_state(places)
+  is_county <- all(stringr::str_to_lower(parsed$upper) %in% COUNTIES$long)
+  is_states <- is.null(parsed)
+  county_args <- "county" %in% formalArgs(.function)
+  if (county_args & is_county) {
+    data <- parsed$parsed |>
+      purrr::map(
+        \(x) .function(state = x[2], county = x[1], ...)
+      )
+  } else if (is_states) {
+      data <- parsed$states |>
+        purrr::map(
+          \(x) .function(state = x, ...)
+        )
+  } else {
+    data <- parsed$states |>
+      purrr::map(
+        \(x) .function(state = x, ...)
+      )
   }
-  county_list |>
-    purrr::pmap(
-      \(s, c) .function(state = s, county = c, ...)
-    ) |>
+  data |>
     purrr::list_rbind() |>
     sf::st_as_sf() |>
     st_preprocess(crs)
@@ -104,49 +96,75 @@ tigris_get_multistate_by_county <- function(.function,
 
 #' @name tigris_get_*
 #' @export
-tigris_get_counties <- function(counties, crs = 4326, ...) {
-  parsed <- utils_parse_place_state(counties)
-  df <- tigris::counties(
-    state = parsed$states
-  )
+tigris_get_counties <- function(places, crs = 4326, ...) {
+  parsed <- utils_parse_place_state(places)
+  
+  df <- tigris_get_multi(
+    tigris::counties,
+    places = places,
+    crs = crs
+  ) |>
+    dplyr::left_join(
+      STATES |> 
+        sf::st_drop_geometry() |> 
+        dplyr::select(geoid, state_abbrev),
+      by = dplyr::join_by("statefp"=="geoid")
+    )
+  
   if (!is.null(parsed$places)) {
     df <- df |>
-      dplyr::left_join(
-        STATES |> 
-          sf::st_drop_geometry() |> 
-          dplyr::select(geoid, state_abbrev),
-        by = dplyr::join_by("STATEFP"=="geoid")
-      ) |>
       dplyr::filter(
         stringr::str_c(
-          stringr::str_to_upper(.data$NAME), 
+          stringr::str_to_upper(.data$name), 
           stringr::str_to_upper(.data$state_abbrev), 
           sep = ",") %in% parsed$upper
         )
     
   }
-  df |>
-    st_preprocess(crs)
+  df
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_places <- function(states, crs = 4326, ...) {
-  message("Downloading county geometries.")
-  tigris_get_multistate(
+tigris_get_places <- function(places, crs = 4326, ...) {
+  parsed <- utils_parse_place_state(places)
+  
+  df <- tigris_get_multi(
     .function = tigris::places,
-    states = states,
+    places = places,
     crs = crs,
     ...
-  )
+  ) |>
+    dplyr::select(statefp, name) |>
+    dplyr::left_join(
+      STATES |> 
+        sf::st_drop_geometry() |> 
+        dplyr::select(geoid, state = state_abbrev),
+      by = dplyr::join_by("statefp"=="geoid")
+    ) |>
+    dplyr::select(-statefp)
+  
+  
+  
+  if (!is.null(parsed$places)) {
+    df <- df |>
+      dplyr::filter(
+        stringr::str_c(
+          stringr::str_to_upper(.data$name), 
+          stringr::str_to_upper(.data$state), 
+          sep = ",") %in% parsed$upper
+      )
+    
+  }
+  df
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_tracts <- function(states, crs = 4326, ...) {
-  tigris_get_multistate_by_county(
+tigris_get_tracts <- function(places, crs = 4326, ...) {
+  tigris_get_multi(
     .function = tigris::tracts,
-    states = states,
+    states = places,
     crs = crs,
     ...
   )
@@ -154,10 +172,10 @@ tigris_get_tracts <- function(states, crs = 4326, ...) {
 
 #' @name tigris_get_*
 #' @export
-tigris_get_block_groups <- function(states, crs = 4326, ...) {
-  tigris_get_multistate(
+tigris_get_block_groups <- function(places, crs = 4326, ...) {
+  tigris_get_multi(
     .function = tigris::block_groups,
-    states = states,
+    places = places,
     crs = crs,
     ...
   )
@@ -165,30 +183,31 @@ tigris_get_block_groups <- function(states, crs = 4326, ...) {
 
 #' @name tigris_get_*
 #' @export
-tigris_get_roads <- function(states, crs = 4326, counties = NULL, ...) {
-  tigris_get_multistate_by_county(.function = tigris::roads,
-                                  states = states,
-                                  crs = crs,
-                                  counties = counties,
-                                  ...)
+tigris_get_roads <- function(places, crs = 4326, counties = NULL, ...) {
+  tigris_get_multi(
+    .function = tigris::roads,
+    places = places,
+    crs = crs,
+    ...
+    )
 }
 
 #' @name tigris_get_*
 #' @export
 tigris_get_primary_roads <- function(crs = 4326, ...) {
-  message("Downloading road geometries.")
   tigris::primary_roads(...) |>
     st_preprocess(crs)
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_primary_secondary_roads <- function(states, crs = 4326, ...) {
-  message("Downloading road geometries.")
-  tigris_get_multistate(.function = tigris::primary_secondary_roads,
-                                  states = states,
-                                  crs = crs,
-                                  ...)
+tigris_get_primary_secondary_roads <- function(places, crs = 4326, ...) {
+  tigris_get_multi(
+    .function = tigris::primary_secondary_roads,
+    places = places,
+    crs = crs,
+    ...
+    )
 }
 
 #' @name tigris_get_*
@@ -201,26 +220,24 @@ tigris_get_rails <- function(crs = 4326, ...) {
 
 #' @name tigris_get_*
 #' @export
-tigris_get_area_water <- function(states, crs = 4326, counties = NULL, ...) {
+tigris_get_area_water <- function(places, crs = 4326, ...) {
   message("Downloading road geometries.")
-  tigris_get_multistate_by_county(
+  tigris_get_multi(
     .function = tigris::area_water,
-    states = states,
+    places = places,
     crs = crs,
-    counties = counties,
     ...
   )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_linear_water <- function(states, crs = 4326, counties = NULL, ...) {
+tigris_get_linear_water <- function(places, crs = 4326, ...) {
   message("Downloading road geometries.")
-  tigris_get_multistate_by_county(
+  tigris_get_multi(
     .function = tigris::linear_water,
-    states = states,
+    places = places,
     crs = crs,
-    counties = counties,
     ...
   )
 }

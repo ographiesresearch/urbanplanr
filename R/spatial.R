@@ -60,15 +60,23 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
 st_get_extent <- function(point = NULL, path = NULL, places = NULL, crs = 4326) {
   if (!is.null(point)) {
     if (all(c("coords", "dist") %in% names(point))){
-      extent <- c(point$coords[2], point$coords[1]) |>
-        st_point_from_coords(
-          crs = 4326
-        ) |>
+      print(length(point$coords[[1]]))
+      if (length(point$coords[[1]]) == 1) {
+        print("hellO")
+        extent <- c(point$coords[[2]], point$coords[[1]]) |>
+          st_point_from_coords(
+            crs = 4326
+          )
+      } else {
+        print(point$coords)
+        extent <- point$coords |>
+          purrr::map(\(x) st_point_from_coords(c(x[[2]], x[[1]]), crs = crs)) |>
+          purrr::list_rbind() |>
+          sf::st_as_sf()
+      }
+      extent <- extent |>
         sf::st_buffer(
           dist = units::as_units(point$dist, "miles")
-        ) |>
-          dplyr::mutate(
-            name = point$name
         )
     } else {
       stop(
@@ -90,7 +98,8 @@ st_get_extent <- function(point = NULL, path = NULL, places = NULL, crs = 4326) 
         extent <- munis_get(
             places = places$names,
             crs = crs,
-            munis = munis
+            munis = munis,
+            fallback = TRUE
           )
       } else if (places$type == "state") {
         extent <- places$names |>

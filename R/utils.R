@@ -1,8 +1,8 @@
-utils_slugify <- function(df, ..., slug_col = "id", sep = "-") {
+utils_slugify <- function(df, ..., col = "id", sep = "-") {
   cols <- rlang::enquos(...)
   df |>
     dplyr::mutate(
-      !!slug_col := df |>
+      !!col := df |>
         sf::st_drop_geometry() |>
         dplyr::select(!!!rlang::enquos(...)) |>
         purrr::pmap_chr(~ stringr::str_c(..., sep = sep) |> stringr::str_to_lower())
