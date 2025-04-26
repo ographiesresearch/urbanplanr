@@ -57,22 +57,27 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df
 }
 
-st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
+st_get_extent <- function(point = NULL, path = NULL, places = NULL, crs = 4326) {
   if (!is.null(point)) {
     if (all(c("coords", "dist") %in% names(point))){
-      extent <- c(point$coords[2], point$coords[1]) |>
-        st_point_from_coords(
-          crs = 4326
-        ) |>
+      print(length(point$coords[[1]]))
+      if (length(point$coords[[1]]) == 1) {
+        print("hellO")
+        extent <- c(point$coords[[2]], point$coords[[1]]) |>
+          st_point_from_coords(
+            crs = 4326
+          )
+      } else {
+        print(point$coords)
+        extent <- point$coords |>
+          purrr::map(\(x) st_point_from_coords(c(x[[2]], x[[1]]), crs = crs)) |>
+          purrr::list_rbind() |>
+          sf::st_as_sf()
+      }
+      extent <- extent |>
         sf::st_buffer(
           dist = units::as_units(point$dist, "miles")
         )
-      if ("name" %in% names(point)) {
-        extent <- extent |>
-          dplyr::mutate(
-            name = point$name
-          )
-      }
     } else {
       stop(
         glue::glue("utils_get_study_area(): Point requires both coords and dist.")
@@ -89,31 +94,19 @@ st_get_extent <- function(crs, point = NULL, path = NULL, places = NULL) {
     }
   } else if (!is.null(places)) {
     if (all(c("names", "type") %in% names(places))) {
-      places_parse <- places$names |>
-        stringr::str_to_upper() |>
-        stringr::str_split(pattern = "( COUNTY)?, ?")
       if (places$type == "muni") {
-        states <- utils_list_unique_by_index(places_parse, 2)
-        munis <- utils_list_unique_by_index(places_parse, 1)
-        extent <- states |>
-          munis_get(
+        extent <- munis_get(
+            places = places$names,
             crs = crs,
-            munis = munis
+            munis = munis,
+            fallback = TRUE
           )
       } else if (places$type == "state") {
-        states <- utils_list_unique_by_index(places_parse, 1)
-        extent <- states |>
-          tigris_get_states(
-            crs = crs
-          )
+        extent <- places$names |>
+          tigris_get_states(crs = crs)
       } else if (places$type == "county") {
-        states <- utils_list_unique_by_index(places_parse, 2)
-        counties <- utils_list_unique_by_index(places_parse, 1)
-        extent <- states |>
-          tigris_get_counties(
-            counties = counties,
-            crs = crs
-          )
+        extent <- places$names |>
+          tigris_get_counties(crs = crs)
       } else {
         stop(
           glue::glue("utils_get_study_area(): place type must be state, county or muni.")

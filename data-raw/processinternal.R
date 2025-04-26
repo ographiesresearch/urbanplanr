@@ -20,6 +20,9 @@ counties <- function(states) {
     dplyr::left_join(
       states |> sf::st_drop_geometry(),
       by = dplyr::join_by("state_geoid"=="geoid")
+    ) |>
+    dplyr::mutate(
+      long = stringr::str_to_lower(stringr::str_c(county_name, state_abbrev, sep=","))
     )
 }
 

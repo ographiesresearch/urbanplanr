@@ -157,50 +157,73 @@ munis_get_vt <- function(crs) {
 
 #' Get Municipality by State and Munis
 #'
-#' @param states Character vector of state names.
+#' @param munis Character vector of state names.
 #' @param crs target coordinate reference system.
 #'
 #' @returns An `sf` object
 #' @export
-munis_get <- function(states, crs, munis = NULL) {
-  df <- states |>
+munis_get <- function(munis, crs = 4326, fallback = FALSE) {
+  parsed <- utils_parse_place_state(munis)
+  if (!all(parsed$states %in% munis_defined())) {
+    unmatched <- subset(parsed$states, !(parsed$states %in% munis_defined()))
+    message("No municipal boundary function defined for 
+            {stringr::str_c(unmatched, sep=',')}.")
+    if (!fallback) {
+      stop("Stopping.")
+    } else {
+      message("Falling back on CDPs from tigris::places().")
+      census_places <- unmatched |>
+        tigris_get_places(crs = crs) 
+    }
+  }
+  df <- subset(parsed$states, parsed$states %in% munis_defined()) |>
     stringr::str_to_lower() |>
     purrr::map(\(x) {
-        do.call(glue::glue("munis_get_{x}"), args=list(crs=crs))
+        do.call(glue::glue("munis_get_{x}"), args=list(crs = crs))
       }
     ) |>
     purrr::list_rbind() |>
-    sf::st_as_sf() |>
     dplyr::mutate(
       name = dplyr::case_when(
         stringr::str_detect(name, "^ *$") ~ NA_character_,
         .default = name
       )
     ) |>
+    dplyr::bind_rows(census_places) |>
     tidyr::drop_na(name) |>
     utils_slugify(name, state) |>
+    sf::st_as_sf() |>
     sf::st_cast("MULTIPOLYGON")|>
     st_preprocess(crs)
-  
-  if (!is.null(munis)) {
+  # print(df)
+  if (!is.null(parsed$places)) {
     df <- df |>
+      utils_slugify(name, state, col="long", sep=",") |>
       dplyr::filter(
-        stringr::str_to_upper(name) %in% stringr::str_to_upper(munis)
-        )
+        long %in% stringr::str_to_lower(parsed$upper)
+        ) |>
+      dplyr::select(-long)
   }
   df
 }
 
+munis_defined <- function() {
+  state.abb |>
+    subset(
+      "munis_get_" |> 
+        stringr::str_c(
+          stringr::str_to_lower(
+            state.abb
+          )
+        ) |> 
+        purrr::map(exists) |> 
+        unlist()
+    )
+}
+
+
+
 munis_all <- function(crs) {
-  funcs <- stringr::str_c(
-    "munis_get_",
-    stringr::str_to_lower(state.abb)
-  )
-  
-  state.abb[
-    funcs |> 
-      purrr::map(exists) |> 
-      unlist()
-  ] |>
+  munis_defined() |>
     munis_get(crs)
 }
