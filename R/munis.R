@@ -164,47 +164,53 @@ munis_get_vt <- function(crs) {
 #' @export
 munis_get <- function(munis, crs = 4326, fallback = FALSE) {
   parsed <- utils_parse_place_state(munis)
-  if (!all(parsed$states %in% munis_defined())) {
-    unmatched <- subset(parsed$states, !(parsed$states %in% munis_defined()))
+  
+  matched <- subset(parsed$states, parsed$states %in% munis_defined())
+  unmatched <- subset(parsed$states, !(parsed$states %in% munis_defined()))
+  results <- list()
+  if (length(unmatched > 0)) {
     message("No municipal boundary function defined for 
             {stringr::str_c(unmatched, sep=',')}.")
     if (!fallback) {
       stop("Stopping.")
     } else {
       message("Falling back on CDPs from tigris::places().")
-      census_places <- unmatched |>
-        tigris_get_places(crs = crs) 
+      results[['unmatched']] <- unmatched |>
+        tigris_get_places(crs = crs)
     }
   }
-  df <- subset(parsed$states, parsed$states %in% munis_defined()) |>
-    stringr::str_to_lower() |>
-    purrr::map(\(x) {
+  if (length(matched > 0)) {
+    results[['matched']] <- matched |>
+      stringr::str_to_lower() |>
+      purrr::map(\(x) {
         do.call(glue::glue("munis_get_{x}"), args=list(crs = crs))
       }
-    ) |>
-    purrr::list_rbind() |>
-    dplyr::mutate(
-      name = dplyr::case_when(
-        stringr::str_detect(name, "^ *$") ~ NA_character_,
-        .default = name
-      )
-    ) |>
-    dplyr::bind_rows(census_places) |>
+      ) |>
+      purrr::list_rbind() |>
+      dplyr::mutate(
+        name = dplyr::case_when(
+          stringr::str_detect(name, "^ *$") ~ NA_character_,
+          .default = name
+        )
+      ) 
+  }
+  
+  results <- dplyr::bind_rows(results) |>
     tidyr::drop_na(name) |>
     utils_slugify(name, state) |>
     sf::st_as_sf() |>
     sf::st_cast("MULTIPOLYGON")|>
     st_preprocess(crs)
-  # print(df)
+  
   if (!is.null(parsed$places)) {
-    df <- df |>
+    results <- results |>
       utils_slugify(name, state, col="long", sep=",") |>
       dplyr::filter(
         long %in% stringr::str_to_lower(parsed$upper)
         ) |>
       dplyr::select(-long)
   }
-  df
+  results
 }
 
 munis_defined <- function() {
