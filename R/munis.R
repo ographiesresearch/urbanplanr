@@ -157,60 +157,50 @@ munis_get_vt <- function(crs) {
 
 #' Get Municipality by State and Munis
 #'
-#' @param munis Character vector of state names.
+#' @param places Character vector of state names.
 #' @param crs target coordinate reference system.
 #'
 #' @returns An `sf` object
 #' @export
-munis_get <- function(munis, crs = 4326, fallback = FALSE) {
-  parsed <- utils_parse_place_state(munis)
+munis_get_munis <- function(places, crs = 4326, fallbacks = c("cdp", "osm")) {
   
-  matched <- subset(parsed$states, parsed$states %in% munis_defined())
-  unmatched <- subset(parsed$states, !(parsed$states %in% munis_defined()))
-  results <- list()
-  if (length(unmatched > 0)) {
-    message("No municipal boundary function defined for 
-            {stringr::str_c(unmatched, sep=',')}.")
-    if (!fallback) {
-      stop("Stopping.")
-    } else {
-      message("Falling back on CDPs from tigris::places().")
-      results[['unmatched']] <- unmatched |>
-        tigris_get_places(crs = crs)
-    }
+  states <- utils_place_states(places)
+  
+  matched <- states %in% munis_defined()
+  unmatched <- !(states %in% munis_defined())
+  
+  data <- list()
+  if (sum(matched) > 0) {
+    data[['matched']] <- states |>
+      subset(matched) |>
+        purrr::map(\(x) {
+          do.call(
+            glue::glue("munis_get_{stringr::str_to_lower(x)}"), 
+            args = list(crs = crs)
+            )
+        }) |>
+        purrr::list_rbind() |> 
+        sf::st_as_sf() |>
+        st_preprocess(crs)
   }
-  if (length(matched > 0)) {
-    results[['matched']] <- matched |>
-      stringr::str_to_lower() |>
-      purrr::map(\(x) {
-        do.call(glue::glue("munis_get_{x}"), args=list(crs = crs))
-      }
-      ) |>
-      purrr::list_rbind() |>
-      dplyr::mutate(
-        name = dplyr::case_when(
-          stringr::str_detect(name, "^ *$") ~ NA_character_,
-          .default = name
-        )
-      ) 
+  if ("cdp" %in% fallbacks & sum(unmatched) > 0) {
+    data[['unmatched']] <- places |>
+      subset(unmatched) |>
+      tigris_get_places(crs = crs)
+  }
+  data <- dplyr::bind_rows(data)
+  
+  if (utils_is_muni(places)) {
+    data <- data |>
+      utils_filter_by_place(places)
   }
   
-  results <- dplyr::bind_rows(results) |>
+  data |>
     tidyr::drop_na(name) |>
+    dplyr::filter(!stringr::str_detect(name, "^ *$")) |>
     utils_slugify(name, state) |>
     sf::st_as_sf() |>
-    sf::st_cast("MULTIPOLYGON")|>
-    st_preprocess(crs)
-  
-  if (!is.null(parsed$places)) {
-    results <- results |>
-      utils_slugify(name, state, col="long", sep=",") |>
-      dplyr::filter(
-        long %in% stringr::str_to_lower(parsed$upper)
-        ) |>
-      dplyr::select(-long)
-  }
-  results
+    sf::st_cast("MULTIPOLYGON")
 }
 
 munis_defined <- function() {
@@ -231,5 +221,5 @@ munis_defined <- function() {
 
 munis_all <- function(crs) {
   munis_defined() |>
-    munis_get(crs)
+    munis_get_munis(crs)
 }

@@ -1,6 +1,3 @@
-#' Get Census-Designated Places
-#' @name tigris_get_*
-#' 
 #' @description
 #' `tigris_get_places()` retrieves census-designated places.
 #' 
@@ -43,120 +40,145 @@
 #'
 #' @returns Simple Features dataframe.
 #' @export
-#'
-tigris_get_states <- function(states = NULL, crs = 4326, ...) {
-  df <- tigris::states(...)
-  
-  if (!is.null(states)) {
-    df <- df |>
-      dplyr::filter(.data$STUSPS %in% states)
-  }
-  df |>
-    st_preprocess(crs)
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_zctas <- function(starts_with = NULL, crs = 4326, counties = NULL, ...) {
-  tigris::zctas(starts_with, cb = FALSE, ...) |>
-    st_preprocess(crs)
-}
 
 #' @name tigris_get_*
 #' @export
 tigris_get_multi <- function(.function, 
-                              places, 
-                              crs = 4326,
-                              ...) {
-  parsed <- utils_parse_place_state(places)
-  is_county <- all(stringr::str_to_lower(parsed$upper) %in% COUNTIES$long)
-  is_states <- is.null(parsed)
-  county_args <- "county" %in% formalArgs(.function)
-  if (county_args & is_county) {
-    data <- parsed$parsed |>
+                             places, 
+                             state = NULL,
+                             county = NULL,
+                             ...,
+                             crs = 4326) {
+  parsed <- utils_parse_place(places)
+  is_county <- utils_is_county(places)
+  is_state <- utils_is_state(places)
+  is_muni <- utils_is_muni(places)
+  has_county <- "county" %in% formalArgs(.function)
+  has_state <- "state" %in% formalArgs(.function)
+  if (is_county & has_county) {
+    data <- parsed |>
       purrr::map(
-        \(x) .function(state = x[2], county = x[1], ...)
+        \(x) .function(state = x[2], county = x[1])
       )
-  } else if (is_states) {
-      data <- parsed$states |>
+  } else if ((is_county | is_muni) & !has_county & has_state) {
+    data <- utils_place_states(places) |>
+      purrr::map(
+        \(x) .function(state = x)
+      )
+  } else if (is_state && has_state) {
+      data <- utils_place_states(places) |>
         purrr::map(
-          \(x) .function(state = x, ...)
+          \(x) .function(state = x)
         )
   } else {
-    data <- parsed$states |>
-      purrr::map(
-        \(x) .function(state = x, ...)
-      )
+    data <- .function() 
   }
-  data |>
+  
+  data <- data |>
     purrr::list_rbind() |>
+    sf::st_as_sf() |>
+    dplyr::rename_with(tolower)
+  
+  state <- NULL
+  if ("statefp" %in% names(data)) {
+    data <- data |>
+      dplyr::left_join(
+        STATES |>
+          sf::st_drop_geometry() |>
+          dplyr::select(geoid, state = state_abbrev),
+        by = dplyr::join_by("statefp" == "geoid")
+      )
+    state <- "state"
+  }
+  
+  data |>
+    dplyr::select(..., {{state}}) |>
     sf::st_as_sf() |>
     st_preprocess(crs)
 }
 
+tigris_extent_to_tigris <- function(extent) {
+  int_counties <- COUNTIES |>
+    sf::st_transform(sf::st_crs(extent)) |>
+    sf::st_filter(extent) |>
+    dplyr::mutate(
+      place = stringr::str_c(county_name, " County", ", ", state_abbrev, sep=""),
+    ) |>
+    dplyr::pull(place) |>
+    tigris_get_counties(crs = sf::st_crs(extent))
+  
+  int_counties |>
+    sf::st_transform(sf::st_crs(extent)) |>
+    sf::st_filter(extent)
+}
+
 #' @name tigris_get_*
-#' @export
-tigris_get_counties <- function(places, crs = 4326, ...) {
-  parsed <- utils_parse_place_state(places)
-  
-  df <- tigris_get_multi(
-    tigris::counties,
+#' 
+tigris_get_states <- function(places, crs = 4326, filter = TRUE, ...) {
+  data <- tigris_get_multi(
+    .function = tigris::states,
     places = places,
-    crs = crs
+    crs = crs,
+    id = geoid,
+    name = name,
+    abbrev = stusps,
+    ...
   ) |>
-    dplyr::left_join(
-      STATES |> 
-        sf::st_drop_geometry() |> 
-        dplyr::select(geoid, state_abbrev),
-      by = dplyr::join_by("statefp"=="geoid")
-    )
-  
-  if (!is.null(parsed$places)) {
-    df <- df |>
-      dplyr::filter(
-        stringr::str_c(
-          stringr::str_to_upper(.data$name), 
-          stringr::str_to_upper(.data$state_abbrev), 
-          sep = ",") %in% parsed$upper
-        )
-    
+    dplyr::select(-state)
+  if (filter) {
+    data <- data |>
+      utile_filter_by_state(places)
   }
-  df
+  data
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_places <- function(places, crs = 4326, ...) {
-  parsed <- utils_parse_place_state(places)
-  
-  df <- tigris_get_multi(
+tigris_get_counties <- function(places, crs = 4326, filter = TRUE, ...) {
+  data <- tigris_get_multi(
+    tigris::counties,
+    places = places,
+    crs = crs,
+    id = geoid,
+    name = name,
+    ...
+  )
+  if (utils_is_county(places) & filter) {
+    data <- data |>
+      utils_filter_by_place(places)
+  }
+  data
+}
+
+#' @name tigris_get_*
+#' @export
+tigris_get_places <- function(places, crs = 4326, filter = TRUE, ...) {
+  data <- tigris_get_multi(
     .function = tigris::places,
     places = places,
     crs = crs,
+    id = geoid,
+    name,
     ...
-  ) |>
-    dplyr::select(statefp, name) |>
-    dplyr::left_join(
-      STATES |> 
-        sf::st_drop_geometry() |> 
-        dplyr::select(geoid, state = state_abbrev),
-      by = dplyr::join_by("statefp"=="geoid")
-    ) |>
-    dplyr::select(-statefp)
-  
-  
-  
-  if (!is.null(parsed$places)) {
-    df <- df |>
-      dplyr::filter(
-        stringr::str_c(
-          stringr::str_to_upper(.data$name), 
-          stringr::str_to_upper(.data$state), 
-          sep = ",") %in% parsed$upper
-      )
-    
+  )
+  if (utils_is_muni(places) & filter) {
+    data <- data |>
+      utils_filter_by_place(places)
   }
-  df
+  data
+}
+
+
+#' @name tigris_get_*
+#' @export
+tigris_get_zctas <- function(starts_with = NULL, crs = 4326, counties = NULL, ...) {
+  tigris_get_multi(
+    .function = tigris::zctas,
+    places = places,
+    crs = crs,
+    id = geoid20,
+    ...
+  )
 }
 
 #' @name tigris_get_*
@@ -164,8 +186,10 @@ tigris_get_places <- function(places, crs = 4326, ...) {
 tigris_get_tracts <- function(places, crs = 4326, ...) {
   tigris_get_multi(
     .function = tigris::tracts,
-    states = places,
+    places = places,
     crs = crs,
+    id = geoid,
+    name,
     ...
   )
 }
@@ -177,6 +201,9 @@ tigris_get_block_groups <- function(places, crs = 4326, ...) {
     .function = tigris::block_groups,
     places = places,
     crs = crs,
+    id = geoid,
+    name = namelsad,
+    statefp,
     ...
   )
 }
@@ -188,34 +215,24 @@ tigris_get_roads <- function(places, crs = 4326, counties = NULL, ...) {
     .function = tigris::roads,
     places = places,
     crs = crs,
-    ...
-    )
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_primary_roads <- function(crs = 4326, ...) {
-  tigris::primary_roads(...) |>
-    st_preprocess(crs)
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_primary_secondary_roads <- function(places, crs = 4326, ...) {
-  tigris_get_multi(
-    .function = tigris::primary_secondary_roads,
-    places = places,
-    crs = crs,
-    ...
+    id = linearid,
+    name = fullname,
+    type = rttyp,
     )
 }
 
 #' @name tigris_get_*
 #' @export
 tigris_get_rails <- function(crs = 4326, ...) {
-  message("Downloading road geometries.")
-  tigris::rails(...) |>
-    st_preprocess(crs)
+  tigris_get_multi(
+    .function = tigris::rails,
+    places = places,
+    crs = crs,
+    id = linearid,
+    name = fullname,
+    type = mtfcc,
+    ...
+  )
 }
 
 #' @name tigris_get_*
@@ -226,6 +243,8 @@ tigris_get_area_water <- function(places, crs = 4326, ...) {
     .function = tigris::area_water,
     places = places,
     crs = crs,
+    id = hydroid,
+    name = fullname,
     ...
   )
 }
@@ -238,6 +257,8 @@ tigris_get_linear_water <- function(places, crs = 4326, ...) {
     .function = tigris::linear_water,
     places = places,
     crs = crs,
+    id = linearid,
+    name = fullname,
     ...
   )
 }

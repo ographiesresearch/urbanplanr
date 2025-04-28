@@ -9,7 +9,7 @@ utils_slugify <- function(df, ..., col = "id", sep = "-") {
     )
 }
 
-utils_list_unique_by_index <- function(list, idx) {
+utils_unique_by_idx <- function(list, idx) {
   list |>
     purrr::map(idx) |>
     unlist() |>
@@ -310,35 +310,186 @@ utils_get_arc <- function(id) {
   )
 }
 
-utils_parse_place_state <- function(ps) {
-  upper <- ps |>
+COUNTY_EQUIVS <- c(
+  "COUNTY",
+  # Louisiana
+  "PARISH", 
+  # Connecticut
+  "PLANNING REGION", 
+  # Alaska
+  "BOROUGH", 
+  "CENSUS AREA",
+  # Puerto Rico
+  "MUNICIPIO"
+)
+
+utils_parse_place <- function(x) {
+  types <- COUNTY_EQUIVS |>
+    stringr::str_c(collapse="|")
+  
+  find <- glue::glue(" ?({types})?, ?")
+  x |>
     stringr::str_to_upper() |>
-    stringr::str_replace("( COUNTY)?, ", ",")
-  
-  parsed <- upper |>
+    stringr::str_replace(find, ",") |>
     stringr::str_split(pattern = ",")
-  parsed_length <- purrr::map(parsed, length)
-  places <- NULL
-  if (all(parsed_length == 2)) {
-    elem <- 2
-    places <- utils_list_unique_by_index(parsed, elem - 1)
-  } else if (all(parsed_length == 1)) {
-    elem <- 1
+}
+
+utils_place_states <- function(x) {
+  is_state <- utils_is_state(x)
+  is_place <- utils_is_place(x)
+  if (is_state) {
+    idx <- 1
+  } else if (is_place) {
+    idx <- 2
   } else {
-    stop("Misspecified places input. Should be either a list of states or a list
-         of counties/municipalities in the form c('Saginaw, MI',...).")
+    stop("Invalid place passed to `utils_place_states`")
   }
-  states <- utils_list_unique_by_index(parsed, elem)
-  if (!all(states %in% STATES$state_abbrev)) {
-    stop("Provided states do not exist.")
+  utils_unique_by_idx(utils_parse_place(x), idx)
+}
+
+utils_filter_by_state <- function(df, places, col="abbrev") {
+  data <- data |>
+    dplyr::filter(
+      .data[[col]] %in% utils_place_states(places)
+    )
+}
+
+utils_filter_by_place <- function(df, places, cols=c("name", "state")) {
+  is_sf <- "sf" %in% class(df)
+  parsed <- utils_parse_place(places)
+  df <- parsed |>
+    purrr::map(\(i) dplyr::filter(
+      df, 
+      stringr::str_to_upper(.data[[cols[1]]]) == i[1] & 
+        stringr::str_to_upper(.data[[cols[2]]]) == i[2]
+      )
+    ) |>
+    purrr::list_rbind()
+  if (is_sf) {
+    df <- sf::st_as_sf(df)
   }
+  df
+}
+
+utils_is_state <- function(x) {
+  x |>
+    stringr::str_to_upper() |>
+    stringr::str_detect("^[A-Z]{2}$") |>
+    all()
+}
+
+utils_is_place <- function(x) {
+  x |>
+    stringr::str_to_upper() |>
+    stringr::str_detect("[A-Z ]+, ?[A-Z]{2}$") |>
+    all()
+}
+
+utils_is_county <- function(x) {
+  types <- COUNTY_EQUIVS |>
+    stringr::str_c(collapse="|")
   
-  list(
-    upper = upper,
-    parsed = parsed,
-    states = states,
-    places = places
-  )
+  x <- x |>
+    stringr::str_to_upper()
+  
+  county <- x |>
+    stringr::str_detect(glue::glue("( {types}),"))
+  
+  all(all(county) && utils_is_place(x))
+}
+
+utils_is_muni <- function(x) {
+  all(!utils_is_county(x) && utils_is_place(x))
+}
+
+utils_is_filepath <- function(x) {
+  length(x) == 1 &
+    class(x) == "character" & 
+    all(tools::file_ext(x) > 0)
+}
+
+utils_is_format <- function (x, formats) {
+  x |>
+    stringr::str_to_upper() |>
+    tools::file_ext() %in% stringr::str_to_upper(formats) |>
+    all()
+}
+
+utils_is_coords <- function(x) {
+  x |> 
+    purrr::map(\(c) 
+               is.numeric(unlist(c)) & 
+                 length(c) == 2 &
+                 dplyr::between(unlist(c)[1], -90, 90) &
+                 dplyr::between(unlist(c)[2], -180, 180)
+    ) |> 
+    unlist() |> 
+    all()
+}
+
+utils_place_picker <- function(places, buffer = NULL, crs=4326) {
+  if (!is.null(buffer)) {
+    buffer <- units::as_units(buffer, "miles")
+  }
+  if (utils_is_filepath(places)) {
+    if (utils_is_format(places, c("shp", "geojson"))) {
+      if (file.exists(places)) {
+        extent <- places |>
+          sf::st_read() |> 
+          st_preprocess(crs)
+        if (!("id" %in% names(extent))) {
+          extent <- extent |>
+            tibble::rowid_to_column("id")
+        }
+        if (!("name" %in% names(extent))) {
+          extent <- extent |>
+            dplyr::mutate(name = id)
+        }
+      } else {
+        stop("You passed a file path to places, but the file doesn't exist.")
+      }
+    } else {
+      stop("Invalid file format.")
+    }
+  } else if (is.null(names(places))) {
+    if (utils_is_state(places)) {
+      extent <- places |>
+        tigris_get_states(crs = crs)
+    } else if (utils_is_county(places)) {
+      extent <- places |>
+        tigris_get_counties(crs = crs)
+    } else if (utils_is_muni(places)) {
+      extent <- places |>
+        munis_get_munis(crs = crs)
+    } else {
+      stop("Invalid strings passed to places. Mixed state/county/muni lists are
+           not accepted.")
+    }
+  } else {
+    if (utils_is_coords(places)) {
+      if (is.null(buffer)) {
+        message("If you're passing in a coordinate, you should also pass in a
+                value to buffer! Defaulting to a 1 mile buffer around the point")
+        buffer <- units::as_units(1, "miles")
+      }
+      extent <- places |>
+        purrr::imap(\(x, idx) 
+                   st_point_from_coords(
+                     c(x[[2]], x[[1]]), 
+                     name = idx,
+                     crs = crs
+                   )) |>
+        purrr::list_rbind() |>
+        sf::st_as_sf()
+    } else {
+      stop("Invalid coordinates.")
+    }
+  }
+  if (!is.null(buffer)) {
+    exent <- extent |>
+      sf::st_buffer(buffer)
+  }
+  extent
 }
 
 #' Read Remote Shapefile Stored in `.zip` File

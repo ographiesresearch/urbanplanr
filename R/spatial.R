@@ -57,75 +57,6 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df
 }
 
-st_get_extent <- function(point = NULL, path = NULL, places = NULL, crs = 4326) {
-  if (!is.null(point)) {
-    if (all(c("coords", "dist") %in% names(point))){
-      print(length(point$coords[[1]]))
-      if (length(point$coords[[1]]) == 1) {
-        print("hellO")
-        extent <- c(point$coords[[2]], point$coords[[1]]) |>
-          st_point_from_coords(
-            crs = 4326
-          )
-      } else {
-        print(point$coords)
-        extent <- point$coords |>
-          purrr::map(\(x) st_point_from_coords(c(x[[2]], x[[1]]), crs = crs)) |>
-          purrr::list_rbind() |>
-          sf::st_as_sf()
-      }
-      extent <- extent |>
-        sf::st_buffer(
-          dist = units::as_units(point$dist, "miles")
-        )
-    } else {
-      stop(
-        glue::glue("utils_get_study_area(): Point requires both coords and dist.")
-      )
-    }
-  } else if (!is.null(path)) {
-    format <- tools::file_ext(path)
-    if (format == "shp" | format == "geojson") {
-      extent <- sf::st_read(path)
-    } else {
-      stop(
-        glue::glue("utils_get_study_area(): Invalid file format ({format}) passed to path.")
-      )
-    }
-  } else if (!is.null(places)) {
-    if (all(c("names", "type") %in% names(places))) {
-      if (places$type == "muni") {
-        extent <- munis_get(
-            munis = places$names,
-            crs = crs,
-            fallback = TRUE
-          )
-      } else if (places$type == "state") {
-        extent <- places$names |>
-          tigris_get_states(crs = crs)
-      } else if (places$type == "county") {
-        extent <- places$names |>
-          tigris_get_counties(crs = crs)
-      } else {
-        stop(
-          glue::glue("utils_get_study_area(): place type must be state, county or muni.")
-        )
-      }
-      if(nrow(extent) < length(places$names)) {
-        stop(glue::glue("Found no matches for at least one of {stringr::str_c(places$names, collapse = ',')}"))
-      } else if (nrow(extent) > length(places$names)) {
-        stop(glue::glue("Non-unique matches for at least one of {stringr::str_c(places$names, collapse = ',')}"))
-      }
-    } else {
-      stop(
-        glue::glue("utils_get_study_area(): place requires names, type params.")
-      )
-    }
-  }
-  extent |>
-    st_preprocess(crs)
-}
-
 #' Determine Zoom Level from Extent and Requested Tile Resolution
 #'
 #' @param extent `sf` object
@@ -212,32 +143,39 @@ st_get_dem <- function(extent,
                          extent = extent, 
                          tiles_on_side = tiles_on_side
                        ), 
+                       rowwise = TRUE,
                        src = "aws") {
   
   # get_elev_master has a max z of 14.
-  z <- min(c(14,z)) 
+  z <- min(c(14,z))
   
-  dem <- extent |>
-    elevatr::get_elev_raster(
-      z=z,
-      src=src,
-      clip="bbox",
-      expand=expand,
-      neg_to_na=TRUE,
-      verbose=FALSE
-    ) |>
-    terra::rast()
-  
-  terra::set.crs(dem, glue::glue("epsg:{sf::st_crs(extent)$epsg}"))
-  
-  min_res <- 256 * tiles_on_side
-  
-  fact <- ceiling(min_res / terra::ncol(dem))
-  
-  if (fact > 1) {
-    dem <- terra::disagg(dem, fact = fact, method = "bilinear")
+  if (!rowwise) {
+    extent <- sf::st_as_sf(sf::st_union(extent))
   }
-  dem
+  
+  dem <- list()
+  for(i in 1:nrow(extent)) {
+    dem[[i]] <- extent[i,] |>
+      elevatr::get_elev_raster(
+        z = z,
+        src = src,
+        clip = "bbox",
+        expand = expand,
+        neg_to_na = TRUE,
+        verbose = FALSE
+      ) |>
+      terra::rast()
+    
+    terra::crs(dem[[i]]) <- sf::st_crs(extent)$wkt
+    min_res <- 256 * tiles_on_side
+    fact <- ceiling(min_res / terra::ncol(dem[[i]]))
+    if (fact > 1) {
+      dem[[i]] <- terra::disagg(dem[[i]], fact = fact, method = "bilinear")
+    }
+  }
+  
+  dem |> 
+    terra::sprc()
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -259,27 +197,30 @@ st_get_dem <- function(extent,
 #'
 #' @returns A `RasterLayer`.
 #' @export
-st_hillshade <- function(dem,
+st_hillshade <- function(dems,
                          angle = 45,
                          direction = 300,
                          z_scale = 1,
                          normalize = TRUE,
                          overwrite = TRUE,
                          filename = "") {
-  if (z_scale > 1) {
-    dem <- dem * z_scale
-  } else {
+  if (!(z_scale >= 1)) {
     stop("Invalid z_scale. Must be >= 1.")
   }
-  terra::shade(
-    slope = terra::terrain(dem, v = "slope", unit = "radians"),
-    aspect = terra::terrain(dem, v = "aspect", unit = "radians"),
-    angle = angle,
-    direction = direction,
-    filename = filename,
-    normalize = normalize,
-    overwrite = overwrite
-  )
+  dems |>
+    list() |>
+    purrr::map(\(x) terra::shade(
+      slope = terra::terrain(x * z_scale, v = "slope", unit = "radians"),
+      aspect = terra::terrain(x * z_scale, v = "aspect", unit = "radians"),
+      angle = angle,
+      direction = direction,
+      filename = filename,
+      normalize = normalize,
+      overwrite = overwrite
+    )
+  ) |> 
+    terra::sprc()
+  
 }
 #' Contours from Raster
 #' 
