@@ -9,33 +9,28 @@
 lodes_get_data <- function(states, 
                       year, 
                       census_unit) {
-  results <- list()
-  for (s in states) {
-    message(glue::glue("Getting LODES data for {s}."))
-    results[[s]] <- lehdr::grab_lodes(
-      state = s,
-      year = year,
-      version = "LODES8",
-      job_type = "JT01",
-      segment = "S000",
-      state_part = "main",
-      agg_geo = census_unit,
-      use_cache = TRUE
-    ) |>
-      dplyr::bind_rows(
-        lehdr::grab_lodes(
-          state = s,
-          year = year,
-          version = "LODES8",
-          job_type = "JT01",
-          segment = "S000",
-          state_part = "aux",
-          agg_geo = census_unit,
-          use_cache = TRUE
-        )
+  lehdr::grab_lodes(
+    state = states,
+    year = year,
+    version = "LODES8",
+    job_type = "JT01",
+    segment = "S000",
+    state_part = "main",
+    agg_geo = census_unit,
+    use_cache = TRUE
+  ) |>
+    dplyr::bind_rows(
+      lehdr::grab_lodes(
+        state = states,
+        year = year,
+        version = "LODES8",
+        job_type = "JT01",
+        segment = "S000",
+        state_part = "aux",
+        agg_geo = census_unit,
+        use_cache = TRUE
       )
-  }
-  dplyr::bind_rows(results) |>
+    ) |>
     dplyr::distinct()
 }
 
