@@ -16,10 +16,10 @@ BugReports: https://github.com/ographiesresearch/urbanplanr/issues
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports: 
-    config (>= 0.3.2),
     dotenv (>= 1.0.3),
     dplyr (>= 1.1.4),
     elevatr (>= 0.99.0),
+    geotargets (>= 0.3.0),
     glue (>= 1.8.0),
     httr (>= 1.4.7),
     lehdr (>= 1.1.4),
@@ -33,6 +33,7 @@ Imports:
     sf (>= 1.0.20),
     stringi (>= 1.8.4),
     stringr (>= 1.5.1),
+    targets (>= 1.11.1),
     terra (>= 1.8-29),
     tibble (>= 3.2.1),
     tidycensus (>= 1.6.7),

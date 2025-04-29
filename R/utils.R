@@ -33,15 +33,14 @@ utils_extent_to_census <- function(extent) {
 #'
 #' @returns A list or vector as returned by `config()`.
 #' @export
-utils_init_env <- function(config_name = "default", 
-                           config_file = "config.yml") {
-  if(file.exists(".env")) {
-    dotenv::load_dot_env()
-    tidycensus::census_api_key(Sys.getenv("CENSUS_API"))
-  }
+# utils_init_env <- function(config_name = "default", 
+#                            config_file = "config.yml") {
+#   if(file.exists(".env")) {
+#     dotenv::load_dot_env()
+#     tidycensus::census_api_key(Sys.getenv("CENSUS_API"))
+#   }
   
-  config::get(config=config_name, file=config_file)
-}
+# }
 
 #' Standardize Output File Format
 #'
@@ -158,12 +157,12 @@ utils_write_multi <- function(data,
         layer = name,
         driver = "GPKG",
         quiet = FALSE
-        )
+      )
       terra::writeRaster(
         x = data,
         filename = stringr::str_c(dir_db, format, sep="."),
         filetype = "GPKG",
-        gdal = c(glue::glue("RASTER_TABLE={name}"), "APPEND_SUBDATASET=YES", "OVERWRITE=YES")
+        gdal = c(glue::glue("RASTER_TABLE={name}"), "APPEND_SUBDATASET=YES")
       )
     }
   } else if (format == "postgis") {
@@ -249,6 +248,22 @@ utils_write_multi <- function(data,
   data
 }
 
+utils_write_named_list <- function(data,
+                              dir_db,
+                              format,
+                              conn = NULL) {
+  data |>
+    purrr::imap(
+      \(x,i) utils_write_multi(
+        x, 
+        name = i, 
+        dir_db = dir_db, 
+        format = format, 
+        conn = conn
+        )
+    )
+}
+
 #' Get Remote File and Write to Disk
 #'
 #' @param url URL of remote file.
@@ -290,6 +305,193 @@ utils_get_arc <- function(id) {
   sf::st_read(
     glue::glue("{prefix}{id}{suffix}")
   )
+}
+
+COUNTY_EQUIVS <- c(
+  "COUNTY",
+  # Louisiana
+  "PARISH", 
+  # Connecticut
+  "PLANNING REGION", 
+  # Alaska
+  "BOROUGH", 
+  "CENSUS AREA",
+  # Puerto Rico
+  "MUNICIPIO"
+)
+
+utils_parse_place <- function(x) {
+  types <- COUNTY_EQUIVS |>
+    stringr::str_c(collapse="|")
+  
+  find <- glue::glue(" ?({types})?, ?")
+  x |>
+    stringr::str_to_upper() |>
+    stringr::str_replace(find, ",") |>
+    stringr::str_split(pattern = ",")
+}
+
+utils_place_states <- function(x) {
+  is_state <- utils_is_state(x)
+  is_place <- utils_is_place(x)
+  if (is_state) {
+    idx <- 1
+  } else if (is_place) {
+    idx <- 2
+  } else {
+    stop("Invalid place passed to `utils_place_states`")
+  }
+  utils_unique_by_idx(utils_parse_place(x), idx)
+}
+
+utils_filter_by_state <- function(df, places, col="abbrev") {
+  data <- data |>
+    dplyr::filter(
+      .data[[col]] %in% utils_place_states(places)
+    )
+}
+
+utils_filter_by_place <- function(df, places, cols=c("name", "state")) {
+  is_sf <- "sf" %in% class(df)
+  parsed <- utils_parse_place(places)
+  df <- parsed |>
+    purrr::map(\(i) dplyr::filter(
+      df, 
+      stringr::str_to_upper(.data[[cols[1]]]) == i[1] & 
+        stringr::str_to_upper(.data[[cols[2]]]) == i[2]
+      )
+    ) |>
+    purrr::list_rbind()
+  if (is_sf) {
+    df <- sf::st_as_sf(df)
+  }
+  df
+}
+
+utils_is_state <- function(x) {
+  x |>
+    stringr::str_to_upper() |>
+    stringr::str_detect("^[A-Z]{2}$") |>
+    all()
+}
+
+utils_is_place <- function(x) {
+  x |>
+    stringr::str_to_upper() |>
+    stringr::str_detect("[A-Z ]+, ?[A-Z]{2}$") |>
+    all()
+}
+
+utils_is_county <- function(x) {
+  types <- COUNTY_EQUIVS |>
+    stringr::str_c(collapse="|")
+  
+  x <- x |>
+    stringr::str_to_upper()
+  
+  county <- x |>
+    stringr::str_detect(glue::glue("( {types}),"))
+  
+  all(all(county) && utils_is_place(x))
+}
+
+utils_is_muni <- function(x) {
+  all(!utils_is_county(x) && utils_is_place(x))
+}
+
+utils_is_filepath <- function(x) {
+  length(x) == 1 &
+    class(x) == "character" & 
+    all(tools::file_ext(x) > 0)
+}
+
+utils_is_format <- function (x, formats) {
+  x |>
+    stringr::str_to_upper() |>
+    tools::file_ext() %in% stringr::str_to_upper(formats) |>
+    all()
+}
+
+utils_is_coords <- function(x) {
+  x |> 
+    purrr::map(\(c) 
+               is.numeric(unlist(c)) & 
+                 length(c) == 2 &
+                 dplyr::between(unlist(c)[1], -90, 90) &
+                 dplyr::between(unlist(c)[2], -180, 180)
+    ) |> 
+    unlist() |> 
+    all()
+}
+
+utils_place_picker <- function(places, buffer = NULL, crs=4326) {
+  if (!is.null(buffer)) {
+    buffer <- units::as_units(buffer, "miles")
+    print(buffer)
+  }
+  if (utils_is_filepath(places)) {
+    if (utils_is_format(places, c("shp", "geojson"))) {
+      if (file.exists(places)) {
+        extent <- places |>
+          sf::st_read() |> 
+          st_preprocess(crs)
+        if (!("id" %in% names(extent))) {
+          extent <- extent |>
+            tibble::rowid_to_column("id")
+        }
+        if (!("name" %in% names(extent))) {
+          extent <- extent |>
+            dplyr::mutate(name = id)
+        }
+      } else {
+        stop("You passed a file path to places, but the file doesn't exist.")
+      }
+    } else {
+      stop("Invalid file format.")
+    }
+  } else if (is.null(names(places))) {
+    if (utils_is_state(places)) {
+      extent <- places |>
+        tigris_get_states(crs = crs) |>
+        dplyr::mutate(type="state")
+    } else if (utils_is_county(places)) {
+      extent <- places |>
+        tigris_get_counties(crs = crs) |>
+        dplyr::mutate(type="county")
+    } else if (utils_is_muni(places)) {
+      extent <- places |>
+        munis_get_munis(crs = crs) |>
+        dplyr::mutate(type="muni")
+    } else {
+      stop("Invalid strings passed to places. Mixed state/county/muni lists are
+           not accepted.")
+    }
+  } else {
+    if (utils_is_coords(places)) {
+      if (is.null(buffer)) {
+        message("If you're passing in a coordinate, you should also pass in a
+                value to buffer! Defaulting to a 1 mile buffer around the point")
+        buffer <- units::as_units(1, "miles")
+      }
+      extent <- places |>
+        purrr::imap(\(x, idx) 
+                   st_point_from_coords(
+                     c(x[[2]], x[[1]]), 
+                     name = idx,
+                     crs = crs
+                   )) |>
+        purrr::list_rbind() |>
+        sf::st_as_sf() |>
+        dplyr::mutate(type="coord")
+    } else {
+      stop("Invalid coordinates.")
+    }
+  }
+  if (!is.null(buffer)) {
+    extent <- extent |>
+      sf::st_buffer(buffer)
+  }
+  extent
 }
 
 #' Read Remote Shapefile Stored in `.zip` File

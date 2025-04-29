@@ -1,0 +1,29 @@
+main:
+  dir_db: boston
+  places: 
+    - Boston, MA
+    - Brookline, MA
+  crs: 2249
+  format: gpkg
+  elev:
+    expand: 1000
+    tiles_on_side: 16
+    rowwise: false
+    z_scale: 5
+    contour_int: 5
+  buffers:
+    region: 5
+worcester:
+  dir_db: worcester
+  places: 
+    - Worcester, MA
+  crs: 2249
+  format: gpkg
+  elev:
+    expand: 1000
+    tiles_on_side: 16
+    rowwise: false
+    z_scale: 5
+    contour_int: 5
+  buffers:
+    region: 5

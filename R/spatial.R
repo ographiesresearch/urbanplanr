@@ -124,15 +124,17 @@ st_preprocess <- function(df, crs, name="geometry") {
 #'
 st_get_dem <- function(extent, 
                        tiles_on_side = 8, 
-                       expand=NULL,
+                       expand = NULL,
                        z = st_zoom_from_extent(
                          extent = extent, 
                          tiles_on_side = tiles_on_side
                        ), 
+                       rowwise = FALSE,
                        src = "aws") {
   
   # get_elev_master has a max z of 14.
-  z <- min(c(14,z)) 
+  z <- min(c(14,z))
+  min_res <- 256 * tiles_on_side
   
   dem <- extent |>
     elevatr::get_elev_raster(
@@ -146,15 +148,38 @@ st_get_dem <- function(extent,
     terra::rast()
   
   terra::set.crs(dem, glue::glue("epsg:{sf::st_crs(extent)$epsg}"))
-  
-  min_res <- 256 * tiles_on_side
-  
+
   fact <- ceiling(min_res / terra::ncol(dem))
   
   if (fact > 1) {
     dem <- terra::disagg(dem, fact = fact, method = "bilinear")
   }
-  dem
+  
+  # TODO: Rowwise
+  # dem <- list()
+  # for(i in 1:nrow(extent)) {
+  #   dem[[i]] <- extent[i,] |>
+  #     elevatr::get_elev_raster(
+  #       z = z,
+  #       src = src,
+  #       clip = "bbox",
+  #       expand = expand,
+  #       neg_to_na = TRUE,
+  #       verbose = FALSE
+  #     ) |>
+  #     terra::rast()
+    
+  #   terra::crs(dem[[i]]) <- sf::st_crs(extent)$wkt
+  #   fact <- ceiling(min_res / terra::ncol(dem[[i]]))
+    
+  #   if (fact > 1) {
+  #     dem[[i]] <- terra::disagg(dem[[i]], fact = fact, method = "bilinear")
+  #   }
+  # }
+  
+  dem |> 
+    terra::sprc() |>
+    terra::merge()
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -188,15 +213,16 @@ st_hillshade <- function(dem,
   } else {
     stop("Invalid z_scale. Must be >= 1.")
   }
-  terra::shade(
-    slope = terra::terrain(dem, v = "slope", unit = "radians"),
-    aspect = terra::terrain(dem, v = "aspect", unit = "radians"),
-    angle = angle,
-    direction = direction,
-    filename = filename,
-    normalize = normalize,
-    overwrite = overwrite
-  )
+    terra::shade(
+      slope = terra::terrain(dem * z_scale, v = "slope", unit = "radians"),
+      aspect = terra::terrain(dem * z_scale, v = "aspect", unit = "radians"),
+      angle = angle,
+      direction = direction,
+      filename = filename,
+      normalize = normalize,
+      overwrite = overwrite
+    )
+  
 }
 #' Contours from Raster
 #' 
@@ -261,8 +287,6 @@ st_contours_enclose <- function(
     enclosure_layer <- st_bbox_sf(enclosure_layer)
   }
   
-  message(sf::st_crs(contours)$epsg)
-  message(sf::st_crs(enclosure_layer)$epsg)
   if(poly) {
     out_geom <- "MULTIPOLYGON"
   } else {
@@ -355,6 +379,7 @@ st_clip <- function(x, y) {
     sf::st_set_agr("constant") |>
     sf::st_intersection(
       y |>
+        sf::st_set_agr("constant") |>
         sf::st_union() |>
         sf::st_geometry()
     ) |>
@@ -386,6 +411,36 @@ st_clip <- function(x, y) {
   
   clip |>
     sf::st_cast(cast_to)
+}
+
+st_filter_and_join <- function(df, 
+                               filter = NULL, 
+                               clip = NULL,
+                               join = NULL,
+                               int_join = FALSE) {
+  if (!is.null(filter)) {
+    df <- df |>
+      sf::st_filter(filter)
+  }
+  
+  if (!is.null(clip)) {
+    df <- df |>
+      st_clip(clip)
+  }
+  
+  if (!is.null(join)) {
+    if (int_join) {
+      df <- df |>
+        sf::st_intersection(join)
+    }
+    df <- df |>
+      sf::st_join(
+        join |>
+          dplyr::select(place_id = id),
+        largest = TRUE
+      )
+  }
+  df
 }
 
 #' Retrieve Scaling Parameters, Given Model Size

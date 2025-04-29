@@ -49,7 +49,7 @@ acs_get_vars <- function(vars,
   }
   df |>
     dplyr::rename(
-      geoid = .data$GEOID
+      geoid = GEOID
     )
 }
 
@@ -146,7 +146,7 @@ acs_get_table <- function(table,
 acs_process_nested <- function(df) {
   max_level <- max(df$level)
   
-  df <- df |>
+  df |>
     dplyr::mutate(
       levels_flag = dplyr::case_when(
         (.data$level == dplyr::lead(.data$level)) ~ TRUE,
@@ -167,10 +167,11 @@ acs_process_nested <- function(df) {
         .data$label,
         c("[(),:]" = "", "\\-" = " ")
       )
-    ) |>
-    dplyr::rename(
-      geoid = .data$GEOID
-    )
+    ) 
+  # |>
+  #   dplyr::rename(
+  #     geoid = .data$GEOID
+  #   )
 }
 
 #' Calculate Proportions from Long-Formatted ACS Subsets by Population
@@ -291,7 +292,9 @@ acs_get_ind <- function(states,
                  states = states,
                  county = county,
                  geometry = geometry) |>
-    acs_process_nested()
+    acs_process_nested() 
+  # |>
+  #   acs_pivot()
 }
 
 #' @name get_acs
@@ -350,6 +353,7 @@ acs_get_place_of_birth <- function(states,
 acs_get_housing <- function(states,
                             year,
                             census_unit,
+                            county = NULL,
                             crs = 4326,
                             geometry = FALSE) {
   vars <- c("hsg_unts" = "B25024_001",
@@ -393,6 +397,7 @@ acs_get_housing <- function(states,
   acs_get_vars(vars, 
                states = states,
                year = year,
+               county = county,
                census_unit = census_unit,
                geometry = geometry
                )
@@ -403,6 +408,7 @@ acs_get_housing <- function(states,
 acs_get_race <- function(states,
                          year,
                          census_unit,
+                         county = NULL,
                          crs = 4326,
                          geometry = FALSE) {
   vars <- c(
@@ -444,6 +450,7 @@ acs_get_race <- function(states,
   acs_get_vars(vars, 
                states = states,
                year = year,
+               county = county,
                census_unit = census_unit,
                geometry = geometry
   )
@@ -454,6 +461,7 @@ acs_get_race <- function(states,
 acs_get_age <- function(states,
                         year,
                         census_unit,
+                        county = NULL,
                         crs = 4326,
                         geometry = FALSE) {
   vars <- c(
@@ -492,6 +500,7 @@ acs_get_age <- function(states,
   acs_get_vars(vars, 
                states = states,
                year = year,
+               county = county,
                census_unit = census_unit,
                geometry = geometry
     )|>
@@ -520,20 +529,74 @@ acs_get_age <- function(states,
       mgt65 = rowSums(dplyr::across(c("m65_74", "m75_84", "mgt85")), na.rm = TRUE)
     ) |>
     dplyr::select(
-      "geoid",
+       "geoid",
       dplyr::starts_with("t"), 
       dplyr::starts_with("f"),
       dplyr::starts_with("m")
     )
 }
 
-acs_get_multi <- function(var, params, geos = c("tract", "block_group", "place")) {
-  out <- list()
-  for (g in geos) {
-    out[[g]] <- do.call(
-      glue::glue("acs_get_{var}"), 
-      args=append(params, list(census_unit = g))
-    )
+acs_router <- function(var, geography, states, county = NULL, year = 2022) {
+  if (var == "ind") {
+    # data <- acs_get_ind(census_unit = geography, states = states, county = county, year = year)
+  } else if (var == "occ") {
+    # data <- acs_get_occ(census_unit = geography, states = states, county = county, year = year)
+  } else if (var == "ancestry") {
+    # data <- acs_get_ancestry(census_unit = geography, states = states, county = county, year = year)
+  } else if (var == "place_of_birth") {
+    # data <- acs_get_place_of_birth(census_unit = geography, states = states, county = county, year = year)
+  } else if (var == "housing") {
+    data <- acs_get_housing(census_unit = geography, states = states, county = county, year = year)
+  } else if (var == "race") {
+    data <- acs_get_race(census_unit = geography, states = states, county = county, year = year)
+  } else if (var == "age") {
+    data <- acs_get_age(census_unit = geography, states = states, county = county, year = year)
+  } else {
+    message(glue::glue("ACS variable {var} is invalid. Skipping"))
   }
-  out
+}
+
+acs_get_multi <- function(vars, places, year, geography) {
+  if (geography == "block_group") {
+    geo_name <- "block_groups"
+  } else if (geography == "tract") {
+    geo_name <- "tracts"
+  } else if (geography == "county") {
+    geo_name <- "counties"
+  }
+  vars_out_names <- stringr::str_c(geo_name, vars, sep="_")
+  is_county <- utils_is_county(places)
+  if (is_county) {
+    data <- vars |>
+      purrr::map(
+        \(x) purrr::map(
+          utils_parse_place(places),
+          \(y) acs_router(
+          var = x,
+          geography = geography, 
+          state = y[2], 
+          county = y[1], 
+          year = year
+          )
+        ) |>
+          dplyr::bind_rows()
+      ) |>
+      purrr::set_names(vars_out_names)
+  } else {
+    data <- vars |>
+      purrr::map(
+        \(x) purrr::map(
+          utils_place_states(places),
+          \(y) acs_router(
+            var = x,
+            geography = geography, 
+            state = y,
+            year = year
+          )
+        ) |>
+        purrr::set_names(vars) |>
+          purrr::set_names(vars_out_names)
+      )
+  }
+  data
 }
