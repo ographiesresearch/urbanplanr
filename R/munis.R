@@ -1,16 +1,10 @@
 munis_process <- function(munis, name_col, state_abbrev) {
   munis |>
     dplyr::rename_with(tolower) |>
-    dplyr::select(name = .data[[name_col]])  |>
-    dplyr::filter(
-      !stringr::str_detect(name, "^ *$")
-    ) |>
-    dplyr::group_by(name) |>
-    dplyr::summarize(
-      geometry = sf::st_union(geometry)
-    ) |>
-    dplyr::ungroup() |>
-    dplyr::mutate(state = state_abbrev)
+    dplyr::select(name = name_col)  |>
+    tidyr::drop_na(name) |>
+    dplyr::filter(!stringr::str_detect(name, "^ *$")) |>
+    dplyr::mutate(state = state_abbrev) 
 }
 
 #' Downloads Municipal Boundaries by State
@@ -169,10 +163,13 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
   }
   
   data |>
-    tidyr::drop_na(name) |>
-    dplyr::filter(!stringr::str_detect(name, "^ *$")) |>
-    utils_slugify(name, state) |>
     sf::st_as_sf() |>
+    dplyr::group_by(name, state) |>
+    dplyr::summarize(
+      geometry = sf::st_union(geometry)
+    ) |>
+    dplyr::ungroup() |>
+    utils_slugify(name, state) |>
     sf::st_cast("MULTIPOLYGON")
 }
 

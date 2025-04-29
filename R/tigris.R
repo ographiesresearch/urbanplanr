@@ -47,49 +47,9 @@ tigris_get_multi <- function(.function,
                              places, 
                              state = NULL,
                              county = NULL,
-                             ...,
-                             crs = 4326) {
-  parsed <- utils_parse_place(places)
-  is_county <- utils_is_county(places)
-  is_state <- utils_is_state(places)
-  is_muni <- utils_is_muni(places)
-  has_county <- "county" %in% formalArgs(.function)
-  has_state <- "state" %in% formalArgs(.function)
-  if (is_county & has_county) {
-    data <- parsed |>
-      purrr::map(
-        \(x) .function(state = x[2], county = x[1])
-      )
-  } else if ((is_county | is_muni) & !has_county & has_state) {
-    data <- utils_place_states(places) |>
-      purrr::map(
-        \(x) .function(state = x)
-      )
-  } else if (is_state && has_state) {
-      data <- utils_place_states(places) |>
-        purrr::map(
-          \(x) .function(state = x)
-        )
-  } else {
-    data <- .function() 
-  }
-  
-  if (!is.null(states)) {
-    df <- df |>
-      dplyr::filter(.data$stusps %in% states)
-  }
-  df
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_multi <- function(.function, 
-                             places, 
-                             state = NULL,
-                             county = NULL,
                              year = NULL,
-                             ...,
-                             crs = 4326) {
+                             crs = 4326,
+                             ...) {
   parsed <- utils_parse_place(places)
   is_county <- utils_is_county(places)
   is_state <- utils_is_state(places)
@@ -131,7 +91,6 @@ tigris_get_multi <- function(.function,
   
   data |>
     dplyr::select(..., {{state}}) |>
-    sf::st_as_sf() |>
     st_preprocess(crs)
 }
 
@@ -152,7 +111,7 @@ tigris_extent_to_counties <- function(extent, year = NULL) {
 
 #' @name tigris_get_*
 #' 
-tigris_get_states <- function(places, year = NULL, crs = 4326, filter = TRUE, ...) {
+tigris_get_states <- function(places, year = NULL, crs = 4326, filter = TRUE) {
   data <- tigris_get_multi(
     .function = tigris::states,
     places = places,
@@ -160,8 +119,7 @@ tigris_get_states <- function(places, year = NULL, crs = 4326, filter = TRUE, ..
     crs = crs,
     id = geoid,
     name = name,
-    abbrev = stusps,
-    ...
+    abbrev = stusps
   ) |>
     dplyr::select(-state)
   if (filter) {
@@ -173,15 +131,14 @@ tigris_get_states <- function(places, year = NULL, crs = 4326, filter = TRUE, ..
 
 #' @name tigris_get_*
 #' @export
-tigris_get_counties <- function(places, year = NULL, crs = 4326, filter = TRUE, ...) {
+tigris_get_counties <- function(places, year = NULL, crs = 4326, filter = TRUE) {
   data <- tigris_get_multi(
     tigris::counties,
     places = places,
     year = year,
     crs = crs,
     id = geoid,
-    name = name,
-    ...
+    name = name
   )
   if (utils_is_county(places) & filter) {
     data <- data |>
@@ -192,15 +149,14 @@ tigris_get_counties <- function(places, year = NULL, crs = 4326, filter = TRUE, 
 
 #' @name tigris_get_*
 #' @export
-tigris_get_places <- function(places, year = NULL, crs = 4326, filter = TRUE, ...) {
+tigris_get_places <- function(places, year = NULL, crs = 4326, filter = TRUE) {
   data <- tigris_get_multi(
     .function = tigris::places,
     places = places,
     year = year,
     crs = crs,
     id = geoid,
-    name = name,
-    ...
+    name = name
   )
   if (utils_is_muni(places) & filter) {
     data <- data |>
@@ -212,48 +168,45 @@ tigris_get_places <- function(places, year = NULL, crs = 4326, filter = TRUE, ..
 
 #' @name tigris_get_*
 #' @export
-tigris_get_postal <- function(places = NULL, year = 2010, crs = 4326, counties = NULL, ...) {
+tigris_get_postal <- function(places = NULL, year = 2010, crs = 4326, counties = NULL) {
   tigris_get_multi(
     .function = tigris::zctas,
     places = places,
     year = year,
     crs = crs,
-    id = geoid10,
-    ...
+    id = geoid10
   )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_tracts <- function(places, year = NULL, crs = 4326, ...) {
+tigris_get_tracts <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
     .function = tigris::tracts,
     places = places,
     year = year,
     crs = crs,
     id = geoid,
-    name = name,
-    ...
+    name = name
   )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_block_groups <- function(places, year = NULL, crs = 4326, ...) {
+tigris_get_block_groups <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
     .function = tigris::block_groups,
     places = places,
     year = year,
     crs = crs,
     id = geoid,
-    name = namelsad,
-    ...
+    name = namelsad
   )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_roads <- function(places, year = NULL, crs = 4326, counties = NULL, ...) {
+tigris_get_roads <- function(places, year = NULL, crs = 4326, counties = NULL) {
   tigris_get_multi(
     .function = tigris::roads,
     places = places,
@@ -261,14 +214,13 @@ tigris_get_roads <- function(places, year = NULL, crs = 4326, counties = NULL, .
     crs = crs,
     id = linearid,
     name = fullname,
-    type = rttyp,
-    ...
+    type = rttyp
     )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_rails <- function(places, year = NULL, crs = 4326, ...) {
+tigris_get_rails <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
     .function = tigris::rails,
     places = places,
@@ -276,50 +228,33 @@ tigris_get_rails <- function(places, year = NULL, crs = 4326, ...) {
     crs = crs,
     id = linearid,
     name = fullname,
-    type = mtfcc,
-    ...
+    type = mtfcc
   )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_area_water <- function(places, year = NULL, crs = 4326, ...) {
+tigris_get_area_water <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
     .function = tigris::area_water,
     places = places,
     year = year,
     crs = crs,
-    id = linearid,
+    id = hydroid,
     name = fullname,
-    type = mtfcc,
-    ...
+    type = mtfcc
   )
 }
 
 #' @name tigris_get_*
 #' @export
-tigris_get_linear_water <- function(places, year = NULL, crs = 4326, ...) {
+tigris_get_linear_water <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
     .function = tigris::linear_water,
     places = places,
     year = year,
     crs = crs,
-    id = hydroid,
-    name = fullname,
-    ...
-  )
-}
-
-#' @name tigris_get_*
-#' @export
-tigris_get_linear_water <- function(places, crs = 4326, ...) {
-  message("Downloading road geometries.")
-  tigris_get_multi(
-    .function = tigris::linear_water,
-    places = places,
-    crs = crs,
     id = linearid,
-    name = fullname,
-    ...
+    name = fullname
   )
 }

@@ -148,34 +148,32 @@ st_get_dem <- function(extent,
   
   # get_elev_master has a max z of 14.
   z <- min(c(14,z))
+  min_res <- 256 * tiles_on_side
   
+  # TODO: Reimplement rowwise.
   if (!rowwise) {
     extent <- sf::st_as_sf(sf::st_union(extent))
   }
   
-  dem <- list()
-  for(i in 1:nrow(extent)) {
-    dem[[i]] <- extent[i,] |>
-      elevatr::get_elev_raster(
-        z = z,
-        src = src,
-        clip = "bbox",
-        expand = expand,
-        neg_to_na = TRUE,
-        verbose = FALSE
-      ) |>
-      terra::rast()
+  dem <- extent |>
+    elevatr::get_elev_raster(
+      z = z,
+      src = src,
+      clip = "bbox",
+      expand = expand,
+      neg_to_na = TRUE,
+      verbose = FALSE
+    ) |>
+    terra::rast()
     
-    terra::crs(dem[[i]]) <- sf::st_crs(extent)$wkt
-    min_res <- 256 * tiles_on_side
-    fact <- ceiling(min_res / terra::ncol(dem[[i]]))
-    if (fact > 1) {
-      dem[[i]] <- terra::disagg(dem[[i]], fact = fact, method = "bilinear")
-    }
+  terra::crs(dem) <- sf::st_crs(extent)$wkt
+  
+  fact <- ceiling(min_res / terra::ncol(dem))
+  if (fact > 1) {
+    dem <- terra::disagg(dem, fact = fact, method = "bilinear")
   }
   
-  dem |> 
-    terra::sprc()
+  dem
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -197,7 +195,7 @@ st_get_dem <- function(extent,
 #'
 #' @returns A `RasterLayer`.
 #' @export
-st_hillshade <- function(dems,
+st_hillshade <- function(dem,
                          angle = 45,
                          direction = 300,
                          z_scale = 1,
@@ -207,19 +205,15 @@ st_hillshade <- function(dems,
   if (!(z_scale >= 1)) {
     stop("Invalid z_scale. Must be >= 1.")
   }
-  dems |>
-    list() |>
-    purrr::map(\(x) terra::shade(
-      slope = terra::terrain(x * z_scale, v = "slope", unit = "radians"),
-      aspect = terra::terrain(x * z_scale, v = "aspect", unit = "radians"),
-      angle = angle,
-      direction = direction,
-      filename = filename,
-      normalize = normalize,
-      overwrite = overwrite
-    )
-  ) |> 
-    terra::sprc()
+  terra::shade(
+    slope = terra::terrain(dem * z_scale, v = "slope", unit = "radians"),
+    aspect = terra::terrain(dem * z_scale, v = "aspect", unit = "radians"),
+    angle = angle,
+    direction = direction,
+    filename = filename,
+    normalize = normalize,
+    overwrite = overwrite
+  )
   
 }
 #' Contours from Raster
