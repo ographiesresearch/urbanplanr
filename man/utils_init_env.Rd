@@ -4,7 +4,13 @@
 \alias{utils_init_env}
 \title{Initiate Environment}
 \usage{
-utils_init_env()
+utils_init_env(config_name = "default", config_file = "config.yml")
+}
+\arguments{
+\item{config_name}{Name of configuration to read values from.}
+
+\item{config_file}{Configuration file to read values from (config.yml is the 
+default).}
 }
 \value{
 A list or vector as returned by `config()`.

@@ -1,3 +1,21 @@
+utils_slugify <- function(df, ..., col = "id", sep = "-") {
+  cols <- rlang::enquos(...)
+  df |>
+    dplyr::mutate(
+      !!col := df |>
+        sf::st_drop_geometry() |>
+        dplyr::select(!!!rlang::enquos(...)) |>
+        purrr::pmap_chr(~ stringr::str_c(..., sep = sep) |> stringr::str_to_lower())
+    )
+}
+
+utils_unique_by_idx <- function(list, idx) {
+  list |>
+    purrr::map(idx) |>
+    unlist() |>
+    unique()
+}
+
 #' Extent to State/County
 #'
 #' @param extent `sf` object.
@@ -427,7 +445,6 @@ utils_is_coords <- function(x) {
 utils_place_picker <- function(places, buffer = NULL, crs=4326) {
   if (!is.null(buffer)) {
     buffer <- units::as_units(buffer, "miles")
-    print(buffer)
   }
   if (utils_is_filepath(places)) {
     if (utils_is_format(places, c("shp", "geojson"))) {
@@ -502,9 +519,6 @@ utils_place_picker <- function(places, buffer = NULL, crs=4326) {
 #' @returns Object of class `sf`.
 #' @export
 utils_get_remote_shp <- function(url, layer) {
-  message(
-    glue::glue("Downloading {shpfile} from {url}...")
-  )
   temp <- base::tempfile(fileext = ".zip")
   utils_get_remote(
     url = url,

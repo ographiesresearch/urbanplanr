@@ -20,6 +20,9 @@ counties <- function(states) {
     dplyr::left_join(
       states |> sf::st_drop_geometry(),
       by = dplyr::join_by("state_geoid"=="geoid")
+    ) |>
+    dplyr::mutate(
+      long = stringr::str_to_lower(stringr::str_c(county_name, state_abbrev, sep=","))
     )
 }
 
@@ -28,8 +31,11 @@ UTM_ZONES <- file.path("data-raw", "utm_zones.geojson") |>
   dplyr::select(zone_num) |>
   sf::st_make_valid()
 
+MUNIS <- munis_all(crs = 3857) |>
+  st_bbox_sf()
+
 STATES <- states()
 
 COUNTIES <- counties(STATES)
 
-usethis::use_data(COUNTIES, STATES, UTM_ZONES, internal=TRUE, overwrite = TRUE)
+usethis::use_data(COUNTIES, STATES, UTM_ZONES, MUNIS, internal=TRUE, overwrite = TRUE)

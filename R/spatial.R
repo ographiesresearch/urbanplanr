@@ -35,20 +35,20 @@ st_bbox_sf <- function(df) {
 #'
 #' @param coords vector of longitude, latitude coordinates (in EPSG:4326, unless
 #' coord_crs is changed).
-#' @param name Name to give point (in name field).
 #' @param crs output `crs`
+#' @param name Optional. Name to give point (in name field).
 #' @param coord_crs `crs` of provided points. 4326 default.
 #'
 #' @returns `sf` object
 #' @export
-st_point_from_coords <- function(coords, crs, name, coord_crs=4326) {
+st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df <- sf::st_point(x=coords, dim="XY") |>
     sf::st_sfc(crs=coord_crs) |>
     sf::st_as_sf() |>
     sf::st_set_geometry("geometry") |>
     sf::st_transform(crs)
   
-  if(!missing(name)) {
+  if(!is.null(name)) {
     df <- df |>
       dplyr::mutate(
         name = name
@@ -99,11 +99,25 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
 #' @export
 #'
 st_preprocess <- function(df, crs, name="geometry") {
-  df |> 
+  df <- df |> 
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
     sf::st_set_geometry(name) |>
     st_geom_to_xy(retain_geom = TRUE)
+  
+  if (st_is_polygon(df)) {
+    df <- df |>
+      dplyr::mutate(
+        area = sf::st_area(sf::st_geometry(df))
+      )
+  }
+  if (st_is_linestring(df)) {
+    df <- df |>
+      dplyr::mutate(
+        area = sf::st_length(sf::st_geometry(df))
+      )
+  }
+  df
 }
 
 #' Get DEM from AWS Terrain Tiles
@@ -134,52 +148,34 @@ st_get_dem <- function(extent,
   
   # get_elev_master has a max z of 14.
   z <- min(c(14,z))
-  min_res <- 256 * tiles_on_side
   
-  dem <- extent |>
-    elevatr::get_elev_raster(
-      z=z,
-      src=src,
-      clip="bbox",
-      expand=expand,
-      neg_to_na=TRUE,
-      verbose=FALSE
-    ) |>
-    terra::rast()
-  
-  terra::set.crs(dem, glue::glue("epsg:{sf::st_crs(extent)$epsg}"))
-
-  fact <- ceiling(min_res / terra::ncol(dem))
-  
-  if (fact > 1) {
-    dem <- terra::disagg(dem, fact = fact, method = "bilinear")
+  if (!rowwise) {
+    extent <- sf::st_as_sf(sf::st_union(extent))
   }
   
-  # TODO: Rowwise
-  # dem <- list()
-  # for(i in 1:nrow(extent)) {
-  #   dem[[i]] <- extent[i,] |>
-  #     elevatr::get_elev_raster(
-  #       z = z,
-  #       src = src,
-  #       clip = "bbox",
-  #       expand = expand,
-  #       neg_to_na = TRUE,
-  #       verbose = FALSE
-  #     ) |>
-  #     terra::rast()
+  dem <- list()
+  for(i in 1:nrow(extent)) {
+    dem[[i]] <- extent[i,] |>
+      elevatr::get_elev_raster(
+        z = z,
+        src = src,
+        clip = "bbox",
+        expand = expand,
+        neg_to_na = TRUE,
+        verbose = FALSE
+      ) |>
+      terra::rast()
     
-  #   terra::crs(dem[[i]]) <- sf::st_crs(extent)$wkt
-  #   fact <- ceiling(min_res / terra::ncol(dem[[i]]))
-    
-  #   if (fact > 1) {
-  #     dem[[i]] <- terra::disagg(dem[[i]], fact = fact, method = "bilinear")
-  #   }
-  # }
+    terra::crs(dem[[i]]) <- sf::st_crs(extent)$wkt
+    min_res <- 256 * tiles_on_side
+    fact <- ceiling(min_res / terra::ncol(dem[[i]]))
+    if (fact > 1) {
+      dem[[i]] <- terra::disagg(dem[[i]], fact = fact, method = "bilinear")
+    }
+  }
   
   dem |> 
-    terra::sprc() |>
-    terra::merge()
+    terra::sprc()
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -201,27 +197,29 @@ st_get_dem <- function(extent,
 #'
 #' @returns A `RasterLayer`.
 #' @export
-st_hillshade <- function(dem,
+st_hillshade <- function(dems,
                          angle = 45,
                          direction = 300,
                          z_scale = 1,
                          normalize = TRUE,
                          overwrite = TRUE,
                          filename = "") {
-  if (z_scale > 1) {
-    dem <- dem * z_scale
-  } else {
+  if (!(z_scale >= 1)) {
     stop("Invalid z_scale. Must be >= 1.")
   }
-    terra::shade(
-      slope = terra::terrain(dem * z_scale, v = "slope", unit = "radians"),
-      aspect = terra::terrain(dem * z_scale, v = "aspect", unit = "radians"),
+  dems |>
+    list() |>
+    purrr::map(\(x) terra::shade(
+      slope = terra::terrain(x * z_scale, v = "slope", unit = "radians"),
+      aspect = terra::terrain(x * z_scale, v = "aspect", unit = "radians"),
       angle = angle,
       direction = direction,
       filename = filename,
       normalize = normalize,
       overwrite = overwrite
     )
+  ) |> 
+    terra::sprc()
   
 }
 #' Contours from Raster
@@ -722,8 +720,8 @@ st_geom_to_xy <- function(df,
   init_crs <- sf::st_crs(df)
   
   df <- df |> 
-    sf::st_transform(crs) |>
-    st_multi_type_center(retain_geom=retain_geom, ...)
+    st_multi_type_center(retain_geom=retain_geom, ...) |>
+    sf::st_transform(crs = crs)
   
   df <- df |>
     dplyr::mutate(
@@ -731,15 +729,18 @@ st_geom_to_xy <- function(df,
       "{cols[1]}" := .data$coords[, "X"],
       "{cols[2]}" := .data$coords[, "Y"]
     ) |>
-    dplyr::select(-c(.data$coords))
+    dplyr::select(-c("coords"))
   
   if(retain_geom) {
     df <- df |>
       sf::st_drop_geometry() |>
-      sf::st_set_geometry(init_geo_col)
+      sf::st_set_geometry(init_geo_col) |>
+      sf::st_set_crs(init_crs)
+  } else {
+    df |>
+      sf::st_transform(init_crs)
   }
-  df |>
-    sf::st_transform(init_crs)
+  df
 }
 
 #' Add Z Dimension to Points from Column

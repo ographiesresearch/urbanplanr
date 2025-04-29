@@ -5,7 +5,6 @@ munis_process <- function(munis, name_col, state_abbrev) {
     dplyr::filter(
       !stringr::str_detect(name, "^ *$")
     ) |>
-    sf::st_make_valid() |>
     dplyr::group_by(name) |>
     dplyr::summarize(
       geometry = sf::st_union(geometry)
@@ -33,8 +32,6 @@ munis_process <- function(munis, name_col, state_abbrev) {
 #' `muni_get_ri()` Downloads municipal boundaries for Rhode Island.
 #' 
 #' `muni_get_vt()` Downloads municipal boundaries for Vermont.
-#'
-#' @inheritParams munis_preprocess
 #'
 #' @returns An `sf` object.
 #' @export
@@ -132,9 +129,9 @@ munis_router <- function(state, crs) {
   data
 }
 
-#' Execute Municipality-Getter Using State Name
+#' Get Municipality by State and Munis
 #'
-#' @param states Character vector of state names.
+#' @param places Character vector of state names.
 #' @param crs target coordinate reference system.
 #'
 #' @returns An `sf` object
@@ -158,8 +155,10 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
         sf::st_cast("MULTIPOLYGON") |>
         st_preprocess(crs)
   }
-  if (length(no_muni_st) > 0) {
-    state_munis[["Other"]] <- tigris_get_places(states = no_muni_st)
+  if ("cdp" %in% fallbacks & sum(unmatched) > 0) {
+    data[['unmatched']] <- places |>
+      subset(unmatched) |>
+      tigris_get_places(crs = crs)
   }
   
   data <- dplyr::bind_rows(data)
@@ -175,4 +174,25 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
     utils_slugify(name, state) |>
     sf::st_as_sf() |>
     sf::st_cast("MULTIPOLYGON")
+}
+
+munis_defined <- function() {
+  state.abb |>
+    subset(
+      "munis_get_" |> 
+        stringr::str_c(
+          stringr::str_to_lower(
+            state.abb
+          )
+        ) |> 
+        purrr::map(exists) |> 
+        unlist()
+    )
+}
+
+
+
+munis_all <- function(crs) {
+  munis_defined() |>
+    munis_get_munis(crs)
 }
