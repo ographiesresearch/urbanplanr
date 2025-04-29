@@ -8,191 +8,93 @@
 #' 
 lodes_get_data <- function(states, 
                       year, 
-                      census_unit) {
+                      census_unit,
+                      use_cache = TRUE) {
   lehdr::grab_lodes(
     state = states,
     year = year,
+    agg_geo = census_unit,
+    use_cache = use_cache,
+    state_part = "main",
     version = "LODES8",
     job_type = "JT01",
-    segment = "S000",
-    state_part = "main",
-    agg_geo = census_unit,
-    use_cache = TRUE
+    segment = "S000"
   ) |>
     dplyr::bind_rows(
       lehdr::grab_lodes(
         state = states,
         year = year,
+        agg_geo = census_unit,
+        use_cache = use_cache,
+        state_part = "aux",
         version = "LODES8",
         job_type = "JT01",
-        segment = "S000",
-        state_part = "aux",
-        agg_geo = census_unit,
-        use_cache = TRUE
+        segment = "S000"
       )
-    ) |>
-    dplyr::distinct()
-}
-
-lodes_prep <- function(od,
-                       census_unit) {
-  h_col <- stringr::str_c("h", census_unit, sep = "_")
-  w_col <- stringr::str_c("w", census_unit, sep = "_")
-  od |>
-    dplyr::rename(
-      w_unit = {{w_col}},
-      h_unit = {{h_col}}
     )
 }
 
-lodes_to_census_units <- function(df, 
-                                  census_units_geo,
-                                  census_unit) {
+# lodes_to_census_units <- function(df, 
+#                                   census_units_geo,
+#                                   census_unit) {
+#   df |>
+#     dplyr::left_join(
+#       census_units_geo |> 
+#         dplyr::rename(
+#           x_w = x,
+#           y_w = y,
+#           x_pl_w = x_pl,
+#           y_pl_w = y_pl,
+#           pl_n_w = pl_id,
+#           dplyr::any_of(c(selected_w = "selected"))
+#         ), 
+#       by = c("w_unit" = "unit_id")
+#     ) |>
+#     dplyr::left_join(
+#       census_units_geo |> 
+#         dplyr::rename(
+#           x_h = "x",
+#           y_h = "y",
+#           x_pl_h = "x_pl",
+#           y_pl_h = "y_pl",
+#           pl_n_h = "pl_id",
+#           dplyr::any_of(c(selected_h = "selected"))
+#         ),
+#       by = c("h_unit" = "unit_id")
+#     )
+# }
+
+lodes_type_in_geo <- function(df, type = "w", geo = "bg", segment = "S000") {
+  if (type == "w") {
+    other <- "h"
+  } else if (type == "h") {
+    other <- "w"
+  } else {
+    stop("Invalid work/home type.")
+  }
   
-  census_units_geo <- census_units_geo |>
-    st_multi_type_center() |>
-    sf::st_drop_geometry() |>
-    dplyr::select(-c("state", "pl_name"))
+  a_id <- stringr::str_c(type, geo, sep="_")
+  b_id <- stringr::str_c(other, geo, sep="_")
   
   df |>
-    dplyr::left_join(
-      census_units_geo |> 
-        dplyr::rename(
-          x_w = "x",
-          y_w = "y",
-          x_pl_w = "x_pl",
-          y_pl_w = "y_pl",
-          pl_n_w = "pl_id",
-          dplyr::any_of(c(selected_w = "selected"))
-        ), 
-      by = c("w_unit" = "unit_id")
+    dplyr::mutate(
+      in_unit = .data[[a_id]] == .data[[b_id]]
     ) |>
-    dplyr::left_join(
-      census_units_geo |> 
-        dplyr::rename(
-          x_h = "x",
-          y_h = "y",
-          x_pl_h = "x_pl",
-          y_pl_h = "y_pl",
-          pl_n_h = "pl_id",
-          dplyr::any_of(c(selected_h = "selected"))
-        ),
-      by = c("h_unit" = "unit_id")
-    )
-}
-
-lodes_workers_in_unit <- function(prox) {
-  prox |>
-    dplyr::group_by(.data$in_unit, unit_id = .data$w_unit) |>
+    dplyr::group_by(.data[["in_unit"]], id = .data[[a_id]]) |>
     dplyr::summarize(
-      count = sum(.data$S000)
+      count = sum(.data[[segment]])
     ) |>
+    dplyr::ungroup() |>
     tidyr::pivot_wider(
-      id_cols = "unit_id",
+      id_cols = id,
       names_from = "in_unit",
-      names_prefix = "in_unit_",
-      values_from = "count",
+      values_from = count,
       values_fill = 0
     ) |>
     dplyr::rename(
-      w_in_unit = "in_unit_TRUE"
-    ) |>
-    dplyr::mutate(
-      w_tot_in_unit = .data$in_unit_FALSE + .data$w_in_unit,
-      pct_w_in_unit = .data$w_in_unit / .data$w_tot_in_unit * 100
-    ) |>
-    dplyr::select(-c("in_unit_FALSE"))
-}
-
-lodes_workers_in_town <- function(prox) {
-  prox |>
-    dplyr::group_by(.data$in_town, unit_id = .data$w_unit) |>
-    dplyr::summarize(
-      count = sum(.data$S000)
-    ) |>
-    tidyr::pivot_wider(
-      id_cols = "unit_id",
-      names_from = "in_town",
-      names_prefix = "in_town_",
-      values_from = "count",
-      values_fill = 0
-    ) |>
-    dplyr::rename(
-      w_in_town = "in_town_TRUE"
-    ) |>
-    dplyr::mutate(
-      w_tot_in_town = .data$in_town_FALSE + .data$w_in_town,
-      pct_w_in_town = .data$w_in_town / .data$w_tot_in_town * 100
-    ) |>
-    dplyr::select(-c("in_town_FALSE"))
-}
-
-lodes_residents_in_unit <- function(prox) {
-  # What % of working residents work in tract?
-  prox |>
-    dplyr::group_by(.data$in_unit, unit_id = .data$h_unit) |>
-    dplyr::summarize(
-      count = sum(.data$S000)
-    ) |>
-    tidyr::pivot_wider(
-      id_cols = "unit_id",
-      names_from = "in_unit",
-      names_prefix = "in_unit_",
-      values_from = "count",
-      values_fill = 0
-    ) |>
-    dplyr::rename(
-      h_in_unit = "in_unit_TRUE"
-    ) |>
-    dplyr::mutate(
-      h_tot_in_unit = .data$in_unit_FALSE + .data$h_in_unit,
-      pct_h_in_unit = .data$h_in_unit / .data$h_tot_in_unit * 100
-    ) |>
-    dplyr::select(-c("in_unit_FALSE"))
-}
-
-lodes_residents_in_town <- function(prox) {
-  prox |>
-    dplyr::group_by(.data$in_town, unit_id = .data$h_unit) |>
-    dplyr::summarize(
-      count = sum(.data$S000)
-    ) |>
-    tidyr::pivot_wider(
-      id_cols = "unit_id",
-      names_from = "in_town",
-      names_prefix = "in_town_",
-      values_from = "count",
-      values_fill = 0
-    ) |>
-    dplyr::rename(
-      h_in_town = "in_town_TRUE"
-    ) |>
-    dplyr::mutate(
-      h_tot_in_town = .data$in_town_FALSE + .data$h_in_town,
-      pct_h_in_town = .data$h_in_town / .data$h_tot_in_town * 100
-    ) |>
-    dplyr::select(-c("in_town_FALSE"))
-}
-
-lodes_proximity_measures <- function(od_census_units) {
-  prox <- od_census_units |>
-    dplyr::mutate(
-      in_unit = .data$w_unit == .data$h_unit,
-      in_town = .data$pl_n_h == .data$pl_n_w
-    ) |>
-    tidyr::replace_na(
-      list(
-        in_town = FALSE
-      )
+      !!stringr::str_c(type, "in", "unit", sep = "_") := "TRUE",
+      !!stringr::str_c(type, "out", "unit", sep = "_") := "FALSE"
     )
-  
-  # Commence hacky copypaste...
-  # TODO: Fight with dplyr programming.
-  # What % of jobs in tract are held by people in that tract?
-  lodes_workers_in_unit(prox) |>
-    dplyr::full_join(lodes_workers_in_town(prox), by = "unit_id") |>
-    dplyr::full_join(lodes_residents_in_unit(prox), by = "unit_id") |>
-    dplyr::full_join(lodes_residents_in_town(prox), by = "unit_id")
 }
 
 lodes_selected_ods_poly <- function(od_census_units) {
