@@ -19,12 +19,26 @@ osm_extent_to_opq <- function(extent) {
 
 osm_get_type <- function(data, type) {
   if (type == "polygons") {
-    data <- data$osm_polygons
+    simple <- data$osm_polygons
+    multi <- data$osm_multipolygons
+    cast_to <- "MULTIPOLYGON"
   }
   if (type == "lines") {
-    data <- data$osm_lines
+    simple <- data$osm_lines
+    multi <- data$osm_multilines
+    cast_to <- "MULTILINESTRING"
   }
-  data
+  if (!is.null(simple) & !is.null(multi)) {
+    data <- simple |>
+      dplyr::bind_rows(multi)
+  } else if (!is.null(simple)) {
+    data <- simple
+  } else {
+    data <- multi
+  }
+  data |>
+    sf::st_cast(cast_to) |>
+    sf::st_make_valid()
 }
 
 osm_get_features <- function(extent, features, type) {
@@ -62,6 +76,7 @@ osm_get_open_space <- function(extent) {
         leisure = "park",
         leisure = "nature_reserve",
         leisure = "recreation_ground",
+        leisure = "golf_course",
         boundary = "protected_area",
         landuse = "forest",
         landuse = "meadow",
@@ -77,7 +92,7 @@ osm_get_open_space <- function(extent) {
           landuse == "meadown" ~ "meadow",
           .default = NULL
         )
-      ) |> 
+      ) |>
     dplyr::select(id = osm_id, name, type)
 }
 
