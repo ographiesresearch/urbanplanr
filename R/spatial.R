@@ -89,6 +89,31 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
   floor(min(zoom_w, zoom_h)) + log2(tiles_on_side)
 }
 
+st_upgrade_type <- function(data) {
+  t <- list(
+    pt = c("POINT", "MULTIPOINT"),
+    ln = c("LINESTRING", "MULTILINESTRING"),
+    pl = c("POLYGON", "MULTIPOLYGON")
+  )
+  
+  in_type <- data |>
+    sf::st_geometry_type() |> 
+    unique()
+  
+  if (length(in_type) > 1) {
+    cast_to <- dplyr::case_when(
+      all(in_type %in% t$pt) ~ t$pt[2],
+      all(in_type %in% t$ln) ~ t$ln[2],
+      all(in_type %in% t$pl) ~ t$pl[2]
+    )
+  } else {
+    cast_to <- in_type
+  }
+  data |>
+    sf::st_cast(cast_to)
+}
+
+
 #' Pre-processing operations for spatial data.
 #'
 #' @param df Simple features dataframe.
@@ -100,6 +125,7 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
 #'
 st_preprocess <- function(df, crs, name="geometry") {
   df <- df |> 
+    st_upgrade_type() |>
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
     sf::st_set_geometry(name) |>
@@ -607,8 +633,8 @@ st_xyxy_to_lines <- function(df,
 #' @returns Boolean.
 #' @export
 #'
-st_is_type <- function(df, type, exact=FALSE) {
-  df_type <- sf::st_geometry_type(df, by_geometry=FALSE)
+st_is_type <- function(df, type, exact=FALSE, by_geometry = FALSE, ...) {
+  df_type <- sf::st_geometry_type(df, by_geometry = FALSE, ...)
   if (exact) {
     type <- stringr::str_c("^", type, "$")
   }
@@ -617,38 +643,38 @@ st_is_type <- function(df, type, exact=FALSE) {
 
 #' @name st_is_type
 #' @export
-st_is_multipolygon <- function(df, ...) {
-  st_is_type(df = df, type = "MULTIPOLYGON", ...)
+st_is_multipolygon <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "MULTIPOLYGON", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_polygon <- function(df, ...) {
-  st_is_type(df = df, type = "POLYGON", ...)
+st_is_polygon <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "POLYGON", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_multilinestring <- function(df, ...) {
-  st_is_type(df = df, type = "MULTILINESTRING", ...)
+st_is_multilinestring <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "MULTILINESTRING", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_linestring <- function(df, ...) {
-  st_is_type(df = df, type = "LINESTRING", ...)
+st_is_linestring <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "LINESTRING", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_multipoint <- function(df, ...) {
-  st_is_type(df = df, type = "MULTIPOINT", ...)
+st_is_multipoint <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "MULTIPOINT", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_point <- function(df, ...) {
-  st_is_type(df = df, type = "POINT", ...)
+st_is_point <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "POINT", by_geometry = by_geometry, ...)
 }
 
 #' Return Geometry Centers for Multiple Types.
