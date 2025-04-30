@@ -118,7 +118,7 @@ munis_router <- function(state, crs) {
   } else if (state == "VT") {
     data <- munis_get_ri()
   } else {
-    data <- NULL
+    data <- tigris_get_places(state, crs = crs, filter = FALSE)
   }
   data
 }
