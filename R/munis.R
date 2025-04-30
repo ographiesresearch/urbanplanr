@@ -134,13 +134,7 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
   
   states <- utils_place_states(places)
   
-  matched <- states %in% munis_defined()
-  unmatched <- !(states %in% munis_defined())
-  
-  data <- list()
-  if (sum(matched) > 0) {
-    data[['matched']] <- states |>
-      subset(matched) |>
+  data <- states |>
         purrr::map(\(x) {
           munis_router(x, crs)
         }) |>
@@ -148,22 +142,13 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
         sf::st_as_sf() |>
         sf::st_cast("MULTIPOLYGON") |>
         st_preprocess(crs)
-  }
-  if ("cdp" %in% fallbacks & sum(unmatched) > 0) {
-    data[['unmatched']] <- places |>
-      subset(unmatched) |>
-      tigris_get_places(crs = crs)
-  }
-  
-  data <- dplyr::bind_rows(data)
   
   if (utils_is_muni(places) & filter) {
     data <- data |>
       utils_filter_by_place(places)
   }
-  
+
   data |>
-    sf::st_as_sf() |>
     dplyr::group_by(name, state) |>
     dplyr::summarize(
       geometry = sf::st_union(geometry)
