@@ -14,7 +14,7 @@ list(
   ),
   targets::tar_target(
     name = config,
-    command = targets::tar_config_yaml(config = config_yaml)[['main']]
+    command = targets::tar_config_yaml(config = config_yaml)[['saginaw']]
   ),
   targets::tar_target(
     name = dir_db,
@@ -285,7 +285,7 @@ list(
       )
   ),
   targets::tar_target(
-    name = tracts_housing,
+    name = tracts_acs,
     command = acs_get_multi(
       vars = c("housing", "age", "race"),
       places = county_list, 
@@ -298,7 +298,7 @@ list(
       )
   ),
   targets::tar_target(
-    name = block_group_housing,
+    name = block_group_acs,
     command = acs_get_multi(
         vars = c("housing", "age", "race"),
         places = county_list, 
@@ -306,6 +306,36 @@ list(
         geography="block_group"
       ) |>
       utils_write_named_list(
+        dir_db = dir_db,
+        format = config$format
+      )
+  ),
+  targets::tar_target(
+    name = open_space,
+    command = osm_get_open_space(region_boundary) |>
+      st_clip(region_boundary) |>
+      utils_write_multi(
+        name = "open_space",
+        dir_db = dir_db,
+        format = config$format
+      )
+  ),
+  targets::tar_target(
+    name = bike_lanes,
+    command = osm_get_bike_lanes(region_boundary) |>
+      st_clip(region_boundary) |>
+      utils_write_multi(
+        name = "bike_lanes",
+        dir_db = dir_db,
+        format = config$format
+      )
+  ),
+  targets::tar_target(
+    name = buildings,
+    command = osm_get_buildings(places_boundary) |>
+      st_clip(places_boundary) |>
+      utils_write_multi(
+        name = "buildings",
         dir_db = dir_db,
         format = config$format
       )
