@@ -102,21 +102,29 @@ munis_get_vt <- function() {
 
 munis_router <- function(state, crs) {
   if (state == "MA") {
-    data <- munis_get_ma()
+    data <- munis_get_ma() |>
+      sf::st_transform(crs)
   } else if (state == "CT") {
-    data <- munis_get_ct()
+    data <- munis_get_ct() |>
+      sf::st_transform(crs)
   } else if (state == "ME") {
-    data <- munis_get_me()
+    data <- munis_get_me() |>
+      sf::st_transform(crs)
   } else if (state == "NH") {
-    data <- munis_get_nh()
+    data <- munis_get_nh() |>
+      sf::st_transform(crs)
   } else if (state == "NJ") {
-    data <- munis_get_nj()
+    data <- munis_get_nj() |>
+      sf::st_transform(crs)
   } else if (state == "NY") {
-    data <- munis_get_ny()
+    data <- munis_get_ny() |>
+      sf::st_transform(crs)
   } else if (state == "RI") {
-    data <- munis_get_ri()
+    data <- munis_get_ri() |>
+      sf::st_transform(crs)
   } else if (state == "VT") {
-    data <- munis_get_ri()
+    data <- munis_get_ri() |>
+      sf::st_transform(crs)
   } else {
     data <- tigris_get_places(state, crs = crs, filter = FALSE)
   }
@@ -174,7 +182,12 @@ munis_defined <- function() {
 
 
 
-munis_all <- function(crs) {
-  munis_defined() |>
+munis_all <- function(crs, defined_only = TRUE) {
+  if (defined_only) {
+    states <- munis_defined()
+  } else {
+    states <- state.abb
+  }
+  states |>
     munis_get_munis(crs)
 }

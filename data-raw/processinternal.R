@@ -31,7 +31,10 @@ UTM_ZONES <- file.path("data-raw", "utm_zones.geojson") |>
   dplyr::select(zone_num) |>
   sf::st_make_valid()
 
-MUNIS <- munis_all(crs = 3857) |>
+# For some reason South Dakota is errorring out and it doesn't actually appear
+# to be a `tigris` caching thing
+MUNIS <- state.abb[! state.abb %in% c("SD")] |>
+  munis_get_munis(4326) |>
   st_bbox_sf()
 
 STATES <- states()
