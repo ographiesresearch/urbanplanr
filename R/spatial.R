@@ -26,7 +26,7 @@ st_bbox_sf <- function(df) {
   df |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      geometry = sf::st_as_sfc(sf::st_bbox(geometry))
+      geometry = sf::st_as_sfc(sf::st_bbox(sf::st_geometry(df)))
       ) |>
     dplyr::ungroup()
 }
@@ -100,6 +100,8 @@ st_upgrade_type <- function(data) {
     sf::st_geometry_type() |> 
     unique()
   
+  print(all(in_type %in% t$pl))
+  
   if (length(in_type) > 1) {
     cast_to <- dplyr::case_when(
       all(in_type %in% t$pt) ~ t$pt[2],
@@ -129,7 +131,8 @@ st_preprocess <- function(df, crs, name="geometry") {
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
     sf::st_set_geometry(name) |>
-    st_geom_to_xy(retain_geom = TRUE)
+    st_geom_to_xy(retain_geom = TRUE) |>
+    sf::st_make_valid()
   
   if (st_is_polygon(df)) {
     df <- df |>

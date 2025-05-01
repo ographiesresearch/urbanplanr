@@ -129,7 +129,7 @@ tigris_get_states <- function(places,
     dplyr::select(-state)
   if (filter) {
     data <- data |>
-      utile_filter_by_state(places)
+      utils_filter_by_state(places)
   }
   data
 }
