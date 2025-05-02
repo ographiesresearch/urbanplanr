@@ -13,6 +13,57 @@ st_check_for_proj <- function(df, crs=4326) {
   df
 }
 
+st_width <- function(df) {
+  bbox <- sf::st_bbox(df)
+  abs(bbox$xmax - bbox$xmin)
+}
+
+st_height <- function(df) {
+  bbox <- sf::st_bbox(df)
+  abs(bbox$ymax - bbox$ymin)
+}
+
+st_middle <- function(df) {
+  bbox <- sf::st_bbox(df)
+  list(
+    x = mean(c(bbox$xmax, bbox$xmin)),
+    y = mean(c(bbox$ymax, bbox$ymin))
+  )
+}
+
+st_square_it <- function(df, circle=FALSE) {
+  bbox <- st_bbox_sf(df)
+  
+  r <- unlist(st_max_dim(bbox), use.names=FALSE) / 2
+  
+  midpoint <- df |>
+    st_middle() |>
+    unlist(use.names=FALSE) |>
+    st_point_from_coords(crs = sf::st_crs(df), coord_crs = sf::st_crs(df))
+  
+  if (circle) {
+    df <- midpoint |>
+      sf::st_buffer(sqrt(2 * (r ^ 2)))
+  } else {
+    df <- midpoint |>
+      sf::st_buffer(r) |>
+      st_bbox_sf()
+  }
+  df |>
+    sf::st_as_sf()
+}
+
+st_max_dim <- function(df) {
+  x <- st_width(df)
+  y <- st_height(df)
+  max_dist <- max(x, y)
+  if (max_dist == x) {
+    return(list(x = x))
+  } else {
+    return(list(y = y))
+  }
+}
+
 #' Bounding Box as `sf` Object
 #'
 #' Given an input `sf` object, returns that object's bounding box as an `sf`
@@ -23,10 +74,10 @@ st_check_for_proj <- function(df, crs=4326) {
 #' @returns An `sf` object.
 #' @export
 st_bbox_sf <- function(df) {
-  df |>
+  df <- df |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      geometry = sf::st_as_sfc(sf::st_bbox(sf::st_geometry(df)))
+      geometry = sf::st_as_sfc(sf::st_bbox(geometry))
       ) |>
     dplyr::ungroup()
 }
@@ -476,8 +527,8 @@ st_filter_and_join <- function(df,
 st_scale_to_model <- function(df, model_size = NULL) {
   if (!is.null(model_size)) {
     bbox <- sf::st_bbox(df)
-    x_size <- abs(bbox$xmax - bbox$xmin)
-    y_size <- abs(bbox$ymax - bbox$ymin)
+    x_size <- st_width(df)
+    y_size <- st_height(df)
     x_center <- as.numeric(bbox$xmax - (x_size / 2))
     y_center <- as.numeric(bbox$ymax - (y_size / 2))
     
