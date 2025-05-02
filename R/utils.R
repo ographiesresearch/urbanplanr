@@ -363,7 +363,7 @@ utils_place_states <- function(x) {
 }
 
 utils_filter_by_state <- function(df, places, col="abbrev") {
-  data <- data |>
+  df <- df |>
     dplyr::filter(
       .data[[col]] %in% utils_place_states(places)
     )
