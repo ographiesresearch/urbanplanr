@@ -77,7 +77,7 @@ st_bbox_sf <- function(df) {
   df <- df |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      geometry = sf::st_as_sfc(sf::st_bbox(geometry))
+      geometry = sf::st_as_sfc(sf::st_bbox(.data[["geometry"]]))
       ) |>
     dplyr::ungroup()
 }
@@ -527,7 +527,7 @@ st_filter_and_join <- function(df,
     df <- df |>
       sf::st_join(
         join |>
-          dplyr::select(place_id = id),
+          dplyr::select(place_id = "id"),
         largest = TRUE
       )
   }
