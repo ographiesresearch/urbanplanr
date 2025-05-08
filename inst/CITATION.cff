@@ -1,0 +1,36 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: urbanplanr
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Eric Robsky
+    family-names: Huntley
+    email: eric@ographiesresearch.com
+    affiliation: OGRAPHIES Research & Design
+    orcid: 'https://orcid.org/0000-0001-8497-0589'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15366842
+    description: Zenodo Upload
+repository-code: 'https://github.com/ographiesresearch/urbanplanr/'
+abstract: >-
+  A set of R tools that automate various common data
+  processing workflows in urban planning. Developed in
+  collabroation with Utile Architecture and Planning.
+keywords:
+  - city planning
+  - urban planning
+  - urbanism
+  - automation
+  - r
+  - mapping
+  - spatial data science
+  - cartography
+  - gis
+  - demographics
+license: MIT
