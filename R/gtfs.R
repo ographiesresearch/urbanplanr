@@ -1,3 +1,21 @@
+# MA Links availabe here... (from https://www.mass.gov/lists/mbta-and-transit-data-for-developers)
+# https://data.trilliumtransit.com/gtfs/berkshire-ma-us/berkshire-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/brockton-ma-us/brockton-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/capeann-ma-us/capeann-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/capecod-ma-us/capecod-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/frta-ma-us/frta-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/gatra-ma-us/gatra-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/lowell-ma-us/lowell-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/merrimackvalley-ma-us/merrimackvalley-ma-us.zip
+# http://vc.mwrta.com/gtfs/google_transit.zip
+# https://data.trilliumtransit.com/gtfs/montachusett-ma-us/montachusett-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/nantucket-ma-us/nantucket-ma-us.zip
+# http://www.pvta.com/g_trans/google_transit.zip
+# https://data.trilliumtransit.com/gtfs/srta-ma-us/srta-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/marthasvineyard-ma-us/marthasvineyard-ma-us.zip
+# https://data.trilliumtransit.com/gtfs/wrta-ma-us/wrta-ma-us.zip
+
+
 #' GTFS Helper Functions
 #' @name gtfs_helpers
 #' @description
@@ -65,11 +83,19 @@ gtfs_get_mbta <- function(crs) {
     gtfs_process(crs)
 }
 
+
 #' @name gtfs_feeds
 #' @export
 gtfs_get_mta <- function(crs) {
   tidytransit::read_gtfs(
     "http://web.mta.info/developers/data/nyct/subway/google_transit.zip"
     ) |>
+    gtfs_process(crs)
+}
+
+gtfs_get_rrta <- function(crs) {
+  tidytransit::read_gtfs(
+    "https://busfinder.redrosetransit.com/Infopoint/gtfs-zip.ashx"
+  ) |>
     gtfs_process(crs)
 }

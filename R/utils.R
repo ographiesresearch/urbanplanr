@@ -377,13 +377,6 @@ utils_is_state <- function(x) {
     all()
 }
 
-utils_is_place <- function(x) {
-  x |>
-    stringr::str_to_upper() |>
-    stringr::str_detect("[A-Z ]+, ?[A-Z]{2}$") |>
-    all()
-}
-
 utils_is_county <- function(x) {
   types <- COUNTY_EQUIVS |>
     stringr::str_c(collapse="|")
@@ -395,6 +388,14 @@ utils_is_county <- function(x) {
     stringr::str_detect(glue::glue("( {types}),"))
   
   all(all(county) && utils_is_place(x))
+}
+
+utils_is_place <- function(x) {
+  a <- x |>
+    stringr::str_to_upper() |>
+    stringr::str_detect("[A-Z ]+, ?[A-Z]{2}$") |>
+    all()
+  a
 }
 
 utils_is_muni <- function(x) {
