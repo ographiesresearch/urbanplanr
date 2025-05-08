@@ -14,5 +14,7 @@ Run a shiny interface walking through configuration of a batch download
 workflow.
 }
 \examples{
+\dontrun{
 shinyplanr()
+}
 }

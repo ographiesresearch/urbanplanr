@@ -5,7 +5,6 @@
 #'
 #' @returns Boolean.
 #' @export
-#'
 db_exists <- function(conn, dbname) {
   exists <- dbname %in% RPostgres::dbGetQuery(
     conn, 
@@ -18,7 +17,13 @@ db_exists <- function(conn, dbname) {
   }
   exists
 }
-
+#' Test Whether Extension Exists
+#'
+#' @inheritParams db_exists
+#' @param ext Character. Name of extension, e.g., "postgis."
+#'
+#' @returns Boolean.
+#' @export
 db_extension_exists <- function(conn, ext) {
    ext %in% RPostgres::dbGetQuery(
     conn,
@@ -26,6 +31,12 @@ db_extension_exists <- function(conn, ext) {
   )$extname
 }
 
+#' Create Extension
+#'
+#' @inheritParams db_extension_exists
+#'
+#' @returns conn
+#' @export
 db_create_extension <- function(conn, ext) {
   current <- RPostgres::dbGetInfo(conn)
   if(!db_extension_exists(conn, ext)) {
@@ -38,19 +49,19 @@ db_create_extension <- function(conn, ext) {
       glue::glue("'{ext}' already exists on database '{current$dbname}'.")
     )
   }
+  conn
 }
 
-#' Create PostGIS extension.
+#' Create extensions.
 #'
 #' @inheritParams db_exists
-#' @param extension Character. Name of extension to create.
+#' @param exts Character vector. Name of extensions to create.
 #'
 #' @returns conn
 #' @export
-#'
 db_create_extensions <- function(conn, 
-                                 extensions = c("postgis", "postgis_raster")) {
-  purrr::walk(extensions, \(x) db_create_extension(conn, x))
+                                 exts = c("postgis", "postgis_raster")) {
+  purrr::walk(exts, \(x) db_create_extension(conn, x))
   conn
 }
 
@@ -74,7 +85,6 @@ db_drop <- function(conn, dbname) {
 #'
 #' @returns conn
 #' @export
-#'
 db_create <- function(conn, dbname) {
   RPostgres::dbExecute(
     conn, 
@@ -95,7 +105,6 @@ db_create <- function(conn, dbname) {
 #'
 #' @returns Boolean
 #' @export
-#'
 db_role_exists <- function(conn, role) {
   
   exists <- role %in% RPostgres::dbGetQuery(
@@ -195,7 +204,8 @@ db_conn <- function(dbname, role, pass, host = "localhost", port = 5432) {
 #'
 #' @inheritParams db_grant_access
 #' @inheritParams db_role_create
-#'
+#' @inheritParams db_create_extensions
+#' 
 #' @returns conn
 #' @export
 db_create_flow <- function(conn,
@@ -203,7 +213,7 @@ db_create_flow <- function(conn,
                            role,
                            role_pass,
                            admin_pass,
-                           extensions = c("postgis", "postgis_raster")
+                           exts = c("postgis", "postgis_raster")
                            ) {
   if (db_exists(conn, dbname)) {
     overwrite <- utils_prompt_check("Would you like to overwrite the database?")
@@ -241,7 +251,7 @@ db_create_flow <- function(conn,
   new_conn |>
     db_grant_access(dbname, role) |>
     db_set_defaults(dbname, role) |>
-    db_create_extensions(extensions)
+    db_create_extensions(exts)
 
   conn
 }

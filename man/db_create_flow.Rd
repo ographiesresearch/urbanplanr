@@ -10,7 +10,7 @@ db_create_flow(
   role,
   role_pass,
   admin_pass,
-  extensions = c("postgis", "postgis_raster")
+  exts = c("postgis", "postgis_raster")
 )
 }
 \arguments{
@@ -19,6 +19,8 @@ db_create_flow(
 \item{dbname}{Character. Name of database.}
 
 \item{role}{Character. Name of role.}
+
+\item{exts}{Character vector. Name of extensions to create.}
 }
 \value{
 conn

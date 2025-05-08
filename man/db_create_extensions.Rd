@@ -2,18 +2,18 @@
 % Please edit documentation in R/db.R
 \name{db_create_extensions}
 \alias{db_create_extensions}
-\title{Create PostGIS extension.}
+\title{Create extensions.}
 \usage{
-db_create_extensions(conn, extensions = c("postgis", "postgis_raster"))
+db_create_extensions(conn, exts = c("postgis", "postgis_raster"))
 }
 \arguments{
 \item{conn}{Database connection like that created by `RPostgres::dbConnect()`.}
 
-\item{extension}{Character. Name of extension to create.}
+\item{exts}{Character vector. Name of extensions to create.}
 }
 \value{
 conn
 }
 \description{
-Create PostGIS extension.
+Create extensions.
 }
