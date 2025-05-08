@@ -594,9 +594,9 @@ acs_get_multi <- function(vars, places, year, geography) {
             year = year
           )
         ) |>
-        purrr::set_names(vars) |>
-          purrr::set_names(vars_out_names)
-      )
+          dplyr::bind_rows()
+      ) |>
+      purrr::set_names(vars_out_names)
   }
   data
 }
