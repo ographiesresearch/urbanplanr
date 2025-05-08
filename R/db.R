@@ -205,6 +205,8 @@ db_conn <- function(dbname, role, pass, host = "localhost", port = 5432) {
 #' @inheritParams db_grant_access
 #' @inheritParams db_role_create
 #' @inheritParams db_create_extensions
+#' @param role_pass Password to be given to read-only role.
+#' @param admin_pass Password of admin user.
 #' 
 #' @returns conn
 #' @export

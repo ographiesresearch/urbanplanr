@@ -1,15 +1,3 @@
-#' Get OpenStreetMap Features by Key
-#' @name get_osm
-#' 
-#' @description
-#' `get_osm_key()` retrieves an arbitrary feature type based on its key.
-#' `get_osm_buildings()` retrieves buildings based on bounding box of a feature.
-#'
-#' @param extent `sf` object used to generate `bbox`
-#' @param key OpenStreetMap feature key.
-#'
-#' @returns `sf` object
-#' @export
 osm_extent_to_opq <- function(extent) {
   extent |>
     sf::st_transform(4326) |>
@@ -41,6 +29,28 @@ osm_get_type <- function(data, type) {
     sf::st_make_valid()
 }
 
+#' Get OpenStreetMap Features
+#' @name osm_get_
+#' 
+#' @description
+#' `osm_get_buildings()` Retrieves buildings from OpenStreetMap, given an 
+#' input extent.
+#' 
+#' `osm_get_open_space()` Retrieves open space from OpenStreetMap, given an 
+#' input extent.
+#' 
+#' `osm_get_bike_lanes()` Retrieves bike lanes from OpenStreetMap, given an
+#' input extent.
+#' 
+#' @param extent `sf` object used to generate the overpass query.
+#' @param key OpenStreetMap feature key.
+#' @param features Named list or vector with key value pairs.
+#' @param key A feature key (e.g., "building").
+#' @param type String. "Polygons" or "lines".
+#'
+#' @returns `sf` object
+#' 
+#' @export
 osm_get_features <- function(extent, features, type) {
   extent |>
     osm_extent_to_opq() |>
@@ -50,6 +60,8 @@ osm_get_features <- function(extent, features, type) {
     sf::st_transform(sf::st_crs(extent))
 }
 
+#' @name osm_get_
+#' @export
 osm_get_key <- function(extent, key, type) {
   extent |>
     osm_extent_to_opq() |>
@@ -59,7 +71,7 @@ osm_get_key <- function(extent, key, type) {
     sf::st_transform(sf::st_crs(extent))
 }
 
-#' @name get_osm
+#' @name osm_get_
 #' @export
 osm_get_buildings <- function(extent) {
   extent |>
@@ -67,7 +79,7 @@ osm_get_buildings <- function(extent) {
     dplyr::select(id = "osm_id", "name")
 }
 
-#' @name get_osm
+#' @name osm_get_
 #' @export
 osm_get_open_space <- function(extent) {
   extent |>
@@ -96,6 +108,8 @@ osm_get_open_space <- function(extent) {
     dplyr::select(id = "osm_id", "name", "type")
 }
 
+#' @name osm_get_
+#' @export
 osm_get_bike_lanes <- function(extent) {
   extent |>
     osm_get_features(

@@ -20,6 +20,10 @@ db_create_flow(
 
 \item{role}{Character. Name of role.}
 
+\item{role_pass}{Password to be given to read-only role.}
+
+\item{admin_pass}{Password of admin user.}
+
 \item{exts}{Character vector. Name of extensions to create.}
 }
 \value{
