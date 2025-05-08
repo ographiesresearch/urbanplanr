@@ -35,30 +35,13 @@ utils_extent_to_census <- function(extent) {
   }
   c |>
     sf::st_drop_geometry() |>
-    dplyr::group_by(state_name) |>
+    dplyr::group_by(.data[["state_name"]]) |>
     dplyr::summarize(
-      counties = list(county_name)
+      counties = list(.data[["county_name"]])
     ) |>
     dplyr::ungroup() |>
     tibble::deframe()
 }
-
-#' Initiate Environment
-#'
-#' @param config_name Name of configuration to read values from.
-#' @param config_file Configuration file to read values from (config.yml is the 
-#' default).
-#'
-#' @returns A list or vector as returned by `config()`.
-#' @export
-# utils_init_env <- function(config_name = "default", 
-#                            config_file = "config.yml") {
-#   if(file.exists(".env")) {
-#     dotenv::load_dot_env()
-#     tidycensus::census_api_key(Sys.getenv("CENSUS_API"))
-#   }
-  
-# }
 
 #' Standardize Output File Format
 #'
@@ -458,7 +441,7 @@ utils_place_picker <- function(places, buffer = NULL, crs=4326) {
         }
         if (!("name" %in% names(extent))) {
           extent <- extent |>
-            dplyr::mutate(name = id)
+            dplyr::mutate(name = .data[["id"]])
         }
       } else {
         stop("You passed a file path to places, but the file doesn't exist.")
