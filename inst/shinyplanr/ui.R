@@ -83,7 +83,6 @@ ui <- bslib::page_sidebar(
             )
           )
         ),
-        
         shiny::fluidRow(
           shiny::column(
             width = 6,
@@ -115,6 +114,34 @@ ui <- bslib::page_sidebar(
           width = "100%"
         )
       )
+      # ,
+      # bslib::accordion_panel(
+      #   title = "Table",
+      #   shiny::fluidRow(
+      #     shiny::column(
+      #       width = 6,
+      #       shiny::selectizeInput(
+      #         "place_id_col",
+      #         "ID Column",
+      #         choices = names(places()),
+      #         selected = if ("id" %in% names(places())) {"id"} else {NULL},
+      #         width = "100%",
+      #         options = list(dropdownParent = 'body')
+      #       )
+      #     ),
+      #     shiny::column(
+      #       width = 6,
+      #       shiny::selectizeInput(
+      #         "place_name_col",
+      #         "Name Column",
+      #         choices = names(places()),
+      #         selected = if ("name" %in% names(places())) { "name" } else {NULL},
+      #         width = "100%",
+      #         options = list(dropdownParent = 'body')
+      #       )
+      #     )
+      #   )
+      # )
       # bslib::accordion_panel(
       #   title = "Output",
       #   shiny::fluidRow(

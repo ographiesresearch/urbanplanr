@@ -31,7 +31,7 @@ server <- function(input, output, session) {
   places <- reactiveVal()
   region <- reactiveVal()
   crs <- reactiveValues()
-  crs$units <- "ft"
+  # crs$units <- "ft"
   
   ## Initialize Map ====
   
@@ -91,7 +91,6 @@ server <- function(input, output, session) {
   )
   
   shiny::observeEvent(crs$suggest, {
-    print("hello2")
     shiny::updateSelectizeInput(
       session,
       "choose_crs",
@@ -115,66 +114,19 @@ server <- function(input, output, session) {
     )
   })
   
-  ## Build Table Settings ====
-  
-  # output$table_settings <- renderUI({
-  #   if (!is.null(places())) {
-  #     bslib::accordion_panel(
-  #       title = "Table",
-  #         shiny::fluidRow(
-  #           shiny::column(
-  #             width = 6,
-  #             shiny::selectizeInput(
-  #               "place_id_col",
-  #               "ID Column",
-  #               choices = names(places()),
-  #               selected = if ("id" %in% names(places())) {"id"} else {NULL},
-  #               width = "100%",
-  #               options = list(dropdownParent = 'body')
-  #             )
-  #           ),
-  #           shiny::column(
-  #             width = 6,
-  #             shiny::selectizeInput(
-  #               "place_name_col",
-  #               "Name Column",
-  #               choices = names(places()),
-  #               selected = if ("name" %in% names(places())) { "name" } else {NULL},
-  #               width = "100%",
-  #               options = list(dropdownParent = 'body')
-  #             )
-  #           )
-  #         )
-  #     )
-  #   }
-  # })
-  
   # Data Processing ====
   
   ## Update Buffer Based on Regionalizer ====
   
   shiny::observeEvent(input$button_update_region, {
-    d <- places() |>
-      sf::st_buffer(units::as_units(
-        input$region,
-        input$region_units
-      )) |>
-      sf::st_union() |>
-      sf::st_as_sf(crs = sf::st_crs(places())) |>
-      sf::st_set_geometry("geometry")
-    
-    if (input$region_type == "bbox") {
-      d <- d |>
-        st_bbox_sf()
-    } else if (input$region_type == "square") {
-      d <- d |>
-        st_square_it()
-    } else if (input$region_type == "circle") {
-      d <- d |>
-        st_square_it(circle = TRUE)
-    }
-    d |>
-      region()
+    places() |>
+      st_regionalize(
+        dist = units::as_units(
+          input$region,
+          input$region_units
+        ),
+        type = input$region_type) |>
+        region()
   })
   
   # I/O ====
