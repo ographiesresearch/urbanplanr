@@ -49,7 +49,7 @@ acs_get_vars <- function(vars,
   }
   df |>
     dplyr::rename(
-      geoid = GEOID
+      geoid = "GEOID"
     )
 }
 
@@ -574,7 +574,7 @@ acs_get_multi <- function(vars, places, year, geography) {
           \(y) acs_router(
           var = x,
           geography = geography, 
-          state = y[2], 
+          states = y[2], 
           county = y[1], 
           year = year
           )
@@ -590,7 +590,7 @@ acs_get_multi <- function(vars, places, year, geography) {
           \(y) acs_router(
             var = x,
             geography = geography, 
-            state = y,
+            states = y,
             year = year
           )
         ) |>

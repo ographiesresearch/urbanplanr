@@ -235,7 +235,7 @@ db_create_flow <- function(conn,
   
   if (!db_role_exists(new_conn, role)) {
     new_conn |>
-      db_role_create(role, pass)
+      db_role_create(role, role_pass)
   }
 
   new_conn |>
