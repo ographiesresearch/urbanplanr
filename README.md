@@ -1,5 +1,7 @@
 # urbanplanR
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip) [![R-CMD-check](https://github.com/ographiesresearch/urbanplanr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ographiesresearch/urbanplanr/actions/workflows/R-CMD-check.yaml) [![Codecov test coverage](https://codecov.io/gh/ographiesresearch/urbanplanr/graph/badge.svg)](https://app.codecov.io/gh/ographiesresearch/urbanplanr) [![DOI](https://zenodo.org/badge/750539523.svg)](https://doi.org/10.5281/zenodo.15366842)
+
 So far, the automated workflows download and process data from the **LEHD Origin-Destination Employment Statistics (LODES)** and the **5-year American Community Survey estimates**, including data necessary to produce ‘Petri Dish’ diagrams of place-based employment by industry and occupation. Developed in collaboration with [Utile Architecture and Planning](https://www.utiledesign.com/).
 
 
