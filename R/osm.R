@@ -64,7 +64,7 @@ osm_get_key <- function(extent, key, type) {
 osm_get_buildings <- function(extent) {
   extent |>
     osm_get_key(key = "building", type = "polygons") |>
-    dplyr::select(id = osm_id, name)
+    dplyr::select(id = "osm_id", "name")
 }
 
 #' @name get_osm
@@ -93,7 +93,7 @@ osm_get_open_space <- function(extent) {
           .default = NULL
         )
       ) |>
-    dplyr::select(id = osm_id, name, type)
+    dplyr::select(id = "osm_id", "name", "type")
 }
 
 osm_get_bike_lanes <- function(extent) {
@@ -130,5 +130,5 @@ osm_get_bike_lanes <- function(extent) {
         .default = NULL
       )
     ) |> 
-    dplyr::select(id = osm_id, name, type)
+    dplyr::select(id = "osm_id", "name", "type")
 }

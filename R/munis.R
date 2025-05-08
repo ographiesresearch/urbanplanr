@@ -167,12 +167,12 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
 }
 
 munis_defined <- function() {
-  state.abb |>
+  datasets::state.abb |>
     subset(
       "munis_get_" |> 
         stringr::str_c(
           stringr::str_to_lower(
-            state.abb
+            datasets::state.abb
           )
         ) |> 
         purrr::map(exists) |> 
@@ -186,7 +186,7 @@ munis_all <- function(crs, defined_only = TRUE) {
   if (defined_only) {
     states <- munis_defined()
   } else {
-    states <- state.abb
+    states <- datasets::state.abb
   }
   states |>
     munis_get_munis(crs)
