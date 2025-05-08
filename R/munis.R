@@ -2,7 +2,7 @@ munis_process <- function(munis, name_col, state_abbrev) {
   munis |>
     dplyr::rename_with(tolower) |>
     dplyr::select(name = name_col)  |>
-    tidyr::drop_na(name) |>
+    tidyr::drop_na("name") |>
     dplyr::filter(!stringr::str_detect(name, "^ *$")) |>
     dplyr::mutate(state = state_abbrev) 
 }
@@ -157,9 +157,9 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
   }
 
   data |>
-    dplyr::group_by(name, state) |>
+    dplyr::group_by(.data[["name"]], .data[["state"]]) |>
     dplyr::summarize(
-      geometry = sf::st_union(geometry)
+      geometry = sf::st_union(.data[["geometry"]])
     ) |>
     dplyr::ungroup() |>
     utils_slugify(name, state) |>
