@@ -86,9 +86,9 @@ lodes_type_in_geo <- function(df, type = "w", geo = "bg", segment = "S000") {
     ) |>
     dplyr::ungroup() |>
     tidyr::pivot_wider(
-      id_cols = id,
+      id_cols = "id",
       names_from = "in_unit",
-      values_from = count,
+      values_from = "count",
       values_fill = 0
     ) |>
     dplyr::rename(

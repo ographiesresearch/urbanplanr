@@ -3,7 +3,7 @@ munis_process <- function(munis, name_col, state_abbrev) {
     dplyr::rename_with(tolower) |>
     dplyr::select(name = name_col)  |>
     tidyr::drop_na("name") |>
-    dplyr::filter(!stringr::str_detect(name, "^ *$")) |>
+    dplyr::filter(!stringr::str_detect(.data$name, "^ *$")) |>
     dplyr::mutate(state = state_abbrev) 
 }
 
@@ -162,7 +162,7 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
       geometry = sf::st_union(.data$geometry)
     ) |>
     dplyr::ungroup() |>
-    utils_slugify(name, state) |>
+    utils_slugify("name", "state") |>
     sf::st_cast("MULTIPOLYGON")
 }
 
