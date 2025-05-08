@@ -4,7 +4,7 @@
 \alias{lodes_get_data}
 \title{Download LODES OD tables by census unit.}
 \usage{
-lodes_get_data(states, year, census_unit)
+lodes_get_data(states, year, census_unit, use_cache = TRUE)
 }
 \arguments{
 \item{states}{Character vector of state abbreviations.}

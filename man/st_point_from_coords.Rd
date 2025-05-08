@@ -4,7 +4,7 @@
 \alias{st_point_from_coords}
 \title{Create a Point Dataframe Row from Coordinate Pair}
 \usage{
-st_point_from_coords(coords, crs, name, coord_crs = 4326)
+st_point_from_coords(coords, crs, name = NULL, coord_crs = 4326)
 }
 \arguments{
 \item{coords}{vector of longitude, latitude coordinates (in EPSG:4326, unless
@@ -12,7 +12,7 @@ coord_crs is changed).}
 
 \item{crs}{output `crs`}
 
-\item{name}{Name to give point (in name field).}
+\item{name}{Optional. Name to give point (in name field).}
 
 \item{coord_crs}{`crs` of provided points. 4326 default.}
 }

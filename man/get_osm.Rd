@@ -2,13 +2,16 @@
 % Please edit documentation in R/osm.R
 \name{get_osm}
 \alias{get_osm}
-\alias{osm_get_key}
+\alias{osm_extent_to_opq}
 \alias{osm_get_buildings}
+\alias{osm_get_open_space}
 \title{Get OpenStreetMap Features by Key}
 \usage{
-osm_get_key(extent, key)
+osm_extent_to_opq(extent)
 
 osm_get_buildings(extent)
+
+osm_get_open_space(extent)
 }
 \arguments{
 \item{extent}{`sf` object used to generate `bbox`}

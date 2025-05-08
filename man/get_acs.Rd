@@ -47,11 +47,32 @@ acs_get_place_of_birth(
   geometry = FALSE
 )
 
-acs_get_housing(states, year, census_unit, crs = 4326, geometry = FALSE)
+acs_get_housing(
+  states,
+  year,
+  census_unit,
+  county = NULL,
+  crs = 4326,
+  geometry = FALSE
+)
 
-acs_get_race(states, year, census_unit, crs = 4326, geometry = FALSE)
+acs_get_race(
+  states,
+  year,
+  census_unit,
+  county = NULL,
+  crs = 4326,
+  geometry = FALSE
+)
 
-acs_get_age(states, year, census_unit, crs = 4326, geometry = FALSE)
+acs_get_age(
+  states,
+  year,
+  census_unit,
+  county = NULL,
+  crs = 4326,
+  geometry = FALSE
+)
 }
 \arguments{
 \item{states}{Character vector of state abbreviations.}

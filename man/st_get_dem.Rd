@@ -9,6 +9,7 @@ st_get_dem(
   tiles_on_side = 8,
   expand = NULL,
   z = st_zoom_from_extent(extent = extent, tiles_on_side = tiles_on_side),
+  rowwise = FALSE,
   src = "aws"
 )
 }

@@ -10,19 +10,19 @@
 \alias{st_is_point}
 \title{Tests `sf` Dataframes for Geometry Types}
 \usage{
-st_is_type(df, type, exact = FALSE)
+st_is_type(df, type, exact = FALSE, by_geometry = FALSE, ...)
 
-st_is_multipolygon(df, ...)
+st_is_multipolygon(df, by_geometry = FALSE, ...)
 
-st_is_polygon(df, ...)
+st_is_polygon(df, by_geometry = FALSE, ...)
 
-st_is_multilinestring(df, ...)
+st_is_multilinestring(df, by_geometry = FALSE, ...)
 
-st_is_linestring(df, ...)
+st_is_linestring(df, by_geometry = FALSE, ...)
 
-st_is_multipoint(df, ...)
+st_is_multipoint(df, by_geometry = FALSE, ...)
 
-st_is_point(df, ...)
+st_is_point(df, by_geometry = FALSE, ...)
 }
 \arguments{
 \item{df}{An `sf` dataframe.}
