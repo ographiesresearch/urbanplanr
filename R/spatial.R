@@ -108,6 +108,26 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df
 }
 
+st_regionalize <- function(df, dist, type) {
+  df <- df |>
+    sf::st_buffer(dist) |>
+    sf::st_union() |>
+    sf::st_as_sf(crs = sf::st_crs(df)) |>
+    sf::st_set_geometry("geometry")
+  
+  if (type == "bbox") {
+    df <- df |>
+      st_bbox_sf()
+  } else if (type == "square") {
+    df <- df |>
+      st_square_it()
+  } else if (type == "circle") {
+    df <- df |>
+      st_square_it(circle = TRUE)
+  }
+  df
+}
+
 #' Determine Zoom Level from Extent and Requested Tile Resolution
 #'
 #' @param extent `sf` object
@@ -149,9 +169,8 @@ st_upgrade_type <- function(data) {
   
   in_type <- data |>
     sf::st_geometry_type() |> 
-    unique()
-  
-  print(all(in_type %in% t$pl))
+    unique() |>
+    as.character()
   
   if (length(in_type) > 1) {
     cast_to <- dplyr::case_when(
