@@ -7,9 +7,9 @@
 st_model_scale(df, scale, thickness, contour_int)
 }
 \arguments{
-\item{df}{Simple features dataframe or tibble.}
+\item{df}{\code{sf} object}
 
-\item{scale}{Scaling parameters, as returend by `scale_to_model()`.}
+\item{scale}{Scaling parameters, as returend by \code{scale_to_model()}.}
 
 \item{thickness}{Numeric. Thickness of model plywood sheets.}
 

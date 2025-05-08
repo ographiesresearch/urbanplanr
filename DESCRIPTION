@@ -16,14 +16,15 @@ BugReports: https://github.com/ographiesresearch/urbanplanr/issues
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports: 
-    config (>= 0.3.2),
     dotenv (>= 1.0.3),
     dplyr (>= 1.1.4),
     elevatr (>= 0.99.0),
+    geotargets (>= 0.3.0),
     glue (>= 1.8.0),
     httr (>= 1.4.7),
     lehdr (>= 1.1.4),
     lwgeom (>= 0.2-14),
+    mapgl,
     osmdata (>= 0.2.5),
     purrr (>= 1.0.2),
     readr (>= 2.1.5),
@@ -31,8 +32,10 @@ Imports:
     RPostgres (>= 1.4.8),
     rpostgis (>= 1.6.0),
     sf (>= 1.0.20),
+    shiny,
     stringi (>= 1.8.4),
     stringr (>= 1.5.1),
+    targets (>= 1.11.1),
     terra (>= 1.8-29),
     tibble (>= 3.2.1),
     tidycensus (>= 1.6.7),
@@ -46,3 +49,4 @@ LazyData: true
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)

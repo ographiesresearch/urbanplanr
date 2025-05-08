@@ -2,20 +2,20 @@
 % Please edit documentation in R/spatial.R
 \name{st_preprocess}
 \alias{st_preprocess}
-\title{Pre-processing operations for spatial data.}
+\title{Standard preprocessing operations for spatial data.}
 \usage{
 st_preprocess(df, crs, name = "geometry")
 }
 \arguments{
-\item{df}{Simple features dataframe.}
+\item{df}{\code{sf} object}
 
-\item{crs}{EPSG code or `crs` object.}
+\item{crs}{EPSG code or \code{crs} object.}
 
-\item{name}{Character. Name of geometry column. `"geometry"` is default.}
+\item{name}{Character. Name of geometry column. \code{"geometry"} is default.}
 }
 \value{
 Simple Features dataframe.
 }
 \description{
-Pre-processing operations for spatial data.
+Standard preprocessing operations for spatial data.
 }

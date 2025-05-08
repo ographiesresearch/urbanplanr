@@ -35,30 +35,12 @@ utils_extent_to_census <- function(extent) {
   }
   c |>
     sf::st_drop_geometry() |>
-    dplyr::group_by(state_name) |>
+    dplyr::group_by(.data$state_name) |>
     dplyr::summarize(
-      counties = list(county_name)
+      counties = list(.data$county_name)
     ) |>
     dplyr::ungroup() |>
     tibble::deframe()
-}
-
-#' Initiate Environment
-#'
-#' @param config_name Name of configuration to read values from.
-#' @param config_file Configuration file to read values from (config.yml is the 
-#' default).
-#'
-#' @returns A list or vector as returned by `config()`.
-#' @export
-utils_init_env <- function(config_name = "default", 
-                           config_file = "config.yml") {
-  if(file.exists(".env")) {
-    dotenv::load_dot_env()
-    tidycensus::census_api_key(Sys.getenv("CENSUS_API"))
-  }
-  
-  config::get(config=config_name, file=config_file)
 }
 
 #' Standardize Output File Format
@@ -144,11 +126,12 @@ utils_write_pg_raster <- function(raster, name, dbname, host, role, pass, port) 
 
 #' Write Dataframe to One or Multiple Common Output Formats
 #'
-#' @param df Dataframe or data frame extension (e.g., tibble).
+#' @param data Dataframe or data frame extension (e.g., tibble).
 #' @param name Character. Name of output table or file.
 #' @param dir_db Character. Name of directory or database.
 #' @param format Character vector including one or multiple of `"gpkg"`, 
 #' `"postgis"`, `"dxf"`, or `"csv"`.
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
 #'
 #' @returns Original dataframe.
 #' @export
@@ -176,12 +159,12 @@ utils_write_multi <- function(data,
         layer = name,
         driver = "GPKG",
         quiet = FALSE
-        )
+      )
       terra::writeRaster(
         x = data,
         filename = stringr::str_c(dir_db, format, sep="."),
         filetype = "GPKG",
-        gdal = c(glue::glue("RASTER_TABLE={name}"), "APPEND_SUBDATASET=YES", "OVERWRITE=YES")
+        gdal = c(glue::glue("RASTER_TABLE={name}"), "APPEND_SUBDATASET=YES")
       )
     }
   } else if (format == "postgis") {
@@ -267,6 +250,22 @@ utils_write_multi <- function(data,
   data
 }
 
+utils_write_named_list <- function(data,
+                              dir_db,
+                              format,
+                              conn = NULL) {
+  data |>
+    purrr::imap(
+      \(x,i) utils_write_multi(
+        x, 
+        name = i, 
+        dir_db = dir_db, 
+        format = format, 
+        conn = conn
+        )
+    )
+}
+
 #' Get Remote File and Write to Disk
 #'
 #' @param url URL of remote file.
@@ -348,7 +347,7 @@ utils_place_states <- function(x) {
 }
 
 utils_filter_by_state <- function(df, places, col="abbrev") {
-  data <- data |>
+  df <- df |>
     dplyr::filter(
       .data[[col]] %in% utils_place_states(places)
     )
@@ -378,13 +377,6 @@ utils_is_state <- function(x) {
     all()
 }
 
-utils_is_place <- function(x) {
-  x |>
-    stringr::str_to_upper() |>
-    stringr::str_detect("[A-Z ]+, ?[A-Z]{2}$") |>
-    all()
-}
-
 utils_is_county <- function(x) {
   types <- COUNTY_EQUIVS |>
     stringr::str_c(collapse="|")
@@ -396,6 +388,14 @@ utils_is_county <- function(x) {
     stringr::str_detect(glue::glue("( {types}),"))
   
   all(all(county) && utils_is_place(x))
+}
+
+utils_is_place <- function(x) {
+  a <- x |>
+    stringr::str_to_upper() |>
+    stringr::str_detect("[A-Z ]+, ?[A-Z]{2}$") |>
+    all()
+  a
 }
 
 utils_is_muni <- function(x) {
@@ -443,7 +443,7 @@ utils_place_picker <- function(places, buffer = NULL, crs=4326) {
         }
         if (!("name" %in% names(extent))) {
           extent <- extent |>
-            dplyr::mutate(name = id)
+            dplyr::mutate(name = .data$id)
         }
       } else {
         stop("You passed a file path to places, but the file doesn't exist.")
@@ -454,13 +454,16 @@ utils_place_picker <- function(places, buffer = NULL, crs=4326) {
   } else if (is.null(names(places))) {
     if (utils_is_state(places)) {
       extent <- places |>
-        tigris_get_states(crs = crs)
+        tigris_get_states(crs = crs) |>
+        dplyr::mutate(type="state")
     } else if (utils_is_county(places)) {
       extent <- places |>
-        tigris_get_counties(crs = crs)
+        tigris_get_counties(crs = crs) |>
+        dplyr::mutate(type="county")
     } else if (utils_is_muni(places)) {
       extent <- places |>
-        munis_get_munis(crs = crs)
+        munis_get_munis(crs = crs) |>
+        dplyr::mutate(type="muni")
     } else {
       stop("Invalid strings passed to places. Mixed state/county/muni lists are
            not accepted.")
@@ -480,13 +483,14 @@ utils_place_picker <- function(places, buffer = NULL, crs=4326) {
                      crs = crs
                    )) |>
         purrr::list_rbind() |>
-        sf::st_as_sf()
+        sf::st_as_sf() |>
+        dplyr::mutate(type="coord")
     } else {
       stop("Invalid coordinates.")
     }
   }
   if (!is.null(buffer)) {
-    exent <- extent |>
+    extent <- extent |>
       sf::st_buffer(buffer)
   }
   extent

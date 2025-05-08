@@ -11,15 +11,15 @@ gtfs_get_mbta(crs)
 gtfs_get_mta(crs)
 }
 \arguments{
-\item{crs}{`crs` object or EPSG code.}
+\item{crs}{\code{crs} object or EPSG code.}
 }
 \value{
-A list including `routes` and `stops` as `sf` objects.
+A list including \code{routes} and \code{stops} as \code{sf} objects.
 }
 \description{
-`gtfs_mbta()` retrieves the GTFS feed of the Massachusetts Bay Transportation
+\code{gtfs_mbta()} retrieves the GTFS feed of the Massachusetts Bay Transportation
 Authority (MBTA) servicing eastern Massachusetts.
 
-`gtfs_mta()` retrieves the GTFS feed of the Metropolitan Transportation
+\code{gtfs_mta()} retrieves the GTFS feed of the Metropolitan Transportation
 Authority (MTA) servicing the New York City metro area.
 }

@@ -12,7 +12,7 @@ st_clip(x, y)
 \item{y}{Layer to do the clipping.}
 }
 \value{
-Layer `x` clipped to `y`.
+Layer \code{x} clipped to \code{y}.
 }
 \description{
 GIS-esque Clip Function

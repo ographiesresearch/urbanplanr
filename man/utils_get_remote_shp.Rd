@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{utils_get_remote_shp}
 \alias{utils_get_remote_shp}
-\title{Read Remote Shapefile Stored in `.zip` File}
+\title{Read Remote Shapefile Stored in \code{.zip} File}
 \usage{
 utils_get_remote_shp(url, layer)
 }
@@ -12,8 +12,8 @@ utils_get_remote_shp(url, layer)
 \item{layer}{Name of Shapefile to read.}
 }
 \value{
-Object of class `sf`.
+Object of class \code{sf}.
 }
 \description{
-Read Remote Shapefile Stored in `.zip` File
+Read Remote Shapefile Stored in \code{.zip} File
 }

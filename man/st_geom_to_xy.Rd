@@ -7,15 +7,17 @@
 st_geom_to_xy(df, cols = c("x", "y"), crs = 4326, retain_geom = FALSE, ...)
 }
 \arguments{
-\item{df}{A dataframe with point geometries.}
+\item{df}{\code{sf} object}
 
-\item{cols}{Character vector of names for x and y columns. (Default 
-`c("x", "y")`.)}
+\item{cols}{Character vector of names for x and y columns. (Default
+\code{c("x", "y")}.)}
 
-\item{retain_geom}{Boolean. If `FALSE` (default), returns point geometry. If
-`TRUE`, returns original geometries}
+\item{crs}{EPSG code or \code{crs} object.}
 
-\item{...}{Arguments passed on to `st_multi_type_center()`.}
+\item{retain_geom}{Boolean. If \code{FALSE} (default), returns point geometry. If
+\code{TRUE}, returns original geometries}
+
+\item{...}{Arguments passed on to \code{st_multi_type_center()}.}
 }
 \value{
 Simple features dataframe.
@@ -23,5 +25,5 @@ Simple features dataframe.
 \description{
 Takes a simple features dataframe containing geometries and returns
 the frame with additional columns containing x and y coordinates. If
-`retain_geom` is TRUE, returns with original (non-point) geometry.
+\code{retain_geom} is TRUE, returns with original (non-point) geometry.
 }

@@ -7,14 +7,16 @@
 utils_write_multi(data, name, dir_db, format, conn = NULL)
 }
 \arguments{
+\item{data}{Dataframe or data frame extension (e.g., tibble).}
+
 \item{name}{Character. Name of output table or file.}
 
 \item{dir_db}{Character. Name of directory or database.}
 
-\item{format}{Character vector including one or multiple of `"gpkg"`, 
-`"postgis"`, `"dxf"`, or `"csv"`.}
+\item{format}{Character vector including one or multiple of \code{"gpkg"},
+\code{"postgis"}, \code{"dxf"}, or \code{"csv"}.}
 
-\item{df}{Dataframe or data frame extension (e.g., tibble).}
+\item{conn}{Database connection like that created by \code{RPostgres::dbConnect()}.}
 }
 \value{
 Original dataframe.

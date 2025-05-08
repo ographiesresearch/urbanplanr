@@ -10,15 +10,21 @@ db_create_flow(
   role,
   role_pass,
   admin_pass,
-  extensions = c("postgis", "postgis_raster")
+  exts = c("postgis", "postgis_raster")
 )
 }
 \arguments{
-\item{conn}{Database connection like that created by `RPostgres::dbConnect()`.}
+\item{conn}{Database connection like that created by \code{RPostgres::dbConnect()}.}
 
 \item{dbname}{Character. Name of database.}
 
 \item{role}{Character. Name of role.}
+
+\item{role_pass}{Password to be given to read-only role.}
+
+\item{admin_pass}{Password of admin user.}
+
+\item{exts}{Character vector. Name of extensions to create.}
 }
 \value{
 conn

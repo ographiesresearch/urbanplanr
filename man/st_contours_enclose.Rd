@@ -7,18 +7,18 @@
 st_contours_enclose(contours, enclosure_layer, poly = FALSE, bbox = FALSE)
 }
 \arguments{
-\item{contours}{`sf` object, as returned by `st_contour()`.}
+\item{contours}{\code{sf} object, as returned by \code{st_contour()}.}
 
 \item{enclosure_layer}{Feature layer used to enclose contour lines.}
 
-\item{poly}{Boolean. If `FALSE` (default), returns `MULTILINESTRING`s. If 
-`TRUE`, returns `MULTIPOLYGON`s.}
+\item{poly}{Boolean. If \code{FALSE} (default), returns \code{MULTILINESTRING}s. If
+\code{TRUE}, returns \code{MULTIPOLYGON}s.}
 
-\item{bbox}{Boolean. If `FALSE` (default), contours are enclosed by feature
-boundaries. If `TRUE`, contours are enclosed by their bounding box.}
+\item{bbox}{Boolean. If \code{FALSE} (default), contours are enclosed by feature
+boundaries. If \code{TRUE}, contours are enclosed by their bounding box.}
 }
 \value{
-`sf` object, `POLYGON` geometries.
+\code{sf} object, \code{POLYGON} geometries.
 }
 \description{
 Enclose Contours Using Polygon Features

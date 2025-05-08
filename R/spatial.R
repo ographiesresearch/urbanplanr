@@ -13,20 +13,101 @@ st_check_for_proj <- function(df, crs=4326) {
   df
 }
 
+#' Calculate Simple Measurements of `sf` Objects
+#' @name st_simple
+#' 
+#' @description
+#' `st_width()` returns the bounding width in units of the crs.
+#' `st_height()` returns the bounding height in units of the crs.
+#' `st_middle()` returns the center of the bounding box.
+#' `st_max_dim()` returns the largest dimension, named 'x' or 'y'.
+#' 
+#' @inheritParams st_check_for_proj
+#' 
+#' @returns A number for `st_width` and `st_height`. A named list for 
+#' `st_middle`.
+#' 
+#' @export
+st_width <- function(df) {
+  bbox <- sf::st_bbox(df)
+  abs(bbox$xmax - bbox$xmin)
+}
+
+#' @name st_simple
+#' @export
+st_height <- function(df) {
+  bbox <- sf::st_bbox(df)
+  abs(bbox$ymax - bbox$ymin)
+}
+
+#' @name st_simple
+#' @export
+st_middle <- function(df) {
+  bbox <- sf::st_bbox(df)
+  list(
+    x = mean(c(bbox$xmax, bbox$xmin)),
+    y = mean(c(bbox$ymax, bbox$ymin))
+  )
+}
+
+#' @name st_simple
+#' @export
+st_max_dim <- function(df) {
+  x <- st_width(df)
+  y <- st_height(df)
+  max_dist <- max(x, y)
+  if (max_dist == x) {
+    return(list(x = x))
+  } else {
+    return(list(y = y))
+  }
+}
+
+#' Bounding Square, Bounding Circle
+#'
+#' @inheritParams st_check_for_proj
+#' @param circle If `TRUE`, returns a circle. If `FALSE` (the default), returns
+#' a square.
+#'
+#' @returns A circle or square `sf` object whose size is given by the larger
+#' dimension of a layer's bounding box.
+#' @export
+st_square_it <- function(df, circle=FALSE) {
+  bbox <- st_bbox_sf(df)
+  
+  r <- unlist(st_max_dim(bbox), use.names=FALSE) / 2
+  
+  midpoint <- df |>
+    st_middle() |>
+    unlist(use.names=FALSE) |>
+    st_point_from_coords(crs = sf::st_crs(df), coord_crs = sf::st_crs(df))
+  
+  if (circle) {
+    df <- midpoint |>
+      sf::st_buffer(sqrt(2 * (r ^ 2)))
+  } else {
+    df <- midpoint |>
+      sf::st_buffer(r) |>
+      st_bbox_sf()
+  }
+  df |>
+    sf::st_as_sf()
+}
+
 #' Bounding Box as `sf` Object
 #'
 #' Given an input `sf` object, returns that object's bounding box as an `sf`
 #' object.
 #' 
-#' @param df An `sf` object.
+#' @inheritParams st_check_for_proj
 #'
 #' @returns An `sf` object.
 #' @export
 st_bbox_sf <- function(df) {
-  df |>
+  df <- df |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      geometry = sf::st_as_sfc(sf::st_bbox(geometry))
+      geometry = sf::st_as_sfc(sf::st_bbox(.data$geometry))
       ) |>
     dplyr::ungroup()
 }
@@ -35,7 +116,7 @@ st_bbox_sf <- function(df) {
 #'
 #' @param coords vector of longitude, latitude coordinates (in EPSG:4326, unless
 #' coord_crs is changed).
-#' @param crs output `crs`
+#' @inheritParams st_check_for_proj
 #' @param name Optional. Name to give point (in name field).
 #' @param coord_crs `crs` of provided points. 4326 default.
 #'
@@ -57,24 +138,58 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
   df
 }
 
+#' Build Regional Polygon from Input Layer
+#' 
+#' @description
+#' Builds a "region" on the basis of an input layer's extent, a buffer distance,
+#' and a geometric type.
+#'
+#' @inheritParams st_check_for_proj
+#' @param dist `units` object or number, in which case output will be based on 
+#' CRS of input.
+#' @param type One of "bbox", "square", or "circle".
+#'
+#' @returns `sf` object
+#' @export
+st_regionalize <- function(df, dist, type) {
+  df <- df |>
+    sf::st_buffer(dist) |>
+    sf::st_union() |>
+    sf::st_as_sf(crs = sf::st_crs(df)) |>
+    sf::st_set_geometry("geometry")
+  
+  if (type == "bbox") {
+    df <- df |>
+      st_bbox_sf()
+  } else if (type == "square") {
+    df <- df |>
+      st_square_it()
+  } else if (type == "circle") {
+    df <- df |>
+      st_square_it(circle = TRUE)
+  }
+  df
+}
+
 #' Determine Zoom Level from Extent and Requested Tile Resolution
 #'
-#' @param extent `sf` object
+#' @inheritParams st_check_for_proj
 #' @param tiles_on_side Numeric. Tile 'resolution' (i.e., number of map tiles on
 #' the longest side of the extent's bounding box). Must be two raised to a power
 #' or 1.
 #'
 #' @returns An integer zoom level.
-st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
+#' @export
+st_zoom_from_extent <- function(df, tiles_on_side = 2) {
   
   if (!(log2(tiles_on_side) %% 1 == 0)) {
       stop("`tiles_on_side` must be two to a power or 1.")
   }
   
-  extent <- extent |>
+  df <- df |>
     st_check_for_proj(4326)
   
-  bbox <- sf::st_bbox(extent)
+  bbox <- sf::st_bbox(df)
   
   w <- bbox["xmax"] - bbox["xmin"]
   h <- bbox["ymax"] - bbox["ymin"]
@@ -89,21 +204,56 @@ st_zoom_from_extent <- function(extent, tiles_on_side = 2) {
   floor(min(zoom_w, zoom_h)) + log2(tiles_on_side)
 }
 
-#' Pre-processing operations for spatial data.
+#' Upgrade Geometry Type
+#' 
+#' Given an input `sf` object that is made up "POINT"s, "POLYLINE"s, etc.,
+#' upcasts that object to "MULTIPOINT", "MULTIPOLYLINE", etc.
 #'
-#' @param df Simple features dataframe.
-#' @param crs EPSG code or `crs` object.
+#' @inheritParams st_check_for_proj
+#'
+#' @returns An `sf` object, with upcast geometry.
+#' @export
+st_upgrade_type <- function(df) {
+  t <- list(
+    pt = c("POINT", "MULTIPOINT"),
+    ln = c("LINESTRING", "MULTILINESTRING"),
+    pl = c("POLYGON", "MULTIPOLYGON")
+  )
+  
+  in_type <- df |>
+    sf::st_geometry_type() |> 
+    unique() |>
+    as.character()
+  
+  if (length(in_type) > 1) {
+    cast_to <- dplyr::case_when(
+      all(in_type %in% t$pt) ~ t$pt[2],
+      all(in_type %in% t$ln) ~ t$ln[2],
+      all(in_type %in% t$pl) ~ t$pl[2]
+    )
+  } else {
+    cast_to <- in_type
+  }
+  df |>
+    sf::st_cast(cast_to)
+}
+
+
+#' Standard preprocessing operations for spatial data.
+#'
+#' @inheritParams st_check_for_proj
 #' @param name Character. Name of geometry column. `"geometry"` is default.
 #'
 #' @returns Simple Features dataframe.
 #' @export
-#'
 st_preprocess <- function(df, crs, name="geometry") {
   df <- df |> 
+    st_upgrade_type() |>
     sf::st_transform(crs) |>
     dplyr::rename_with(tolower) |>
     sf::st_set_geometry(name) |>
-    st_geom_to_xy(retain_geom = TRUE)
+    st_geom_to_xy(retain_geom = TRUE) |>
+    sf::st_make_valid()
   
   if (st_is_polygon(df)) {
     df <- df |>
@@ -135,47 +285,44 @@ st_preprocess <- function(df, crs, name="geometry") {
 #'
 #' @returns A `RasterLayer`.
 #' @export
-#'
 st_get_dem <- function(extent, 
                        tiles_on_side = 8, 
-                       expand=NULL,
+                       expand = NULL,
                        z = st_zoom_from_extent(
-                         extent = extent, 
+                         df = extent, 
                          tiles_on_side = tiles_on_side
                        ), 
-                       rowwise = TRUE,
+                       # rowwise = FALSE,
                        src = "aws") {
   
   # get_elev_master has a max z of 14.
   z <- min(c(14,z))
+  min_res <- 256 * tiles_on_side
   
-  if (!rowwise) {
-    extent <- sf::st_as_sf(sf::st_union(extent))
-  }
+  # TODO: Reimplement rowwise.
+  # if (!rowwise) {
+  #   extent <- sf::st_as_sf(sf::st_union(extent))
+  # }
   
-  dem <- list()
-  for(i in 1:nrow(extent)) {
-    dem[[i]] <- extent[i,] |>
-      elevatr::get_elev_raster(
-        z = z,
-        src = src,
-        clip = "bbox",
-        expand = expand,
-        neg_to_na = TRUE,
-        verbose = FALSE
-      ) |>
-      terra::rast()
+  dem <- extent |>
+    elevatr::get_elev_raster(
+      z = z,
+      src = src,
+      clip = "bbox",
+      expand = expand,
+      neg_to_na = TRUE,
+      verbose = FALSE
+    ) |>
+    terra::rast()
     
-    terra::crs(dem[[i]]) <- sf::st_crs(extent)$wkt
-    min_res <- 256 * tiles_on_side
-    fact <- ceiling(min_res / terra::ncol(dem[[i]]))
-    if (fact > 1) {
-      dem[[i]] <- terra::disagg(dem[[i]], fact = fact, method = "bilinear")
-    }
+  terra::crs(dem) <- sf::st_crs(extent)$wkt
+  
+  fact <- ceiling(min_res / terra::ncol(dem))
+  if (fact > 1) {
+    dem <- terra::disagg(dem, fact = fact, method = "bilinear")
   }
   
-  dem |> 
-    terra::sprc()
+  dem
 }
 
 #' Calculate a Hillshade from a Digital Elevation Model.
@@ -197,7 +344,7 @@ st_get_dem <- function(extent,
 #'
 #' @returns A `RasterLayer`.
 #' @export
-st_hillshade <- function(dems,
+st_hillshade <- function(dem,
                          angle = 45,
                          direction = 300,
                          z_scale = 1,
@@ -207,19 +354,15 @@ st_hillshade <- function(dems,
   if (!(z_scale >= 1)) {
     stop("Invalid z_scale. Must be >= 1.")
   }
-  dems |>
-    list() |>
-    purrr::map(\(x) terra::shade(
-      slope = terra::terrain(x * z_scale, v = "slope", unit = "radians"),
-      aspect = terra::terrain(x * z_scale, v = "aspect", unit = "radians"),
-      angle = angle,
-      direction = direction,
-      filename = filename,
-      normalize = normalize,
-      overwrite = overwrite
-    )
-  ) |> 
-    terra::sprc()
+  terra::shade(
+    slope = terra::terrain(dem * z_scale, v = "slope", unit = "radians"),
+    aspect = terra::terrain(dem * z_scale, v = "aspect", unit = "radians"),
+    angle = angle,
+    direction = direction,
+    filename = filename,
+    normalize = normalize,
+    overwrite = overwrite
+  )
   
 }
 #' Contours from Raster
@@ -285,8 +428,6 @@ st_contours_enclose <- function(
     enclosure_layer <- st_bbox_sf(enclosure_layer)
   }
   
-  message(sf::st_crs(contours)$epsg)
-  message(sf::st_crs(enclosure_layer)$epsg)
   if(poly) {
     out_geom <- "MULTIPOLYGON"
   } else {
@@ -372,13 +513,13 @@ st_contours_model <- function(
 #'
 #' @returns Layer `x` clipped to `y`.
 #' @export
-#'
 st_clip <- function(x, y) {
   init_type <- as.character(sf::st_geometry_type(x, by_geometry=FALSE))
   clip <- x |>
     sf::st_set_agr("constant") |>
     sf::st_intersection(
       y |>
+        sf::st_set_agr("constant") |>
         sf::st_union() |>
         sf::st_geometry()
     ) |>
@@ -412,20 +553,61 @@ st_clip <- function(x, y) {
     sf::st_cast(cast_to)
 }
 
+#' Runs a series of standard subsetting steps
+#'
+#' @inheritParams st_check_for_proj
+#' @param filter `sf` object to spatially filter by.
+#' @param clip `sf` object to clip input by.
+#' @param join `sf` object to spatially join by.
+#' @param int_join If FALSE (default), `join` is a left join. If `int_join`, 
+#' it is intersected with the input.
+#'
+#' @returns A processed `sf` object.
+#' @export
+st_filter_and_join <- function(df, 
+                               filter = NULL, 
+                               clip = NULL,
+                               join = NULL,
+                               int_join = FALSE) {
+  if (!is.null(filter)) {
+    df <- df |>
+      sf::st_filter(filter)
+  }
+  
+  if (!is.null(clip)) {
+    df <- df |>
+      st_clip(clip)
+  }
+  
+  if (!is.null(join)) {
+    if (int_join) {
+      df <- df |>
+        sf::st_intersection(join)
+    }
+    df <- df |>
+      sf::st_join(
+        join |>
+          dplyr::select(place_id = "id"),
+        largest = TRUE
+      )
+  }
+  df
+}
+
 #' Retrieve Scaling Parameters, Given Model Size
 #'
-#' @param df Simple features dataframe or tibble.
+#' @inheritParams st_check_for_proj
 #' @param model_size Optional. Largest dimension of model, as numeric or
 #' `units`. If numeric, treated as map units. If not provided, model will not be
 #' scaled.
 #'
 #' @returns Named list with `factor`, `x_delta`, `y_delta`.
-#'
+#' @export
 st_scale_to_model <- function(df, model_size = NULL) {
   if (!is.null(model_size)) {
     bbox <- sf::st_bbox(df)
-    x_size <- abs(bbox$xmax - bbox$xmin)
-    y_size <- abs(bbox$ymax - bbox$ymin)
+    x_size <- st_width(df)
+    y_size <- st_height(df)
     x_center <- as.numeric(bbox$xmax - (x_size / 2))
     y_center <- as.numeric(bbox$ymax - (y_size / 2))
     
@@ -441,15 +623,14 @@ st_scale_to_model <- function(df, model_size = NULL) {
 }
 
 #' Scale Layer Based on Scaling Parameters
-#'
-#' @param df Simple features dataframe or tibble.
+#' 
+#' @inheritParams st_check_for_proj
 #' @param scale Scaling parameters, as returend by `scale_to_model()`.
 #' @param thickness Numeric. Thickness of model plywood sheets.
 #' @param contour_int Nuemeric. Intervals for contours.
 #'
 #' @returns Scaled simple features dataframe or tibble.
 #' @export
-#'
 st_model_scale <- function(df, scale, thickness, contour_int) {
   crs <- sf::st_crs(df)
   scaled <- (sf::st_geometry(df) - c(scale["x_delta"], scale["y_delta"])) * scale["factor"]
@@ -470,10 +651,9 @@ st_model_scale <- function(df, scale, thickness, contour_int) {
 
 #' Detect UTM Zone Based on Location
 #'
-#' @param df Simple features data frame or tibble.
+#' @inheritParams st_check_for_proj
 #'
 #' @export
-#'
 st_detect_utm <- function(df) {
   zone <- df |>
     sf::st_transform(
@@ -511,7 +691,6 @@ st_detect_utm <- function(df) {
 #' @return A LINESTRING.
 #'
 #' @export
-#'
 st_make_line <- function(xyxy) {
   sf::st_linestring(base::matrix(xyxy, nrow = 2, byrow = TRUE))
 }
@@ -531,7 +710,6 @@ st_make_line <- function(xyxy) {
 #' @return A dataframe with LINESTRING geometries.
 #'
 #' @export
-#'
 st_xyxy_to_lines <- function(df,
                              names = c("x_h", "y_h", "x_w", "y_w"),
                              retain_cols = FALSE) {
@@ -579,13 +757,15 @@ st_xyxy_to_lines <- function(df,
 #' @param type Character. Type to match.
 #' @param exact Boolean. If `FALSE` (default), returns unexact matches. (E.g., 
 #' `"POLYGON"` will also match `"MULTIPOLYGON".`)
+#' @param by_geometry If `FALSE` (default), returns a single result for the
+#' entire dataframe. (I.e., will be a "GEOMETRYCOLLECTION" if types are mixed).
+#' Otherwise, returns a rowwise result.
 #' @param ... Additional arguments passed to `st_is_type()`.
 #'
 #' @returns Boolean.
 #' @export
-#'
-st_is_type <- function(df, type, exact=FALSE) {
-  df_type <- sf::st_geometry_type(df, by_geometry=FALSE)
+st_is_type <- function(df, type, exact=FALSE, by_geometry = FALSE, ...) {
+  df_type <- sf::st_geometry_type(df, by_geometry = FALSE, ...)
   if (exact) {
     type <- stringr::str_c("^", type, "$")
   }
@@ -594,43 +774,43 @@ st_is_type <- function(df, type, exact=FALSE) {
 
 #' @name st_is_type
 #' @export
-st_is_multipolygon <- function(df, ...) {
-  st_is_type(df = df, type = "MULTIPOLYGON", ...)
+st_is_multipolygon <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "MULTIPOLYGON", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_polygon <- function(df, ...) {
-  st_is_type(df = df, type = "POLYGON", ...)
+st_is_polygon <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "POLYGON", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_multilinestring <- function(df, ...) {
-  st_is_type(df = df, type = "MULTILINESTRING", ...)
+st_is_multilinestring <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "MULTILINESTRING", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_linestring <- function(df, ...) {
-  st_is_type(df = df, type = "LINESTRING", ...)
+st_is_linestring <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "LINESTRING", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_multipoint <- function(df, ...) {
-  st_is_type(df = df, type = "MULTIPOINT", ...)
+st_is_multipoint <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "MULTIPOINT", by_geometry = by_geometry, ...)
 }
 
 #' @name st_is_type
 #' @export
-st_is_point <- function(df, ...) {
-  st_is_type(df = df, type = "POINT", ...)
+st_is_point <- function(df, by_geometry = FALSE, ...) {
+  st_is_type(df = df, type = "POINT", by_geometry = by_geometry, ...)
 }
 
 #' Return Geometry Centers for Multiple Types.
 #'
-#' @param df A dataframe with point geometries.
+#' @inheritParams st_check_for_proj
 #' @param on_surface If `TRUE` (the default), generates polygon centroids using 
 #' `st_point_on_surface()`. If `FALSE`, uses `st_centroid()`.
 #' @param retain_geom Boolean. If `TRUE` (the default), returns points. If 
@@ -638,7 +818,6 @@ st_is_point <- function(df, ...) {
 #'
 #' @returns An `sf` dataframe.
 #' @export
-#'
 st_multi_type_center <- function(df,
                                  on_surface = TRUE,
                                  retain_geom = FALSE) {
@@ -670,9 +849,10 @@ st_multi_type_center <- function(df,
 #' the frame with additional columns containing x and y coordinates. If
 #' `retain_geom` is TRUE, returns with original (non-point) geometry.
 #'
-#' @param df A dataframe with point geometries.
+#' @inheritParams st_check_for_proj
 #' @param cols Character vector of names for x and y columns. (Default 
 #' `c("x", "y")`.)
+#' @inheritParams st_check_for_proj
 #' @param retain_geom Boolean. If `FALSE` (default), returns point geometry. If
 #' `TRUE`, returns original geometries 
 #' @param ... Arguments passed on to `st_multi_type_center()`.
@@ -680,7 +860,6 @@ st_multi_type_center <- function(df,
 #' @return Simple features dataframe.
 #'
 #' @export
-#'
 st_geom_to_xy <- function(df, 
                           cols = c("x", "y"), 
                           crs = 4326,
@@ -716,12 +895,11 @@ st_geom_to_xy <- function(df,
 
 #' Add Z Dimension to Points from Column
 #'
-#' @param df Simple features data frame or tibble.
+#' @param df Simple features data frame or tibble. POINT type.
 #' @param cols Character vector. Contains names of x, y, and z columns.
 #'
 #' @returns Simple features data frame or tibble.
 #' @export
-#'
 st_elevate_points <- function(df, cols=c("x", "y", "z")) {
   if (!(cols[1:2] %in% names(df))) {
     df <- df |>

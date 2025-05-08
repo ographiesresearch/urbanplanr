@@ -8,7 +8,7 @@ st_get_dem(
   extent,
   tiles_on_side = 8,
   expand = NULL,
-  z = st_zoom_from_extent(extent = extent, tiles_on_side = tiles_on_side),
+  z = st_zoom_from_extent(df = extent, tiles_on_side = tiles_on_side),
   src = "aws"
 )
 }
@@ -19,17 +19,17 @@ projected and in linear units.}
 \item{tiles_on_side}{Number of tiles on one side of extent. Must be the
 result of 2 raised to a power or 1.}
 
-\item{expand}{A numeric value of a distance, in map units, used to expand 
+\item{expand}{A numeric value of a distance, in map units, used to expand
 the bounding box that is used to fetch the terrain tiles.}
 
-\item{z}{Number. Zoom level. If specified, `tiles_on_side` is ignored. If not
-specified, the result of `st_zoom_from_extent(extent, tiles_on_side)`. Note
-that `elevatr::get_elev_raster()` has a max `z` of 14.}
+\item{z}{Number. Zoom level. If specified, \code{tiles_on_side} is ignored. If not
+specified, the result of \code{st_zoom_from_extent(extent, tiles_on_side)}. Note
+that \code{elevatr::get_elev_raster()} has a max \code{z} of 14.}
 
 \item{src}{One of "aws", "gl3", "gl1", "alos", "srtm15plus".}
 }
 \value{
-A `RasterLayer`.
+A \code{RasterLayer}.
 }
 \description{
 Get DEM from AWS Terrain Tiles

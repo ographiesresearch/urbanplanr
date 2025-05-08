@@ -7,7 +7,7 @@
 db_set_defaults(conn, dbname, role)
 }
 \arguments{
-\item{conn}{Database connection like that created by `RPostgres::dbConnect()`.}
+\item{conn}{Database connection like that created by \code{RPostgres::dbConnect()}.}
 
 \item{dbname}{Character. Name of database.}
 

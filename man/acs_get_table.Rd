@@ -17,7 +17,7 @@ acs_get_table(
 )
 }
 \arguments{
-\item{table}{The ACS table for which you would like to request all 
+\item{table}{The ACS table for which you would like to request all
 variables.}
 
 \item{states}{Character vector of state abbreviations.}
@@ -26,19 +26,19 @@ variables.}
 
 \item{census_unit}{Census unit for which to download tables.}
 
-\item{crs}{Target coordinate reference system: object of class `crs`.}
+\item{crs}{Target coordinate reference system: object of class \code{crs}.}
 
 \item{county}{Character. County name.}
 
-\item{geometry}{Boolean. If `TRUE` (default) retains Tiger/LINE geography.}
+\item{geometry}{Boolean. If \code{TRUE} (default) retains Tiger/LINE geography.}
 
 \item{var_match}{Character. Retain only variables matching this string.}
 
-\item{var_suffix}{Boolean. If `TRUE` (default), adjusts for variable 
+\item{var_suffix}{Boolean. If \code{TRUE} (default), adjusts for variable
 suffixes.}
 }
 \value{
-`sf` object if `geometry` is `TRUE`. Else data frame.
+\code{sf} object if \code{geometry} is \code{TRUE}. Else data frame.
 }
 \description{
 Get 5-Year ACS Estimates Based on Variable List

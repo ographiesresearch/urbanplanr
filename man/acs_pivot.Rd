@@ -10,7 +10,7 @@ acs_pivot(df, percent = TRUE)
 \item{df}{A dataframe.}
 
 \item{percent}{Whether to calculate percentages from long-formatted table.
-Assumes that one value of `label` is a total.}
+Assumes that one value of \code{label} is a total.}
 }
 \value{
 A dataframe.

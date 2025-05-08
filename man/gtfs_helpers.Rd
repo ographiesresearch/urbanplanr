@@ -14,15 +14,15 @@ gtfs_stops(gtfs, crs)
 gtfs_process(gtfs, crs)
 }
 \arguments{
-\item{gtfs}{A `tidygtfs` object.}
+\item{gtfs}{A \code{tidygtfs} object.}
 
-\item{crs}{`crs` object or EPSG code.}
+\item{crs}{\code{crs} object or EPSG code.}
 }
 \value{
-An `sf` object
+An \code{sf} object
 }
 \description{
-`gtfs_routes()` takes a `tidygtfs` object and returns routes as `sf`.
-`gtfs_stops()` takes a `tidygtfs` object and returns stops as `sf`.
-`gtfs_process()` removes stops with no lat-longs and builds `sf` objects.
+\code{gtfs_routes()} takes a \code{tidygtfs} object and returns routes as \code{sf}.
+\code{gtfs_stops()} takes a \code{tidygtfs} object and returns stops as \code{sf}.
+\code{gtfs_process()} removes stops with no lat-longs and builds \code{sf} objects.
 }

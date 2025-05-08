@@ -7,7 +7,7 @@
 st_elevate_points(df, cols = c("x", "y", "z"))
 }
 \arguments{
-\item{df}{Simple features data frame or tibble.}
+\item{df}{Simple features data frame or tibble. POINT type.}
 
 \item{cols}{Character vector. Contains names of x, y, and z columns.}
 }
