@@ -62,3 +62,5 @@ results/
 .DS_Store
 
 sandbox.R
+
+_targets/
