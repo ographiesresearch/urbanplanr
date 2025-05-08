@@ -105,15 +105,15 @@ utils_prompt_check <- function(prompt) {
 }
 
 utils_write_pg_raster <- function(raster, name, dbname, host, role, pass, port) {
-  conn <- RPostgreSQL::dbConnect(
-    drv = DBI::dbDriver("PostgreSQL"),
+  conn <- RPostgres::dbConnect(
+    drv = RPostgres::Postgres(),
     dbname = dbname,
     host = host,
     user = role,
     pass = pass,
     port = port
   )
-  on.exit(RPostgreSQL::dbDisconnect(conn))
+  on.exit(RPostgres::dbDisconnect(conn))
   
   rpostgis::pgWriteRast(
     conn=conn, 

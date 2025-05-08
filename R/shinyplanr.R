@@ -16,5 +16,8 @@ shinyplanr <- function() {
   if (appDir == "") {
     stop("Could not find example directory. Try re-installing `urbanplanr`.", call. = FALSE)
   }
+  if (!(requireNamespace("mapgl", quietly = TRUE) & requireNamespace("shiny", quietly = TRUE))) {
+    stop("Package 'mapgl' is required to run this app. Please install it.")
+  }
   shiny::runApp(appDir, display.mode = "normal")
 }
