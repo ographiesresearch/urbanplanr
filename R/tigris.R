@@ -1,3 +1,6 @@
+#' Get Census Geographies
+#' @name tigris_get_
+#' 
 #' @description
 #' `tigris_get_places()` retrieves census-designated places.
 #'
@@ -40,9 +43,7 @@
 #'
 #' @returns Simple Features dataframe.
 #' @export
-
-#' @name tigris_get_*
-#' @export
+#' 
 tigris_get_multi <- function(.function,
                              places,
                              state = NULL,
@@ -54,12 +55,11 @@ tigris_get_multi <- function(.function,
   is_county <- utils_is_county(places)
   is_state <- utils_is_state(places)
   is_muni <- utils_is_muni(places)
-  has_county <- "county" %in% formalArgs(.function)
-  has_state <- "state" %in% formalArgs(.function)
-  year <- if (is.null(year))
-    2022
-  else
-    year
+  has_county <- "county" %in% methods::formalArgs(.function)
+  has_state <- "state" %in% methods::formalArgs(.function)
+  
+  year <- if (is.null(year)) 2022 else year
+  
   if (is_county & has_county) {
     data <- parsed |>
       purrr::map(\(x) .function(
@@ -86,7 +86,7 @@ tigris_get_multi <- function(.function,
       dplyr::left_join(
         STATES |>
           sf::st_drop_geometry() |>
-          dplyr::select(geoid, state = state_abbrev),
+          dplyr::select("geoid", state = "state_abbrev"),
         by = dplyr::join_by("statefp" == "geoid")
       )
     state <- "state"
@@ -102,17 +102,18 @@ tigris_extent_to_counties <- function(extent, year = NULL) {
     sf::st_transform(sf::st_crs(extent)) |>
     sf::st_filter(extent) |>
     dplyr::mutate(
-      place = stringr::str_c(county_name, 
+      place = stringr::str_c(.data$county_name, 
                              " County", 
                              ", ", 
-                             state_abbrev),
+                             .data$state_abbrev),
     ) |>
-    dplyr::pull(place) |>
+    dplyr::pull("place") |>
     tigris_get_counties(year = NULL, crs = sf::st_crs(extent)) |>
     sf::st_filter(extent)
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
+#' @export
 tigris_get_states <- function(places,
                               year = NULL,
                               crs = 4326,
@@ -122,11 +123,11 @@ tigris_get_states <- function(places,
     places = places,
     year = year,
     crs = crs,
-    id = geoid,
-    name = name,
-    abbrev = stusps
+    id = "geoid",
+    name = "name",
+    abbrev = "stusps"
   ) |>
-    dplyr::select(-state)
+    dplyr::select(-c("state"))
   if (filter) {
     data <- data |>
       utils_filter_by_state(places)
@@ -134,7 +135,7 @@ tigris_get_states <- function(places,
   data
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_counties <- function(places,
                                 year = NULL,
@@ -145,8 +146,8 @@ tigris_get_counties <- function(places,
     places = places,
     year = year,
     crs = crs,
-    id = geoid,
-    name = name
+    id = "geoid",
+    name = "name"
   )
   if (utils_is_county(places) & filter) {
     data <- data |>
@@ -155,7 +156,7 @@ tigris_get_counties <- function(places,
   data
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_places <- function(places,
                               year = NULL,
@@ -166,8 +167,8 @@ tigris_get_places <- function(places,
     places = places,
     year = year,
     crs = crs,
-    id = geoid,
-    name = name
+    id = "geoid",
+    name = "name"
   )
   if (utils_is_muni(places) & filter) {
     data <- data |>
@@ -177,7 +178,7 @@ tigris_get_places <- function(places,
 }
 
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_postal <- function(places = NULL,
                               year = 2010,
@@ -188,11 +189,11 @@ tigris_get_postal <- function(places = NULL,
     places = places,
     year = year,
     crs = crs,
-    id = geoid10
+    id = "geoid10"
   )
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_tracts <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
@@ -200,12 +201,12 @@ tigris_get_tracts <- function(places, year = NULL, crs = 4326) {
     places = places,
     year = year,
     crs = crs,
-    id = geoid,
-    name = name
+    id = "geoid",
+    name = "name"
   )
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_block_groups <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
@@ -213,12 +214,12 @@ tigris_get_block_groups <- function(places, year = NULL, crs = 4326) {
     places = places,
     year = year,
     crs = crs,
-    id = geoid,
-    name = namelsad
+    id = "geoid",
+    name = "namelsad"
   )
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_roads <- function(places,
                              year = NULL,
@@ -229,13 +230,13 @@ tigris_get_roads <- function(places,
     places = places,
     year = year,
     crs = crs,
-    id = linearid,
-    name = fullname,
-    type = rttyp
+    id = "linearid",
+    name = "fullname",
+    type = "rttyp"
   )
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_rails <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
@@ -243,13 +244,13 @@ tigris_get_rails <- function(places, year = NULL, crs = 4326) {
     places = places,
     year = year,
     crs = crs,
-    id = linearid,
-    name = fullname,
-    type = mtfcc
+    id = "linearid",
+    name = "fullname",
+    type = "mtfcc"
   )
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_area_water <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
@@ -257,13 +258,13 @@ tigris_get_area_water <- function(places, year = NULL, crs = 4326) {
     places = places,
     year = year,
     crs = crs,
-    id = hydroid,
-    name = fullname,
-    type = mtfcc
+    id = "hydroid",
+    name = "fullname",
+    type = "mtfcc"
   )
 }
 
-#' @name tigris_get_*
+#' @name tigris_get_
 #' @export
 tigris_get_linear_water <- function(places, year = NULL, crs = 4326) {
   tigris_get_multi(
@@ -271,7 +272,7 @@ tigris_get_linear_water <- function(places, year = NULL, crs = 4326) {
     places = places,
     year = year,
     crs = crs,
-    id = linearid,
-    name = fullname
+    id = "linearid",
+    name = "fullname"
   )
 }
