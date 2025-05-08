@@ -7,3 +7,4 @@
 ^config.yml$
 ^.env$
 ^sandbox.R$
+^\.github$
