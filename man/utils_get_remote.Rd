@@ -12,7 +12,7 @@ utils_get_remote(url, path)
 \item{path}{Path to saved file.}
 }
 \value{
-A `response()` object.
+A \code{response()} object.
 }
 \description{
 Get Remote File and Write to Disk

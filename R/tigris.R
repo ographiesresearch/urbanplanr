@@ -1,49 +1,3 @@
-#' Get Census Geographies
-#' @name tigris_get_
-#' 
-#' @description
-#' `tigris_get_places()` retrieves census-designated places.
-#'
-#' `tigris_get_states()` retrieves states, commonwealths, and territories.
-#'
-#' `tigris_get_counties()` retrieves counties and equivalents.
-#'
-#' `tigris_get_zctas()` retrieves ZIP code tabulation areas.
-#'
-#' `tigris_get_multistate()` is a helper function that downloads multiple states
-#' worth of data, where `tigris` function prevents this.
-#'
-#' `tigris_get_multistate_by_county()` is a helper function that downloads
-#' multiple states worth of data, county-by-county, where `tigris` function
-#' prevents this.
-#'
-#' `tigris_get_tracts()` retrieves census tracts.
-#'
-#' `tigris_get_block_groups()` retrieves block_groups.
-#'
-#' `tigris_get_roads()` retrieves roads.
-#'
-#' `tigris_get_primary_roads()` retrieves primary roads.
-#'
-#' `tigris_get_primary_secondary_roads()` retrieves primary/secondary roads.
-#'
-#' `tigris_get_area_water()` retrieves areal water features.
-#'
-#' `tigris_get_linear_water()` retrieves linear water features.
-#'
-#' @param states Vector of two-character state codes.
-#' @param starts_with Used only in `tigris_get_zcta()`. Beginning digits of
-#' ZCTAs you want to return.
-#' @param crs EPSG code or `crs` object. `4326` default.
-#' @param counties Character vector of county names. If
-#' `NULL` (the default), all counties are returned.
-#' @param .function `tigris` function to run.
-#' @param ... Passed on to `tigris` download function (e.g.,
-#' `tigris::tracts()`).
-#'
-#' @returns Simple Features dataframe.
-#' @export
-#' 
 tigris_get_multi <- function(.function,
                              places,
                              state = NULL,
@@ -112,7 +66,39 @@ tigris_extent_to_counties <- function(extent, year = NULL) {
     sf::st_filter(extent)
 }
 
+#' Get Census Geographies
 #' @name tigris_get_
+#' 
+#' @description
+#' `tigris_get_states()` retrieves states, commonwealths, and territories.
+#'
+#' `tigris_get_counties()` retrieves counties and equivalents.
+#' 
+#' `tigris_get_places()` retrieves census-designated places.
+#'
+#' `tigris_get_postal()` retrieves ZIP code tabulation areas.
+#'
+#' `tigris_get_tracts()` retrieves census tracts.
+#'
+#' `tigris_get_block_groups()` retrieves block groups.
+#'
+#' `tigris_get_roads()` retrieves roads.
+#' 
+#' `tigris_get_rails()` retrieves  rail lines.
+#'
+#' `tigris_get_area_water()` retrieves areal water features.
+#'
+#' `tigris_get_linear_water()` retrieves linear water features.
+#'
+#' @param places A vector of cities, counties or states.
+#' @param crs EPSG code or `crs` object. `4326` default.
+#' @param year Year of TIGER/Line geometries to pull.
+#' @param filter If `TRUE`, will filter result by query feature. (For example,
+#' `tigris_get_states()` will return only requested states, even though 
+#' tigris::states() returns the entire nation). Note that this will not speed
+#' the query, since the filtering happens after fetching the dataset.
+#'
+#' @returns Simple Features dataframe.
 #' @export
 tigris_get_states <- function(places,
                               year = NULL,
@@ -182,8 +168,7 @@ tigris_get_places <- function(places,
 #' @export
 tigris_get_postal <- function(places = NULL,
                               year = 2010,
-                              crs = 4326,
-                              counties = NULL) {
+                              crs = 4326) {
   tigris_get_multi(
     .function = tigris::zctas,
     places = places,
@@ -195,7 +180,9 @@ tigris_get_postal <- function(places = NULL,
 
 #' @name tigris_get_
 #' @export
-tigris_get_tracts <- function(places, year = NULL, crs = 4326) {
+tigris_get_tracts <- function(places, 
+                              year = NULL, 
+                              crs = 4326) {
   tigris_get_multi(
     .function = tigris::tracts,
     places = places,
@@ -208,7 +195,9 @@ tigris_get_tracts <- function(places, year = NULL, crs = 4326) {
 
 #' @name tigris_get_
 #' @export
-tigris_get_block_groups <- function(places, year = NULL, crs = 4326) {
+tigris_get_block_groups <- function(places, 
+                                    year = NULL, 
+                                    crs = 4326) {
   tigris_get_multi(
     .function = tigris::block_groups,
     places = places,
@@ -223,8 +212,7 @@ tigris_get_block_groups <- function(places, year = NULL, crs = 4326) {
 #' @export
 tigris_get_roads <- function(places,
                              year = NULL,
-                             crs = 4326,
-                             counties = NULL) {
+                             crs = 4326) {
   tigris_get_multi(
     .function = tigris::roads,
     places = places,
@@ -238,7 +226,9 @@ tigris_get_roads <- function(places,
 
 #' @name tigris_get_
 #' @export
-tigris_get_rails <- function(places, year = NULL, crs = 4326) {
+tigris_get_rails <- function(places, 
+                             year = NULL, 
+                             crs = 4326) {
   tigris_get_multi(
     .function = tigris::rails,
     places = places,
@@ -252,7 +242,9 @@ tigris_get_rails <- function(places, year = NULL, crs = 4326) {
 
 #' @name tigris_get_
 #' @export
-tigris_get_area_water <- function(places, year = NULL, crs = 4326) {
+tigris_get_area_water <- function(places, 
+                                  year = NULL, 
+                                  crs = 4326) {
   tigris_get_multi(
     .function = tigris::area_water,
     places = places,
@@ -266,7 +258,9 @@ tigris_get_area_water <- function(places, year = NULL, crs = 4326) {
 
 #' @name tigris_get_
 #' @export
-tigris_get_linear_water <- function(places, year = NULL, crs = 4326) {
+tigris_get_linear_water <- function(places, 
+                                    year = NULL, 
+                                    crs = 4326) {
   tigris_get_multi(
     .function = tigris::linear_water,
     places = places,

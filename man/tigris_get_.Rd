@@ -2,7 +2,6 @@
 % Please edit documentation in R/tigris.R
 \name{tigris_get_}
 \alias{tigris_get_}
-\alias{tigris_get_multi}
 \alias{tigris_get_states}
 \alias{tigris_get_counties}
 \alias{tigris_get_places}
@@ -15,29 +14,19 @@
 \alias{tigris_get_linear_water}
 \title{Get Census Geographies}
 \usage{
-tigris_get_multi(
-  .function,
-  places,
-  state = NULL,
-  county = NULL,
-  year = NULL,
-  crs = 4326,
-  ...
-)
-
 tigris_get_states(places, year = NULL, crs = 4326, filter = TRUE)
 
 tigris_get_counties(places, year = NULL, crs = 4326, filter = TRUE)
 
 tigris_get_places(places, year = NULL, crs = 4326, filter = TRUE)
 
-tigris_get_postal(places = NULL, year = 2010, crs = 4326, counties = NULL)
+tigris_get_postal(places = NULL, year = 2010, crs = 4326)
 
 tigris_get_tracts(places, year = NULL, crs = 4326)
 
 tigris_get_block_groups(places, year = NULL, crs = 4326)
 
-tigris_get_roads(places, year = NULL, crs = 4326, counties = NULL)
+tigris_get_roads(places, year = NULL, crs = 4326)
 
 tigris_get_rails(places, year = NULL, crs = 4326)
 
@@ -46,51 +35,38 @@ tigris_get_area_water(places, year = NULL, crs = 4326)
 tigris_get_linear_water(places, year = NULL, crs = 4326)
 }
 \arguments{
-\item{.function}{`tigris` function to run.}
+\item{places}{A vector of cities, counties or states.}
 
-\item{crs}{EPSG code or `crs` object. `4326` default.}
+\item{year}{Year of TIGER/Line geometries to pull.}
 
-\item{...}{Passed on to `tigris` download function (e.g.,
-`tigris::tracts()`).}
+\item{crs}{EPSG code or \code{crs} object. \code{4326} default.}
 
-\item{counties}{Character vector of county names. If
-`NULL` (the default), all counties are returned.}
-
-\item{states}{Vector of two-character state codes.}
-
-\item{starts_with}{Used only in `tigris_get_zcta()`. Beginning digits of
-ZCTAs you want to return.}
+\item{filter}{If \code{TRUE}, will filter result by query feature. (For example,
+\code{tigris_get_states()} will return only requested states, even though
+tigris::states() returns the entire nation). Note that this will not speed
+the query, since the filtering happens after fetching the dataset.}
 }
 \value{
 Simple Features dataframe.
 }
 \description{
-`tigris_get_places()` retrieves census-designated places.
+\code{tigris_get_states()} retrieves states, commonwealths, and territories.
 
-`tigris_get_states()` retrieves states, commonwealths, and territories.
+\code{tigris_get_counties()} retrieves counties and equivalents.
 
-`tigris_get_counties()` retrieves counties and equivalents.
+\code{tigris_get_places()} retrieves census-designated places.
 
-`tigris_get_zctas()` retrieves ZIP code tabulation areas.
+\code{tigris_get_postal()} retrieves ZIP code tabulation areas.
 
-`tigris_get_multistate()` is a helper function that downloads multiple states
-worth of data, where `tigris` function prevents this.
+\code{tigris_get_tracts()} retrieves census tracts.
 
-`tigris_get_multistate_by_county()` is a helper function that downloads
-multiple states worth of data, county-by-county, where `tigris` function
-prevents this.
+\code{tigris_get_block_groups()} retrieves block groups.
 
-`tigris_get_tracts()` retrieves census tracts.
+\code{tigris_get_roads()} retrieves roads.
 
-`tigris_get_block_groups()` retrieves block_groups.
+\code{tigris_get_rails()} retrieves  rail lines.
 
-`tigris_get_roads()` retrieves roads.
+\code{tigris_get_area_water()} retrieves areal water features.
 
-`tigris_get_primary_roads()` retrieves primary roads.
-
-`tigris_get_primary_secondary_roads()` retrieves primary/secondary roads.
-
-`tigris_get_area_water()` retrieves areal water features.
-
-`tigris_get_linear_water()` retrieves linear water features.
+\code{tigris_get_linear_water()} retrieves linear water features.
 }

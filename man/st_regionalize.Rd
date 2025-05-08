@@ -7,15 +7,15 @@
 st_regionalize(df, dist, type)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
-\item{dist}{`units` object or number, in which case output will be based on 
+\item{dist}{\code{units} object or number, in which case output will be based on
 CRS of input.}
 
 \item{type}{One of "bbox", "square", or "circle".}
 }
 \value{
-`sf` object
+\code{sf} object
 }
 \description{
 Builds a "region" on the basis of an input layer's extent, a buffer distance,

@@ -7,11 +7,11 @@
 st_preprocess(df, crs, name = "geometry")
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
-\item{crs}{EPSG code or `crs` object.}
+\item{crs}{EPSG code or \code{crs} object.}
 
-\item{name}{Character. Name of geometry column. `"geometry"` is default.}
+\item{name}{Character. Name of geometry column. \code{"geometry"} is default.}
 }
 \value{
 Simple Features dataframe.

@@ -7,7 +7,7 @@
 st_zoom_from_extent(df, tiles_on_side = 2)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
 \item{tiles_on_side}{Numeric. Tile 'resolution' (i.e., number of map tiles on
 the longest side of the extent's bounding box). Must be two raised to a power

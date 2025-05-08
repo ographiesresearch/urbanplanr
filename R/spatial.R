@@ -285,12 +285,11 @@ st_preprocess <- function(df, crs, name="geometry") {
 #'
 #' @returns A `RasterLayer`.
 #' @export
-#'
 st_get_dem <- function(extent, 
                        tiles_on_side = 8, 
                        expand = NULL,
                        z = st_zoom_from_extent(
-                         extent = extent, 
+                         df = extent, 
                          tiles_on_side = tiles_on_side
                        ), 
                        # rowwise = FALSE,
@@ -514,7 +513,6 @@ st_contours_model <- function(
 #'
 #' @returns Layer `x` clipped to `y`.
 #' @export
-#'
 st_clip <- function(x, y) {
   init_type <- as.character(sf::st_geometry_type(x, by_geometry=FALSE))
   clip <- x |>
@@ -656,7 +654,6 @@ st_model_scale <- function(df, scale, thickness, contour_int) {
 #' @inheritParams st_check_for_proj
 #'
 #' @export
-#'
 st_detect_utm <- function(df) {
   zone <- df |>
     sf::st_transform(
@@ -767,7 +764,6 @@ st_xyxy_to_lines <- function(df,
 #'
 #' @returns Boolean.
 #' @export
-#'
 st_is_type <- function(df, type, exact=FALSE, by_geometry = FALSE, ...) {
   df_type <- sf::st_geometry_type(df, by_geometry = FALSE, ...)
   if (exact) {

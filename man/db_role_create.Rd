@@ -7,7 +7,7 @@
 db_role_create(conn, role, pass)
 }
 \arguments{
-\item{conn}{Database connection like that created by `RPostgres::dbConnect()`.}
+\item{conn}{Database connection like that created by \code{RPostgres::dbConnect()}.}
 
 \item{role}{Character. Name of role.}
 

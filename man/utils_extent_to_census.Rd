@@ -7,11 +7,11 @@
 utils_extent_to_census(extent)
 }
 \arguments{
-\item{extent}{`sf` object.}
+\item{extent}{\code{sf} object.}
 }
 \value{
-A named list of counties that the.extent intersects. Takes the form 
-`list("MI" = c("Saginaw"))`.
+A named list of counties that the.extent intersects. Takes the form
+\code{list("MI" = c("Saginaw"))}.
 }
 \description{
 Extent to State/County

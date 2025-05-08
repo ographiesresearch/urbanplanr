@@ -13,19 +13,19 @@ st_filter_and_join(
 )
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
-\item{filter}{`sf` object to spatially filter by.}
+\item{filter}{\code{sf} object to spatially filter by.}
 
-\item{clip}{`sf` object to clip input by.}
+\item{clip}{\code{sf} object to clip input by.}
 
-\item{join}{`sf` object to spatially join by.}
+\item{join}{\code{sf} object to spatially join by.}
 
-\item{int_join}{If FALSE (default), `join` is a left join. If `int_join`, 
+\item{int_join}{If FALSE (default), \code{join} is a left join. If \code{int_join},
 it is intersected with the input.}
 }
 \value{
-A processed `sf` object.
+A processed \code{sf} object.
 }
 \description{
 Runs a series of standard subsetting steps

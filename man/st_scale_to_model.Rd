@@ -7,14 +7,14 @@
 st_scale_to_model(df, model_size = NULL)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
 \item{model_size}{Optional. Largest dimension of model, as numeric or
-`units`. If numeric, treated as map units. If not provided, model will not be
+\code{units}. If numeric, treated as map units. If not provided, model will not be
 scaled.}
 }
 \value{
-Named list with `factor`, `x_delta`, `y_delta`.
+Named list with \code{factor}, \code{x_delta}, \code{y_delta}.
 }
 \description{
 Retrieve Scaling Parameters, Given Model Size

@@ -7,12 +7,12 @@
 st_upgrade_type(df)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 }
 \value{
-An `sf` object, with upcast geometry.
+An \code{sf} object, with upcast geometry.
 }
 \description{
-Given an input `sf` object that is made up "POINT"s, "POLYLINE"s, etc.,
+Given an input \code{sf} object that is made up "POINT"s, "POLYLINE"s, etc.,
 upcasts that object to "MULTIPOINT", "MULTIPOLYLINE", etc.
 }

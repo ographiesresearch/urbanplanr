@@ -135,10 +135,15 @@ munis_router <- function(state, crs) {
 #'
 #' @param places Character vector of state names.
 #' @param crs target coordinate reference system.
+#' @param filter If `TRUE`, will filter result by query places. Note that this 
+#' will not speed the query, since the filtering happens after fetching the 
+#' dataset.
+#' @param fallbacks Not current implemented. Considering implementing an OSM (or
+#' other) fallback.
 #'
 #' @returns An `sf` object
 #' @export
-munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cdp", "osm")) {
+munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("osm")) {
   
   states <- utils_place_states(places)
   

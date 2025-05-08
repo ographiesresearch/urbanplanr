@@ -29,22 +29,22 @@ munis_get_ri()
 munis_get_vt()
 }
 \value{
-An `sf` object.
+An \code{sf} object.
 }
 \description{
-`muni_get_ma()` Downloads municipal boundaries for Massachusetts.
+\code{muni_get_ma()} Downloads municipal boundaries for Massachusetts.
 
-`muni_get_ct()` Downloads municipal boundaries for Connecticut.
+\code{muni_get_ct()} Downloads municipal boundaries for Connecticut.
 
-`muni_get_me()` Downloads municipal boundaries for Maine.
+\code{muni_get_me()} Downloads municipal boundaries for Maine.
 
-`muni_get_nh()` Downloads municipal boundaries for New Hampshire.
+\code{muni_get_nh()} Downloads municipal boundaries for New Hampshire.
 
-`muni_get_nj()` Downloads municipal boundaries for New Jersey.
+\code{muni_get_nj()} Downloads municipal boundaries for New Jersey.
 
-`muni_get_ny()` Downloads municipal boundaries for New York.
+\code{muni_get_ny()} Downloads municipal boundaries for New York.
 
-`muni_get_ri()` Downloads municipal boundaries for Rhode Island.
+\code{muni_get_ri()} Downloads municipal boundaries for Rhode Island.
 
-`muni_get_vt()` Downloads municipal boundaries for Vermont.
+\code{muni_get_vt()} Downloads municipal boundaries for Vermont.
 }

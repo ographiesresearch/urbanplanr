@@ -15,28 +15,28 @@ st_hillshade(
 )
 }
 \arguments{
-\item{dem}{A digital elevation model stored as a `RasterLayer`.}
+\item{dem}{A digital elevation model stored as a \code{RasterLayer}.}
 
 \item{angle}{Elevation angle of the light source (degrees). Defaults to 45.}
 
 \item{direction}{Azimuth angle of the light source (degrees). Defaults to
 300.}
 
-\item{z_scale}{How much to exaggerate the z scale. Default is 1. Values of 
+\item{z_scale}{How much to exaggerate the z scale. Default is 1. Values of
 3-4 are fairly standard in cartographic practice.}
 
-\item{normalize}{Logical. If `TRUE` (default), values below zero are set to
+\item{normalize}{Logical. If \code{TRUE} (default), values below zero are set to
 zero and the results are multiplied by 255.}
 
-\item{overwrite}{Logical. If `TRUE` (and `filename` is set), overwrites
+\item{overwrite}{Logical. If \code{TRUE} (and \code{filename} is set), overwrites
 existing raster file.}
 
 \item{filename}{Character. Optional output filename.}
 }
 \value{
-A `RasterLayer`.
+A \code{RasterLayer}.
 }
 \description{
-Can be used to calcualte a hillshade from a DEM `RasterLayer` of the type
-returned by `get_dem()`.
+Can be used to calcualte a hillshade from a DEM \code{RasterLayer} of the type
+returned by \code{get_dem()}.
 }

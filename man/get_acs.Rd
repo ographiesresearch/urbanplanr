@@ -83,34 +83,32 @@ acs_get_age(
 
 \item{county}{Character. County name.}
 
-\item{crs}{Target coordinate reference system: object of class `crs`.}
+\item{crs}{Target coordinate reference system: object of class \code{crs}.}
 
-\item{geometry}{Boolean. If `TRUE` (default) retains Tiger/LINE geography.}
+\item{geometry}{Boolean. If \code{TRUE} (default) retains Tiger/LINE geography.}
 }
 \value{
 A tibble or sf tibble of ACS data.
 }
 \description{
-`acs_get_industries()` obtains data on employment by industry from ACS table [S2403 (Industry by Sex for the Civilian 
-Employed Population 16 Years and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
+\code{acs_get_industries()} obtains data on employment by industry from ACS table \href{https://data.census.gov/table/ACSST5Y2022.S2401}{S2403 (Industry by Sex for the Civilian Employed Population 16 Years and Over)}.
 
-`acs_get_occupations()` obtains data on civilian occupation from ACS table 
-[S2401 (Occupation by Sex for the Civilan Employed Population 16 Years 
-and Over)](https://data.census.gov/table/ACSST5Y2022.S2401).
+\code{acs_get_occupations()} obtains data on civilian occupation from ACS table
+\href{https://data.census.gov/table/ACSST5Y2022.S2401}{S2401 (Occupation by Sex for the Civilan Employed Population 16 Years and Over)}.
 
-`acs_get_ancestry()` obtains data on reported ancestry from ACS table 
-[B04006 (People Reporting Ancestry)](https://data.census.gov/table/ACSDT5Y2023.B04006).
+\code{acs_get_ancestry()} obtains data on reported ancestry from ACS table
+\href{https://data.census.gov/table/ACSDT5Y2023.B04006}{B04006 (People Reporting Ancestry)}.
 
-`acs_get_place_of_birth()` obtains data on place of birth for migrant population from ACS table
-[B05006 (Place of Birth for the Foreign-Born Population in the United States)](https://data.census.gov/table/ACSDT5Y2023.B05006).
+\code{acs_get_place_of_birth()} obtains data on place of birth for migrant population from ACS table
+\href{https://data.census.gov/table/ACSDT5Y2023.B05006}{B05006 (Place of Birth for the Foreign-Born Population in the United States)}.
 
-`acs_get_housing()`obtains data on tenure, housing type, and gross rent from ACS tables
-[B25042 (Tenure by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25042), [B25024 (Units in Structure)](https://data.census.gov/table/ACSDT5Y2023.B25024), and
-[B25031 (Median Gross Rent by Bedrooms)](https://data.census.gov/table/ACSDT5Y2023.B25031).
+\code{acs_get_housing()}obtains data on tenure, housing type, and gross rent from ACS tables
+\href{https://data.census.gov/table/ACSDT5Y2023.B25042}{B25042 (Tenure by Bedrooms)}, \href{https://data.census.gov/table/ACSDT5Y2023.B25024}{B25024 (Units in Structure)}, and
+\href{https://data.census.gov/table/ACSDT5Y2023.B25031}{B25031 (Median Gross Rent by Bedrooms)}.
 
-`acs_get_race()` Obtains data on race and ethnicity, including median household and per-capita income measures, from tables 
-[B03002 (Hispanic or Latino Origin by Race)](https://data.census.gov/table/ACSDT5Y2023.B03002), [B19301B-H (Per capita income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19301B), 
-and [B19013B-H (Median household income in the past 12 months)](https://data.census.gov/table/ACSDT5Y2023.B19013B).
+\code{acs_get_race()} Obtains data on race and ethnicity, including median household and per-capita income measures, from tables
+\href{https://data.census.gov/table/ACSDT5Y2023.B03002}{B03002 (Hispanic or Latino Origin by Race)}, \href{https://data.census.gov/table/ACSDT5Y2023.B19301B}{B19301B-H (Per capita income in the past 12 months)},
+and \href{https://data.census.gov/table/ACSDT5Y2023.B19013B}{B19013B-H (Median household income in the past 12 months)}.
 
-`acs_get_age()` obtains data on age, sliced by sex, from ACS table [B01001 (Sex by Age)](https://data.census.gov/table/ACSDT5Y2023.B01001).
+\code{acs_get_age()} obtains data on age, sliced by sex, from ACS table \href{https://data.census.gov/table/ACSDT5Y2023.B01001}{B01001 (Sex by Age)}.
 }

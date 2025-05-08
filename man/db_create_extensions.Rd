@@ -7,7 +7,7 @@
 db_create_extensions(conn, exts = c("postgis", "postgis_raster"))
 }
 \arguments{
-\item{conn}{Database connection like that created by `RPostgres::dbConnect()`.}
+\item{conn}{Database connection like that created by \code{RPostgres::dbConnect()}.}
 
 \item{exts}{Character vector. Name of extensions to create.}
 }

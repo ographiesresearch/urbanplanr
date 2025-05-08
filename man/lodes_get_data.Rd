@@ -12,6 +12,8 @@ lodes_get_data(states, year, census_unit, use_cache = TRUE)
 \item{year}{Integer. Year of LODES data.}
 
 \item{census_unit}{One of c("bg", "tract", "county", "state").}
+
+\item{use_cache}{Whether LODES data should be loaded from the \code{lehdr} cache.}
 }
 \value{
 A dataframe of LODES files.

@@ -2,19 +2,19 @@
 % Please edit documentation in R/utils.R
 \name{utils_get_zipped_shp}
 \alias{utils_get_zipped_shp}
-\title{Read Single Shapefile from `.zip` File}
+\title{Read Single Shapefile from \code{.zip} File}
 \usage{
 utils_get_zipped_shp(path, layer)
 }
 \arguments{
-\item{path}{Path to `.zip` file.}
+\item{path}{Path to \code{.zip} file.}
 
 \item{layer}{Name of shapefile to read.}
 }
 \value{
-Object of class `sf`.
+Object of class \code{sf}.
 }
 \description{
-Given a `.zip` file that conceivably contains multiple shapefiles, read only
+Given a \code{.zip} file that conceivably contains multiple shapefiles, read only
 one of them.
 }

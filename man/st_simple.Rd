@@ -6,7 +6,7 @@
 \alias{st_height}
 \alias{st_middle}
 \alias{st_max_dim}
-\title{Calculate Simple Measurements of `sf` Objects}
+\title{Calculate Simple Measurements of \code{sf} Objects}
 \usage{
 st_width(df)
 
@@ -17,15 +17,15 @@ st_middle(df)
 st_max_dim(df)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 }
 \value{
-A number for `st_width` and `st_height`. A named list for 
-`st_middle`.
+A number for \code{st_width} and \code{st_height}. A named list for
+\code{st_middle}.
 }
 \description{
-`st_width()` returns the bounding width in units of the crs.
-`st_height()` returns the bounding height in units of the crs.
-`st_middle()` returns the center of the bounding box.
-`st_max_dim()` returns the largest dimension, named 'x' or 'y'.
+\code{st_width()} returns the bounding width in units of the crs.
+\code{st_height()} returns the bounding height in units of the crs.
+\code{st_middle()} returns the center of the bounding box.
+\code{st_max_dim()} returns the largest dimension, named 'x' or 'y'.
 }

@@ -10,14 +10,14 @@ st_point_from_coords(coords, crs, name = NULL, coord_crs = 4326)
 \item{coords}{vector of longitude, latitude coordinates (in EPSG:4326, unless
 coord_crs is changed).}
 
-\item{crs}{EPSG code or `crs` object.}
+\item{crs}{EPSG code or \code{crs} object.}
 
 \item{name}{Optional. Name to give point (in name field).}
 
-\item{coord_crs}{`crs` of provided points. 4326 default.}
+\item{coord_crs}{\code{crs} of provided points. 4326 default.}
 }
 \value{
-`sf` object
+\code{sf} object
 }
 \description{
 Create a Point Dataframe Row from Coordinate Pair

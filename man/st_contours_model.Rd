@@ -7,17 +7,17 @@
 st_contours_model(enclosed_contours, full_plates = TRUE, etch_guides = FALSE)
 }
 \arguments{
-\item{enclosed_contours}{`sf` object, as returned by `st_contours_close()`}
+\item{enclosed_contours}{\code{sf} object, as returned by \code{st_contours_close()}}
 
-\item{full_plates}{If `TRUE` (default), contours extended to the edge of the
-model. If `FALSE`, they will emeerge in 'strips'.}
+\item{full_plates}{If \code{TRUE} (default), contours extended to the edge of the
+model. If \code{FALSE}, they will emeerge in 'strips'.}
 
-\item{etch_guides}{If `TRUE`, guides are created by etching edge of the above
-level into each level. If `FALSE` (default), no guides created. Requires that
-`poly` and `full_plates` both be `TRUE`.}
+\item{etch_guides}{If \code{TRUE}, guides are created by etching edge of the above
+level into each level. If \code{FALSE} (default), no guides created. Requires that
+\code{poly} and \code{full_plates} both be \code{TRUE}.}
 }
 \value{
-`sf` object.
+\code{sf} object.
 }
 \description{
 This function is primarily used in the case where the user is preparing a

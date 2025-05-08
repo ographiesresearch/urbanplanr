@@ -7,16 +7,16 @@
 st_multi_type_center(df, on_surface = TRUE, retain_geom = FALSE)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
-\item{on_surface}{If `TRUE` (the default), generates polygon centroids using 
-`st_point_on_surface()`. If `FALSE`, uses `st_centroid()`.}
+\item{on_surface}{If \code{TRUE} (the default), generates polygon centroids using
+\code{st_point_on_surface()}. If \code{FALSE}, uses \code{st_centroid()}.}
 
-\item{retain_geom}{Boolean. If `TRUE` (the default), returns points. If 
-`FALSE` preserves geometry type of input.}
+\item{retain_geom}{Boolean. If \code{TRUE} (the default), returns points. If
+\code{FALSE} preserves geometry type of input.}
 }
 \value{
-An `sf` dataframe.
+An \code{sf} dataframe.
 }
 \description{
 Return Geometry Centers for Multiple Types.

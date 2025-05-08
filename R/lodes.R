@@ -3,6 +3,7 @@
 #' @param states Character vector of state abbreviations.
 #' @param year Integer. Year of LODES data.
 #' @param census_unit One of c("bg", "tract", "county", "state").
+#' @param use_cache Whether LODES data should be loaded from the `lehdr` cache.
 #'
 #' @returns A dataframe of LODES files.
 #' 

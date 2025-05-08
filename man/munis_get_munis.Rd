@@ -4,15 +4,22 @@
 \alias{munis_get_munis}
 \title{Get Municipality by State and Munis}
 \usage{
-munis_get_munis(places, crs = 4326, filter = TRUE, fallbacks = c("cdp", "osm"))
+munis_get_munis(places, crs = 4326, filter = TRUE, fallbacks = c("osm"))
 }
 \arguments{
 \item{places}{Character vector of state names.}
 
 \item{crs}{target coordinate reference system.}
+
+\item{filter}{If \code{TRUE}, will filter result by query places. Note that this
+will not speed the query, since the filtering happens after fetching the
+dataset.}
+
+\item{fallbacks}{Not current implemented. Considering implementing an OSM (or
+other) fallback.}
 }
 \value{
-An `sf` object
+An \code{sf} object
 }
 \description{
 Get Municipality by State and Munis

@@ -126,11 +126,12 @@ utils_write_pg_raster <- function(raster, name, dbname, host, role, pass, port) 
 
 #' Write Dataframe to One or Multiple Common Output Formats
 #'
-#' @param df Dataframe or data frame extension (e.g., tibble).
+#' @param data Dataframe or data frame extension (e.g., tibble).
 #' @param name Character. Name of output table or file.
 #' @param dir_db Character. Name of directory or database.
 #' @param format Character vector including one or multiple of `"gpkg"`, 
 #' `"postgis"`, `"dxf"`, or `"csv"`.
+#' @param conn Database connection like that created by `RPostgres::dbConnect()`.
 #'
 #' @returns Original dataframe.
 #' @export

@@ -8,7 +8,7 @@
 \alias{st_is_linestring}
 \alias{st_is_multipoint}
 \alias{st_is_point}
-\title{Tests `sf` Dataframes for Geometry Types}
+\title{Tests \code{sf} Dataframes for Geometry Types}
 \usage{
 st_is_type(df, type, exact = FALSE, by_geometry = FALSE, ...)
 
@@ -25,41 +25,41 @@ st_is_multipoint(df, by_geometry = FALSE, ...)
 st_is_point(df, by_geometry = FALSE, ...)
 }
 \arguments{
-\item{df}{An `sf` dataframe.}
+\item{df}{An \code{sf} dataframe.}
 
 \item{type}{Character. Type to match.}
 
-\item{exact}{Boolean. If `FALSE` (default), returns unexact matches. (E.g., 
-`"POLYGON"` will also match `"MULTIPOLYGON".`)}
+\item{exact}{Boolean. If \code{FALSE} (default), returns unexact matches. (E.g.,
+\code{"POLYGON"} will also match \verb{"MULTIPOLYGON".})}
 
-\item{by_geometry}{If `FALSE` (default), returns a single result for the
+\item{by_geometry}{If \code{FALSE} (default), returns a single result for the
 entire dataframe. (I.e., will be a "GEOMETRYCOLLECTION" if types are mixed).
 Otherwise, returns a rowwise result.}
 
-\item{...}{Additional arguments passed to `st_is_type()`.}
+\item{...}{Additional arguments passed to \code{st_is_type()}.}
 }
 \value{
 Boolean.
 }
 \description{
-`st_is_type()` returns `TRUE` if `type` matches geometry type returned by 
-`sf::st_geometry_type()`.
+\code{st_is_type()} returns \code{TRUE} if \code{type} matches geometry type returned by
+\code{sf::st_geometry_type()}.
 
-`st_is_multipolygon()` returns `TRUE` if geometry column contains 
+\code{st_is_multipolygon()} returns \code{TRUE} if geometry column contains
 MULTIPOLYGONS.
 
-`st_is_polygon()` returns `TRUE` if geometry column contains 
-POLYGONS (or MULTIPOLYGONS, if `exact` is FALSE).
+\code{st_is_polygon()} returns \code{TRUE} if geometry column contains
+POLYGONS (or MULTIPOLYGONS, if \code{exact} is FALSE).
 
-`st_is_multilinestring()` returns `TRUE` if geometry column contains 
+\code{st_is_multilinestring()} returns \code{TRUE} if geometry column contains
 MULTILINESTRINGS.
 
-`st_is_linestring()` returns `TRUE` if geometry column contains 
-LINESTRINGS (or MULTILINESTRINGS if `exact` is FALSE).
+\code{st_is_linestring()} returns \code{TRUE} if geometry column contains
+LINESTRINGS (or MULTILINESTRINGS if \code{exact} is FALSE).
 
-`st_is_multipoint()`  returns `TRUE` if geometry column contains 
+\code{st_is_multipoint()}  returns \code{TRUE} if geometry column contains
 MULTIPOINTS.
 
-`st_is_point()` returns `TRUE` if geometry column contains 
-POINTS (or MULTIPOINTS if `exact` is FALSE).
+\code{st_is_point()} returns \code{TRUE} if geometry column contains
+POINTS (or MULTIPOINTS if \code{exact} is FALSE).
 }

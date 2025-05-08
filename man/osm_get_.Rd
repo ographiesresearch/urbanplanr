@@ -20,7 +20,7 @@ osm_get_open_space(extent)
 osm_get_bike_lanes(extent)
 }
 \arguments{
-\item{extent}{`sf` object used to generate the overpass query.}
+\item{extent}{\code{sf} object used to generate the overpass query.}
 
 \item{features}{Named list or vector with key value pairs.}
 
@@ -29,15 +29,15 @@ osm_get_bike_lanes(extent)
 \item{key}{A feature key (e.g., "building").}
 }
 \value{
-`sf` object
+\code{sf} object
 }
 \description{
-`osm_get_buildings()` Retrieves buildings from OpenStreetMap, given an 
+\code{osm_get_buildings()} Retrieves buildings from OpenStreetMap, given an
 input extent.
 
-`osm_get_open_space()` Retrieves open space from OpenStreetMap, given an 
+\code{osm_get_open_space()} Retrieves open space from OpenStreetMap, given an
 input extent.
 
-`osm_get_bike_lanes()` Retrieves bike lanes from OpenStreetMap, given an
+\code{osm_get_bike_lanes()} Retrieves bike lanes from OpenStreetMap, given an
 input extent.
 }

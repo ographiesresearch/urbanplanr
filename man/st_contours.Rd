@@ -12,19 +12,19 @@ st_contours(
 )
 }
 \arguments{
-\item{raster}{`RasterLayer`, for example returned by `st_get_dem()`.}
+\item{raster}{\code{RasterLayer}, for example returned by \code{st_get_dem()}.}
 
-\item{interval}{Numeric. Elevation interval at which contours should be 
+\item{interval}{Numeric. Elevation interval at which contours should be
 drawn. In units of crs.}
 
-\item{maxcells}{Maximum number of raster cells to use. Reduce if function is 
+\item{maxcells}{Maximum number of raster cells to use. Reduce if function is
 failing.}
 
-\item{threshold_length}{Threshold length below which contours will be 
-dropped. Helps to remove shards. Defaults to `units::as_units(250, "m").`}
+\item{threshold_length}{Threshold length below which contours will be
+dropped. Helps to remove shards. Defaults to \verb{units::as_units(250, "m").}}
 }
 \value{
-`sf` object with `LINESTRING` geometries.
+\code{sf} object with \code{LINESTRING} geometries.
 }
 \description{
 Generally used to create contour lines from a digital elevation model (DEM).

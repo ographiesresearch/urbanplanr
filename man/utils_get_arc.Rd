@@ -10,7 +10,7 @@ utils_get_arc(id)
 \item{id}{Character. ArcGIS online ID.}
 }
 \value{
-Object of class `sf`.
+Object of class \code{sf}.
 }
 \description{
 Read Remote ArcGIS Open Data Layer

@@ -2,17 +2,17 @@
 % Please edit documentation in R/spatial.R
 \name{st_bbox_sf}
 \alias{st_bbox_sf}
-\title{Bounding Box as `sf` Object}
+\title{Bounding Box as \code{sf} Object}
 \usage{
 st_bbox_sf(df)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 }
 \value{
-An `sf` object.
+An \code{sf} object.
 }
 \description{
-Given an input `sf` object, returns that object's bounding box as an `sf`
+Given an input \code{sf} object, returns that object's bounding box as an \code{sf}
 object.
 }

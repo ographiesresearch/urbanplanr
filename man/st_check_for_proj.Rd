@@ -7,12 +7,12 @@
 st_check_for_proj(df, crs = 4326)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
-\item{crs}{EPSG code or `crs` object.}
+\item{crs}{EPSG code or \code{crs} object.}
 }
 \value{
-Reprojected `sf` object.
+Reprojected \code{sf} object.
 }
 \description{
 Check if Layer Projection Matches CRS and Transform if Not

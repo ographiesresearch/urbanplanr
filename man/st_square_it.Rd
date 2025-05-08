@@ -7,13 +7,13 @@
 st_square_it(df, circle = FALSE)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 
-\item{circle}{If `TRUE`, returns a circle. If `FALSE` (the default), returns
+\item{circle}{If \code{TRUE}, returns a circle. If \code{FALSE} (the default), returns
 a square.}
 }
 \value{
-A circle or square `sf` object whose size is given by the larger
+A circle or square \code{sf} object whose size is given by the larger
 dimension of a layer's bounding box.
 }
 \description{

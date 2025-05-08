@@ -7,7 +7,7 @@
 st_detect_utm(df)
 }
 \arguments{
-\item{df}{`sf` object}
+\item{df}{\code{sf} object}
 }
 \description{
 Detect UTM Zone Based on Location

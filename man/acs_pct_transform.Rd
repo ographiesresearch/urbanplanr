@@ -12,7 +12,7 @@ acs_pct_transform(df, unique_col, percent = TRUE)
 \item{unique_col}{Character or integer. Column containing unique values of
 aggregating unit (i.e., the FIPS code).}
 
-\item{percent}{If `TRUE` (default), calculates a percentage. Otherwise, returns a
+\item{percent}{If \code{TRUE} (default), calculates a percentage. Otherwise, returns a
 proportion.}
 }
 \value{

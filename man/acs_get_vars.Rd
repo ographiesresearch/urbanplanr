@@ -16,7 +16,7 @@ acs_get_vars(
 )
 }
 \arguments{
-\item{vars}{Character vector of variables (see `tidycensus::load_variables`).}
+\item{vars}{Character vector of variables (see \code{tidycensus::load_variables}).}
 
 \item{states}{Character vector of state abbreviations.}
 
@@ -24,16 +24,16 @@ acs_get_vars(
 
 \item{census_unit}{Census unit for which to download tables.}
 
-\item{crs}{Target coordinate reference system: object of class `crs`.}
+\item{crs}{Target coordinate reference system: object of class \code{crs}.}
 
 \item{county}{Character. County name.}
 
-\item{geometry}{Boolean. If `TRUE` (default) retains Tiger/LINE geography.}
+\item{geometry}{Boolean. If \code{TRUE} (default) retains Tiger/LINE geography.}
 
-\item{drop_moe}{Boolean. If `TRUE` (default) drops margin of error estimates.}
+\item{drop_moe}{Boolean. If \code{TRUE} (default) drops margin of error estimates.}
 }
 \value{
-`sf` object if `geometry` is `TRUE`. Else data frame.
+\code{sf} object if \code{geometry} is \code{TRUE}. Else data frame.
 }
 \description{
 Get 5-Year ACS Estimates Based on Variable List
