@@ -8,3 +8,5 @@
 ^.env$
 ^sandbox.R$
 ^\.github$
+^LICENSE\.md$
+^\.github$
