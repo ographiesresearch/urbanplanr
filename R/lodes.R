@@ -80,7 +80,7 @@ lodes_type_in_geo <- function(df, type = "w", geo = "bg", segment = "S000") {
     dplyr::mutate(
       in_unit = .data[[a_id]] == .data[[b_id]]
     ) |>
-    dplyr::group_by(.data[["in_unit"]], id = .data[[a_id]]) |>
+    dplyr::group_by(.data$in_unit, id = .data[[a_id]]) |>
     dplyr::summarize(
       count = sum(.data[[segment]])
     ) |>

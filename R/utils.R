@@ -35,9 +35,9 @@ utils_extent_to_census <- function(extent) {
   }
   c |>
     sf::st_drop_geometry() |>
-    dplyr::group_by(.data[["state_name"]]) |>
+    dplyr::group_by(.data$state_name) |>
     dplyr::summarize(
-      counties = list(.data[["county_name"]])
+      counties = list(.data$county_name)
     ) |>
     dplyr::ungroup() |>
     tibble::deframe()
@@ -441,7 +441,7 @@ utils_place_picker <- function(places, buffer = NULL, crs=4326) {
         }
         if (!("name" %in% names(extent))) {
           extent <- extent |>
-            dplyr::mutate(name = .data[["id"]])
+            dplyr::mutate(name = .data$id)
         }
       } else {
         stop("You passed a file path to places, but the file doesn't exist.")

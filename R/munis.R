@@ -157,9 +157,9 @@ munis_get_munis <- function(places, crs = 4326, filter = TRUE, fallbacks = c("cd
   }
 
   data |>
-    dplyr::group_by(.data[["name"]], .data[["state"]]) |>
+    dplyr::group_by(.data$name, .data$state) |>
     dplyr::summarize(
-      geometry = sf::st_union(.data[["geometry"]])
+      geometry = sf::st_union(.data$geometry)
     ) |>
     dplyr::ungroup() |>
     utils_slugify(name, state) |>

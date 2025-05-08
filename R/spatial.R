@@ -77,7 +77,7 @@ st_bbox_sf <- function(df) {
   df <- df |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      geometry = sf::st_as_sfc(sf::st_bbox(.data[["geometry"]]))
+      geometry = sf::st_as_sfc(sf::st_bbox(.data$geometry))
       ) |>
     dplyr::ungroup()
 }
