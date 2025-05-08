@@ -7,7 +7,7 @@
 st_scale_to_model(df, model_size = NULL)
 }
 \arguments{
-\item{df}{Simple features dataframe or tibble.}
+\item{df}{`sf` object}
 
 \item{model_size}{Optional. Largest dimension of model, as numeric or
 `units`. If numeric, treated as map units. If not provided, model will not be

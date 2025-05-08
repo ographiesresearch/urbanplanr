@@ -10,7 +10,7 @@ st_point_from_coords(coords, crs, name = NULL, coord_crs = 4326)
 \item{coords}{vector of longitude, latitude coordinates (in EPSG:4326, unless
 coord_crs is changed).}
 
-\item{crs}{output `crs`}
+\item{crs}{EPSG code or `crs` object.}
 
 \item{name}{Optional. Name to give point (in name field).}
 

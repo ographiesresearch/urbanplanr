@@ -7,10 +7,12 @@
 st_geom_to_xy(df, cols = c("x", "y"), crs = 4326, retain_geom = FALSE, ...)
 }
 \arguments{
-\item{df}{A dataframe with point geometries.}
+\item{df}{`sf` object}
 
 \item{cols}{Character vector of names for x and y columns. (Default 
 `c("x", "y")`.)}
+
+\item{crs}{EPSG code or `crs` object.}
 
 \item{retain_geom}{Boolean. If `FALSE` (default), returns point geometry. If
 `TRUE`, returns original geometries}

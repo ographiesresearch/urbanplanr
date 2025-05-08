@@ -32,6 +32,10 @@ st_is_point(df, by_geometry = FALSE, ...)
 \item{exact}{Boolean. If `FALSE` (default), returns unexact matches. (E.g., 
 `"POLYGON"` will also match `"MULTIPOLYGON".`)}
 
+\item{by_geometry}{If `FALSE` (default), returns a single result for the
+entire dataframe. (I.e., will be a "GEOMETRYCOLLECTION" if types are mixed).
+Otherwise, returns a rowwise result.}
+
 \item{...}{Additional arguments passed to `st_is_type()`.}
 }
 \value{

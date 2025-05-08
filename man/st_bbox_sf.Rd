@@ -7,7 +7,7 @@
 st_bbox_sf(df)
 }
 \arguments{
-\item{df}{An `sf` object.}
+\item{df}{`sf` object}
 }
 \value{
 An `sf` object.
