@@ -12,12 +12,15 @@
 #' shinyplanr()
 #' }
 shinyplanr <- function() {
-  appDir <- system.file("shinyplanr", package = "urbanplanr")
-  if (appDir == "") {
-    stop("Could not find example directory. Try re-installing `urbanplanr`.", call. = FALSE)
+  dir <- system.file("shinyplanr", package = "urbanplanr")
+  if (dir == "") {
+    stop("Could not find 'inst/shinyplanr/'. Try re-installing `urbanplanr`.", call. = FALSE)
   }
-  if (!(requireNamespace("mapgl", quietly = TRUE) & requireNamespace("shiny", quietly = TRUE))) {
-    stop("Package 'mapgl' is required to run this app. Please install it.")
+  if (!requireNamespace("mapgl", quietly = TRUE)) {
+    stop("Packages 'mapgl' is required to run `shinyplanr`. Please install it.")
   }
-  shiny::runApp(appDir, display.mode = "normal")
+  if (!requireNamespace("shiny", quietly = TRUE)) {
+    stop("Packages 'shiny' is required to run `shinyplanr`. Please install it.")
+  }
+  shiny::runApp(dir, display.mode = "normal")
 }
