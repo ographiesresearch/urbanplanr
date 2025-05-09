@@ -151,9 +151,13 @@ st_point_from_coords <- function(coords, crs, name = NULL, coord_crs=4326) {
 #'
 #' @returns `sf` object
 #' @export
-st_regionalize <- function(df, dist, type) {
+st_regionalize <- function(df, dist = NULL, type = "bbox") {
+  if (!is.null(dist)) {
+    df <- df |>
+      sf::st_buffer(dist)
+  }
+  
   df <- df |>
-    sf::st_buffer(dist) |>
     sf::st_union() |>
     sf::st_as_sf(crs = sf::st_crs(df)) |>
     sf::st_set_geometry("geometry")
