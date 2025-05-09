@@ -1,0 +1,6 @@
+study_area:
+  script: study_area.R
+  store: study_area
+basemap:
+  script: basemap.R
+  store: basemap
