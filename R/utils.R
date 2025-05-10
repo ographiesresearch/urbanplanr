@@ -9,6 +9,17 @@ utils_slugify <- function(df, ..., col = "id", sep = "-") {
     )
 }
 
+utils_packages_exist <- function(packages) {
+  packages |>
+    purrr::walk(
+      \(x) if (!requireNamespace(x, quietly = TRUE)) {
+        stop(
+          glue::glue("Package '{x}' is required to run workflows. Please install it.")
+        )
+      }
+    )
+}
+
 utils_unique_by_idx <- function(list, idx) {
   list |>
     purrr::map(idx) |>
